@@ -21,38 +21,42 @@ const PageList = ({ pages, setPages, setEditingPage }) => {
     }
   };
 
-  if (pages.length === 0) return <p>No pages created yet.</p>;
+  if (pages?.length === 0) return <p>No pages created yet.</p>;
 
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4">Pages</h2>
       <ul>
-        {pages.map((page) => (
-          <li
-            key={page._id}
-            className="bg-gray-100 p-4 mb-2 rounded flex justify-between items-center"
-          >
-            <div>
-              <h3 className="font-bold">{page.title}</h3>
-              <p>{page.content}</p>
-              <small>Created by: {page.createdBy}</small>
-            </div>
-            <div>
-              <button
-                onClick={() => handleEdit(page)}
-                className="bg-yellow-500 text-white px-3 py-1 rounded mr-2"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(page._id)}
-                className="bg-red-500 text-white px-3 py-1 rounded"
-              >
-                Delete
-              </button>
-            </div>
-          </li>
-        ))}
+        {pages && pages.length > 0 ? (
+          pages.map((page) => (
+            <li
+              key={page._id}
+              className="bg-gray-100 p-4 mb-2 rounded flex justify-between items-center"
+            >
+              <div>
+                <h3 className="font-bold">{page.title}</h3>
+                <p>{page.content}</p>
+                <small>Created by: {page.createdBy}</small>
+              </div>
+              <div>
+                <button
+                  onClick={() => handleEdit(page)}
+                  className="bg-yellow-500 text-white px-3 py-1 rounded mr-2"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(page._id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded"
+                >
+                  Delete
+                </button>
+              </div>
+            </li>
+          ))
+        ) : (
+          <p>No pages created yet.</p>
+        )}
       </ul>
     </div>
   );

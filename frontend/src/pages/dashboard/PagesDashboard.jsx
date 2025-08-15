@@ -1,31 +1,32 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
-import axiosInstance from "../axiosConfig";
-import PageForm from "../components/PageForm";
-import PageList from "../components/PageList";
+import PageForm from "../../components/PageForm";
+import PageList from "../../components/PageList";
+import { useAuth } from "../../context/AuthContext";
+import axiosInstance from "../../axiosConfig";
 
-const Dashboard = () => {
+const PagesDashboard = () => {
   const { user } = useAuth();
   const [pages, setPages] = useState([]);
   const [editingPage, setEditingPage] = useState(null);
 
+  // Fetch pages on mount
   useEffect(() => {
     const fetchPages = async () => {
       try {
         const res = await axiosInstance.get("/api/dashboard/pages", {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        setPages(res.data);
+        setPages(res.data.pages || []); // <- ensure array
       } catch (err) {
-        alert("Failed to fetch pages.");
+        console.error(err);
       }
     };
-    if (user) fetchPages();
-  }, [user]);
+    fetchPages();
+  }, [user.token]);
 
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6 text-center">CMS Dashboard</h1>
+      <h1 className="text-3xl font-bold mb-6 text-center">Pages Management</h1>
       <PageForm
         pages={pages}
         setPages={setPages}
@@ -41,4 +42,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default PagesDashboard;

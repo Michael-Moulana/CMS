@@ -35,14 +35,16 @@ const PageForm = ({ pages, setPages, editingPage, setEditingPage }) => {
             headers: { Authorization: `Bearer ${user.token}` },
           }
         );
-        setPages(pages.map((p) => (p._id === res.data._id ? res.data : p)));
+        setPages(
+          pages.map((p) => (p._id === res.data.page._id ? res.data.page : p))
+        );
         setEditingPage(null);
       } else {
         // Create new page
         const res = await axiosInstance.post("/api/dashboard/pages", formData, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        setPages([...pages, res.data]);
+        setPages([...pages, res.data.page]);
       }
 
       setFormData({ title: "", content: "", slug: "" });
@@ -74,7 +76,10 @@ const PageForm = ({ pages, setPages, editingPage, setEditingPage }) => {
         className="w-full mb-4 p-2 border rounded"
         rows={5}
       />
-      <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+      <button
+        type="submit"
+        className="bg-blue-600 text-white px-4 py-2 rounded"
+      >
         {editingPage ? "Update Page" : "Add Page"}
       </button>
     </form>
