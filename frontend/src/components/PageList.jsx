@@ -6,6 +6,10 @@ const PageList = ({ pages, setPages, setEditingPage }) => {
 
   const handleEdit = (page) => {
     setEditingPage(page);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth", // smooth scroll animation
+    });
   };
 
   const handleDelete = async (id) => {
