@@ -16,7 +16,7 @@ const PagesDashboard = () => {
         const res = await axiosInstance.get("/api/dashboard/pages", {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        setPages(res.data.pages || []); // <- ensure array
+        setPages(res.data || []);
       } catch (err) {
         console.error(err);
       }
