@@ -21,7 +21,7 @@ const PageList = ({ pages, setPages, setEditingPage }) => {
       });
       setPages(pages.filter((p) => p._id !== id));
     } catch (err) {
-      alert("Failed to delete page");
+      alert("Failed to delete this page.");
     }
   };
 
