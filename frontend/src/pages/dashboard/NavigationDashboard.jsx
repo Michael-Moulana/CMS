@@ -7,7 +7,7 @@ import FlashMessage from "../../components/FlashMessage";
 
 const NavigationDashboard = () => {
   const { user } = useAuth();
-  const [navigation, setNavigation] = useState([]);
+  const [navigations, setNavigations] = useState([]);
   const [editingNav, setEditingNav] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [flash, setFlash] = useState({ message: "", type: "" });
@@ -18,21 +18,24 @@ const NavigationDashboard = () => {
   };
 
   useEffect(() => {
-    const fetchNavigation = async () => {
+    if (!user?.token) return;
+
+    const fetchNavigations = async () => {
       try {
         const res = await axiosInstance.get("/api/dashboard/navigation", {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        setNavigation(res.data.navigation);
+        setNavigations(res.data.navigation);
       } catch (err) {
         showFlash("Failed to fetch navigation", "error");
       }
     };
-    if (user?.token) fetchNavigation();
+
+    fetchNavigations();
   }, [user]);
 
-  // Filter navs based on search term
-  const filteredNavs = navigation.filter((navigation) =>
+  // Filter pages based on search term
+  const filteredNavs = navigations.filter((navigation) =>
     navigation.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -41,6 +44,7 @@ const NavigationDashboard = () => {
       <h1 className="text-3xl font-bold mb-6 text-center">
         Navigation Management
       </h1>
+
       {flash.message && (
         <FlashMessage
           message={flash.message}
@@ -48,9 +52,10 @@ const NavigationDashboard = () => {
           onClose={() => setFlash({ message: "", type: "" })}
         />
       )}
+
       <NavigationForm
-        navigation={navigation}
-        setNavigation={setNavigation}
+        navigations={navigations}
+        setNavigations={setNavigations}
         editingNav={editingNav}
         setEditingNav={setEditingNav}
         showFlash={showFlash}
@@ -68,8 +73,8 @@ const NavigationDashboard = () => {
       </div>
 
       <NavigationList
-        navigation={filteredNavs}
-        setNavigation={setNavigation}
+        navigations={filteredNavs}
+        setNavigations={setNavigations}
         setEditingNav={setEditingNav}
         showFlash={showFlash}
       />

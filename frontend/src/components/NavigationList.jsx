@@ -2,8 +2,8 @@ import { useAuth } from "../context/AuthContext";
 import axiosInstance from "../axiosConfig";
 
 const NavigationList = ({
-  navigation,
-  setNavigation,
+  navigations = [], // default to empty array
+  setNavigations,
   setEditingNav,
   showFlash,
 }) => {
@@ -20,20 +20,22 @@ const NavigationList = ({
       await axiosInstance.delete(`/api/dashboard/navigation/${id}`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
-      setNavigation(navigation.filter((n) => n._id !== id));
+      setNavigations(navigations.filter((n) => n._id !== id));
       showFlash("Navigation deleted successfully", "success");
     } catch (err) {
       showFlash("Failed to delete navigation", "error");
     }
   };
 
-  if (!navigation.length) return <p>No navigation items yet.</p>;
+  if (navigations.length === 0) {
+    return <p className="text-gray-500">No navigation items yet.</p>;
+  }
 
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4">Navigation Items</h2>
       <ul>
-        {navigation.map((nav) => (
+        {navigations.map((nav) => (
           <li
             key={nav._id}
             className="bg-gray-100 p-4 mb-2 rounded flex justify-between items-center"
