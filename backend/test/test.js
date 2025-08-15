@@ -185,41 +185,41 @@ describe("Create Page Function Test", () => {
 //   });
 // });
 
-// describe("Get Pages Function Test", () => {
-//   it("should return all pages", async () => {
-//     const pages = [
-//       { _id: new mongoose.Types.ObjectId(), title: "Page 1" },
-//       { _id: new mongoose.Types.ObjectId(), title: "Page 2" },
-//     ];
+describe("Get Pages Function Test", () => {
+  it("should return all pages", async () => {
+    const pages = [
+      { _id: new mongoose.Types.ObjectId(), title: "Page 1" },
+      { _id: new mongoose.Types.ObjectId(), title: "Page 2" },
+    ];
 
-//     const findStub = sinon.stub(Page, "find").resolves(pages);
+    const findStub = sinon.stub(Page, "find").resolves(pages);
 
-//     const req = {};
-//     const res = { json: sinon.spy(), status: sinon.stub().returnsThis() };
+    const req = {};
+    const res = { json: sinon.spy(), status: sinon.stub().returnsThis() };
 
-//     await getPages(req, res);
+    await getPages(req, res);
 
-//     expect(findStub.calledOnce).to.be.true;
-//     expect(res.status.calledWith(200)).to.be.true;
-//     expect(res.json.calledWith(pages)).to.be.true;
+    expect(findStub.calledOnce).to.be.true;
+    expect(res.status.calledWith(200)).to.be.true;
+    expect(res.json.calledWith(pages)).to.be.true;
 
-//     findStub.restore();
-//   });
+    findStub.restore();
+  });
 
-//   it("should return 500 on error", async () => {
-//     const findStub = sinon.stub(Page, "find").throws(new Error("DB Error"));
+  it("should return 500 on error", async () => {
+    const findStub = sinon.stub(Page, "find").throws(new Error("DB Error"));
 
-//     const req = {};
-//     const res = { json: sinon.spy(), status: sinon.stub().returnsThis() };
+    const req = {};
+    const res = { json: sinon.spy(), status: sinon.stub().returnsThis() };
 
-//     await getPages(req, res);
+    await getPages(req, res);
 
-//     expect(res.status.calledWith(500)).to.be.true;
-//     expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
+    expect(res.status.calledWith(500)).to.be.true;
+    expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
 
-//     findStub.restore();
-//   });
-// });
+    findStub.restore();
+  });
+});
 
 // describe("Delete Page Function Test", () => {
 //   it("should delete a page successfully", async () => {
