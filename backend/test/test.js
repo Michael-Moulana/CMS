@@ -14,6 +14,7 @@ const {
 const {
   createNavigation,
   getNavigations,
+  updateNavigation,
 } = require("../controllers/navigationController");
 
 const { expect } = chai;
@@ -166,6 +167,63 @@ describe("Create Navigation Function Test", function () {
 
     expect(res.status.calledWith(500)).to.be.true;
     expect(res.json.calledWith({ error: "Server error" })).to.be.true;
+  });
+});
+
+describe("Update Navigation Controller", () => {
+  let req, res;
+
+  beforeEach(() => {
+    req = {
+      params: { id: new mongoose.Types.ObjectId() },
+      body: {
+        title: "Updated Title",
+        slug: "updated-slug",
+        order: 5,
+        parent: null,
+      },
+    };
+
+    res = {
+      status: sinon.stub().returnsThis(),
+      json: sinon.spy(),
+    };
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should update a navigation and return the updated document", async () => {
+    const fakeNav = {
+      _id: req.params.id,
+      title: req.body.title,
+      slug: req.body.slug,
+      order: req.body.order,
+      parent: req.body.parent,
+    };
+
+    // Stub findByIdAndUpdate to return an object with populate
+    const populateStub = sinon.stub().resolves(fakeNav);
+    const stub = sinon
+      .stub(Navigation, "findByIdAndUpdate")
+      .returns({ populate: populateStub });
+
+    await updateNavigation(req, res);
+
+    expect(stub.calledOnce).to.be.true;
+    expect(populateStub.calledOnce).to.be.true;
+    expect(res.status.calledWith(200)).to.be.true;
+    expect(res.json.calledWith({ navigation: fakeNav })).to.be.true;
+  });
+
+  it("should return 500 if there is an error", async () => {
+    sinon.stub(Navigation, "findByIdAndUpdate").throws(new Error("DB Error"));
+
+    await updateNavigation(req, res);
+
+    expect(res.status.calledWith(500)).to.be.true;
+    expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
   });
 });
 
