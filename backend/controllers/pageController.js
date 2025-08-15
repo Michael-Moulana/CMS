@@ -3,8 +3,7 @@ const Page = require("../models/Page");
 // Create Page
 exports.createPage = async (req, res) => {
   try {
-    const { title, content } = req.body;
-    const slug = title.toLowerCase().replace(/\s+/g, "-");
+    const { title, content, slug } = req.body;
     const page = new Page({ title, content, slug });
     const savedPage = await page.save();
     res.status(201).json({ message: "Page created", page: savedPage });
@@ -37,10 +36,10 @@ exports.getPage = async (req, res) => {
 // Update Page
 exports.updatePage = async (req, res) => {
   try {
-    const { title, content } = req.body;
+    const { title, content, slug } = req.body;
     const page = await Page.findByIdAndUpdate(
       req.params.id,
-      { title, content, updatedAt: Date.now() },
+      { title, content, slug, updatedAt: Date.now() },
       { new: true }
     );
     if (!page) return res.status(404).json({ message: "Page not found" });
