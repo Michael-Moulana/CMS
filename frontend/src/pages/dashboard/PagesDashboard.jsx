@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import PageForm from "../../components/PageForm";
 import PageList from "../../components/PageList";
+import FlashMessage from "../../components/FlashMessage";
 import { useAuth } from "../../context/AuthContext";
 import axiosInstance from "../../axiosConfig";
 
@@ -9,6 +10,11 @@ const PagesDashboard = () => {
   const [pages, setPages] = useState([]);
   const [editingPage, setEditingPage] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [flash, setFlash] = useState(null); // { message, type }
+
+  const showFlash = (message, type) => {
+    setFlash({ message, type });
+  };
 
   // Fetch pages on mount
   useEffect(() => {
@@ -34,11 +40,20 @@ const PagesDashboard = () => {
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6 text-center">Pages Management</h1>
 
+      {flash && (
+        <FlashMessage
+          message={flash.message}
+          type={flash.type}
+          onClose={() => setFlash(null)}
+        />
+      )}
+
       <PageForm
         pages={pages}
         setPages={setPages}
         editingPage={editingPage}
         setEditingPage={setEditingPage}
+        showFlash={showFlash}
       />
 
       {/* Search Input */}
@@ -56,6 +71,7 @@ const PagesDashboard = () => {
         pages={filteredPages}
         setPages={setPages}
         setEditingPage={setEditingPage}
+        showFlash={showFlash}
       />
     </div>
   );
