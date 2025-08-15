@@ -221,56 +221,56 @@ describe("Get Pages Function Test", () => {
   });
 });
 
-// describe("Delete Page Function Test", () => {
-//   it("should delete a page successfully", async () => {
-//     const pageId = new mongoose.Types.ObjectId().toString();
-//     const page = { _id: pageId };
+describe("Delete Page Function Test", () => {
+  it("should delete a page successfully", async () => {
+    const pageId = new mongoose.Types.ObjectId().toString();
+    const page = { _id: pageId };
 
-//     const findByIdAndDeleteStub = sinon
-//       .stub(Page, "findByIdAndDelete")
-//       .resolves(page);
+    const findByIdAndDeleteStub = sinon
+      .stub(Page, "findByIdAndDelete")
+      .resolves(page);
 
-//     const req = { params: { id: pageId } };
-//     const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+    const req = { params: { id: pageId } };
+    const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
 
-//     await deletePage(req, res);
+    await deletePage(req, res);
 
-//     expect(findByIdAndDeleteStub.calledOnceWith(pageId)).to.be.true;
-//     expect(res.status.calledWith(200)).to.be.true;
-//     expect(res.json.calledWith({ message: "Page deleted" })).to.be.true;
+    expect(findByIdAndDeleteStub.calledOnceWith(pageId)).to.be.true;
+    expect(res.status.calledWith(200)).to.be.true;
+    expect(res.json.calledWith({ message: "Page deleted" })).to.be.true;
 
-//     findByIdAndDeleteStub.restore();
-//   });
+    findByIdAndDeleteStub.restore();
+  });
 
-//   it("should return 404 if page is not found", async () => {
-//     const findByIdAndDeleteStub = sinon
-//       .stub(Page, "findByIdAndDelete")
-//       .resolves(null);
+  it("should return 404 if page is not found", async () => {
+    const findByIdAndDeleteStub = sinon
+      .stub(Page, "findByIdAndDelete")
+      .resolves(null);
 
-//     const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
-//     const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+    const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
+    const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
 
-//     await deletePage(req, res);
+    await deletePage(req, res);
 
-//     expect(res.status.calledWith(404)).to.be.true;
-//     expect(res.json.calledWith({ message: "Page not found" })).to.be.true;
+    expect(res.status.calledWith(404)).to.be.true;
+    expect(res.json.calledWith({ message: "Page not found" })).to.be.true;
 
-//     findByIdAndDeleteStub.restore();
-//   });
+    findByIdAndDeleteStub.restore();
+  });
 
-//   it("should return 500 if an error occurs", async () => {
-//     const findByIdAndDeleteStub = sinon
-//       .stub(Page, "findByIdAndDelete")
-//       .throws(new Error("DB Error"));
+  it("should return 500 if an error occurs", async () => {
+    const findByIdAndDeleteStub = sinon
+      .stub(Page, "findByIdAndDelete")
+      .throws(new Error("DB Error"));
 
-//     const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
-//     const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+    const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
+    const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
 
-//     await deletePage(req, res);
+    await deletePage(req, res);
 
-//     expect(res.status.calledWith(500)).to.be.true;
-//     expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
+    expect(res.status.calledWith(500)).to.be.true;
+    expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
 
-//     findByIdAndDeleteStub.restore();
-//   });
-// });
+    findByIdAndDeleteStub.restore();
+  });
+});
