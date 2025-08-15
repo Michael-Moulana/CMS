@@ -10,6 +10,7 @@ import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/dashboard/Dashboard";
 import PagesDashboard from "./pages/dashboard/PagesDashboard";
+import NavigationDashboard from "./pages/dashboard/NavigationDashboard";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 // Separate component, useAuth is called inside provider
@@ -45,7 +46,12 @@ function AppRoutes() {
           path="/dashboard/pages"
           element={user ? <PagesDashboard /> : <Navigate to="/login" replace />}
         />
-        {/* <Route path="/dashboard/navigation" element={<NavigationDashboard />} /> */}
+        <Route
+          path="/dashboard/navigation"
+          element={
+            user ? <NavigationDashboard /> : <Navigate to="/login" replace />
+          }
+        />
       </Routes>
     </>
   );

@@ -34,3 +34,18 @@ exports.createNavigation = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+exports.getNavigations = async (req, res) => {
+  try {
+    const navigation = await Navigation.find({ createdBy: req.user._id })
+      .sort("order")
+      .populate("parent", "title");
+    res.status(200).json({ navigation });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getNavigation = async (req, res) => {};
+exports.updateNavigation = async (req, res) => {};
+exports.deleteNavigation = async (req, res) => {};
