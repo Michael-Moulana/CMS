@@ -5,7 +5,6 @@ const { protect } = require("../middleware/authMiddleware");
 
 router.post("/", protect, navigationController.createNavigation);
 router.get("/", protect, navigationController.getNavigations);
-router.get("/:id", protect, navigationController.getNavigation);
 router.put("/:id", protect, navigationController.updateNavigation);
 router.delete("/:id", protect, navigationController.deleteNavigation);
 

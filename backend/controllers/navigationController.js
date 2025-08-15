@@ -46,6 +46,25 @@ exports.getNavigations = async (req, res) => {
   }
 };
 
-exports.getNavigation = async (req, res) => {};
-exports.updateNavigation = async (req, res) => {};
+exports.updateNavigation = async (req, res) => {
+  try {
+    const { title, slug, order, parent } = req.body;
+
+    const updatedNav = await Navigation.findByIdAndUpdate(
+      req.params.id,
+      {
+        title,
+        slug,
+        order: order || 0,
+        parent: parent || null,
+      },
+      { new: true } // return updated document
+    ).populate("parent", "title");
+
+    res.status(200).json({ navigation: updatedNav });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 exports.deleteNavigation = async (req, res) => {};
