@@ -113,164 +113,164 @@ describe("Create Page Function Test", () => {
 //   });
 // });
 
-// describe("Update Page Function Test", () => {
-//   it("should update page successfully", async () => {
-//     const pageId = new mongoose.Types.ObjectId();
-//     const updatedPage = {
-//       _id: pageId,
-//       title: "New Page",
-//       content: "Updated Content",
-//     };
+describe("Update Page Function Test", () => {
+  it("should update page successfully", async () => {
+    const pageId = new mongoose.Types.ObjectId();
+    const updatedPage = {
+      _id: pageId,
+      title: "New Page",
+      content: "Updated Content",
+    };
 
-//     const findByIdAndUpdateStub = sinon
-//       .stub(Page, "findByIdAndUpdate")
-//       .resolves(updatedPage);
+    const findByIdAndUpdateStub = sinon
+      .stub(Page, "findByIdAndUpdate")
+      .resolves(updatedPage);
 
-//     const req = {
-//       params: { id: pageId },
-//       body: { title: "New Page", content: "Updated Content" },
-//     };
-//     const res = { json: sinon.spy(), status: sinon.stub().returnsThis() };
+    const req = {
+      params: { id: pageId },
+      body: { title: "New Page", content: "Updated Content" },
+    };
+    const res = { json: sinon.spy(), status: sinon.stub().returnsThis() };
 
-//     await updatePage(req, res);
+    await updatePage(req, res);
 
-//     expect(
-//       findByIdAndUpdateStub.calledOnceWith(
-//         pageId,
-//         {
-//           title: "New Page",
-//           content: "Updated Content",
-//           updatedAt: sinon.match.number,
-//         },
-//         { new: true }
-//       )
-//     ).to.be.true;
-//     expect(res.status.calledWith(200)).to.be.true;
-//     expect(res.json.calledWith({ message: "Page updated", page: updatedPage }))
-//       .to.be.true;
+    expect(
+      findByIdAndUpdateStub.calledOnceWith(
+        pageId,
+        {
+          title: "New Page",
+          content: "Updated Content",
+          updatedAt: sinon.match.number,
+        },
+        { new: true }
+      )
+    ).to.be.true;
+    expect(res.status.calledWith(200)).to.be.true;
+    expect(res.json.calledWith({ message: "Page updated", page: updatedPage }))
+      .to.be.true;
 
-//     findByIdAndUpdateStub.restore();
-//   });
+    findByIdAndUpdateStub.restore();
+  });
 
-//   it("should return 404 if page is not found", async () => {
-//     const findByIdAndUpdateStub = sinon
-//       .stub(Page, "findByIdAndUpdate")
-//       .resolves(null);
+  it("should return 404 if page is not found", async () => {
+    const findByIdAndUpdateStub = sinon
+      .stub(Page, "findByIdAndUpdate")
+      .resolves(null);
 
-//     const req = { params: { id: new mongoose.Types.ObjectId() }, body: {} };
-//     const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+    const req = { params: { id: new mongoose.Types.ObjectId() }, body: {} };
+    const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
 
-//     await updatePage(req, res);
+    await updatePage(req, res);
 
-//     expect(res.status.calledWith(404)).to.be.true;
-//     expect(res.json.calledWith({ message: "Page not found" })).to.be.true;
+    expect(res.status.calledWith(404)).to.be.true;
+    expect(res.json.calledWith({ message: "Page not found" })).to.be.true;
 
-//     findByIdAndUpdateStub.restore();
-//   });
+    findByIdAndUpdateStub.restore();
+  });
 
-//   it("should return 500 on error", async () => {
-//     const findByIdAndUpdateStub = sinon
-//       .stub(Page, "findByIdAndUpdate")
-//       .throws(new Error("DB Error"));
+  it("should return 500 on error", async () => {
+    const findByIdAndUpdateStub = sinon
+      .stub(Page, "findByIdAndUpdate")
+      .throws(new Error("DB Error"));
 
-//     const req = { params: { id: new mongoose.Types.ObjectId() }, body: {} };
-//     const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+    const req = { params: { id: new mongoose.Types.ObjectId() }, body: {} };
+    const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
 
-//     await updatePage(req, res);
+    await updatePage(req, res);
 
-//     expect(res.status.calledWith(500)).to.be.true;
-//     expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
+    expect(res.status.calledWith(500)).to.be.true;
+    expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
 
-//     findByIdAndUpdateStub.restore();
-//   });
-// });
+    findByIdAndUpdateStub.restore();
+  });
+});
 
-// describe("Get Pages Function Test", () => {
-//   it("should return all pages", async () => {
-//     const pages = [
-//       { _id: new mongoose.Types.ObjectId(), title: "Page 1" },
-//       { _id: new mongoose.Types.ObjectId(), title: "Page 2" },
-//     ];
+describe("Get Pages Function Test", () => {
+  it("should return all pages", async () => {
+    const pages = [
+      { _id: new mongoose.Types.ObjectId(), title: "Page 1" },
+      { _id: new mongoose.Types.ObjectId(), title: "Page 2" },
+    ];
 
-//     const findStub = sinon.stub(Page, "find").resolves(pages);
+    const findStub = sinon.stub(Page, "find").resolves(pages);
 
-//     const req = {};
-//     const res = { json: sinon.spy(), status: sinon.stub().returnsThis() };
+    const req = {};
+    const res = { json: sinon.spy(), status: sinon.stub().returnsThis() };
 
-//     await getPages(req, res);
+    await getPages(req, res);
 
-//     expect(findStub.calledOnce).to.be.true;
-//     expect(res.status.calledWith(200)).to.be.true;
-//     expect(res.json.calledWith(pages)).to.be.true;
+    expect(findStub.calledOnce).to.be.true;
+    expect(res.status.calledWith(200)).to.be.true;
+    expect(res.json.calledWith(pages)).to.be.true;
 
-//     findStub.restore();
-//   });
+    findStub.restore();
+  });
 
-//   it("should return 500 on error", async () => {
-//     const findStub = sinon.stub(Page, "find").throws(new Error("DB Error"));
+  it("should return 500 on error", async () => {
+    const findStub = sinon.stub(Page, "find").throws(new Error("DB Error"));
 
-//     const req = {};
-//     const res = { json: sinon.spy(), status: sinon.stub().returnsThis() };
+    const req = {};
+    const res = { json: sinon.spy(), status: sinon.stub().returnsThis() };
 
-//     await getPages(req, res);
+    await getPages(req, res);
 
-//     expect(res.status.calledWith(500)).to.be.true;
-//     expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
+    expect(res.status.calledWith(500)).to.be.true;
+    expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
 
-//     findStub.restore();
-//   });
-// });
+    findStub.restore();
+  });
+});
 
-// describe("Delete Page Function Test", () => {
-//   it("should delete a page successfully", async () => {
-//     const pageId = new mongoose.Types.ObjectId().toString();
-//     const page = { _id: pageId };
+describe("Delete Page Function Test", () => {
+  it("should delete a page successfully", async () => {
+    const pageId = new mongoose.Types.ObjectId().toString();
+    const page = { _id: pageId };
 
-//     const findByIdAndDeleteStub = sinon
-//       .stub(Page, "findByIdAndDelete")
-//       .resolves(page);
+    const findByIdAndDeleteStub = sinon
+      .stub(Page, "findByIdAndDelete")
+      .resolves(page);
 
-//     const req = { params: { id: pageId } };
-//     const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+    const req = { params: { id: pageId } };
+    const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
 
-//     await deletePage(req, res);
+    await deletePage(req, res);
 
-//     expect(findByIdAndDeleteStub.calledOnceWith(pageId)).to.be.true;
-//     expect(res.status.calledWith(200)).to.be.true;
-//     expect(res.json.calledWith({ message: "Page deleted" })).to.be.true;
+    expect(findByIdAndDeleteStub.calledOnceWith(pageId)).to.be.true;
+    expect(res.status.calledWith(200)).to.be.true;
+    expect(res.json.calledWith({ message: "Page deleted" })).to.be.true;
 
-//     findByIdAndDeleteStub.restore();
-//   });
+    findByIdAndDeleteStub.restore();
+  });
 
-//   it("should return 404 if page is not found", async () => {
-//     const findByIdAndDeleteStub = sinon
-//       .stub(Page, "findByIdAndDelete")
-//       .resolves(null);
+  it("should return 404 if page is not found", async () => {
+    const findByIdAndDeleteStub = sinon
+      .stub(Page, "findByIdAndDelete")
+      .resolves(null);
 
-//     const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
-//     const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+    const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
+    const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
 
-//     await deletePage(req, res);
+    await deletePage(req, res);
 
-//     expect(res.status.calledWith(404)).to.be.true;
-//     expect(res.json.calledWith({ message: "Page not found" })).to.be.true;
+    expect(res.status.calledWith(404)).to.be.true;
+    expect(res.json.calledWith({ message: "Page not found" })).to.be.true;
 
-//     findByIdAndDeleteStub.restore();
-//   });
+    findByIdAndDeleteStub.restore();
+  });
 
-//   it("should return 500 if an error occurs", async () => {
-//     const findByIdAndDeleteStub = sinon
-//       .stub(Page, "findByIdAndDelete")
-//       .throws(new Error("DB Error"));
+  it("should return 500 if an error occurs", async () => {
+    const findByIdAndDeleteStub = sinon
+      .stub(Page, "findByIdAndDelete")
+      .throws(new Error("DB Error"));
 
-//     const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
-//     const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+    const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
+    const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
 
-//     await deletePage(req, res);
+    await deletePage(req, res);
 
-//     expect(res.status.calledWith(500)).to.be.true;
-//     expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
+    expect(res.status.calledWith(500)).to.be.true;
+    expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
 
-//     findByIdAndDeleteStub.restore();
-//   });
-// });
+    findByIdAndDeleteStub.restore();
+  });
+});

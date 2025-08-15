@@ -6,6 +6,10 @@ const PageList = ({ pages, setPages, setEditingPage }) => {
 
   const handleEdit = (page) => {
     setEditingPage(page);
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth", // smooth scroll animation
+    });
   };
 
   const handleDelete = async (id) => {
@@ -17,7 +21,7 @@ const PageList = ({ pages, setPages, setEditingPage }) => {
       });
       setPages(pages.filter((p) => p._id !== id));
     } catch (err) {
-      alert("Failed to delete page");
+      alert("Failed to delete this page.");
     }
   };
 
@@ -47,6 +51,7 @@ const PageList = ({ pages, setPages, setEditingPage }) => {
                     day: "numeric",
                     hour: "2-digit",
                     minute: "2-digit",
+                    hour12: false,
                   })}
                 </small>
               </div>
