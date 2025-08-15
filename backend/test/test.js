@@ -11,11 +11,61 @@ const {
   deletePage,
 } = require("../controllers/pageController");
 
-const { createNavigation } = require("../controllers/navigationController");
+const {
+  createNavigation,
+  getNavigations,
+} = require("../controllers/navigationController");
 
 const { expect } = chai;
 
 chai.use(chaiHttp);
+
+describe("Get Navigations Function Test", () => {
+  let req, res;
+
+  beforeEach(() => {
+    req = { user: { _id: new mongoose.Types.ObjectId() } };
+    res = {
+      status: sinon.stub().returnsThis(),
+      json: sinon.spy(),
+    };
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should return all navigations for the user", async () => {
+    const navigations = [
+      { _id: new mongoose.Types.ObjectId(), title: "Nav 1" },
+      { _id: new mongoose.Types.ObjectId(), title: "Nav 2" },
+    ];
+
+    const findStub = sinon.stub(Navigation, "find").returns({
+      sort: sinon.stub().returnsThis(),
+      populate: sinon.stub().resolves(navigations),
+    });
+
+    await getNavigations(req, res);
+
+    expect(findStub.calledOnceWith({ createdBy: req.user._id })).to.be.true;
+    expect(res.status.calledWith(200)).to.be.true;
+    expect(res.json.calledWith({ navigation: navigations })).to.be.true;
+  });
+
+  it("should return 500 on error", async () => {
+    const error = new Error("DB Error");
+    const findStub = sinon.stub(Navigation, "find").returns({
+      sort: sinon.stub().returnsThis(),
+      populate: sinon.stub().throws(error),
+    });
+
+    await getNavigations(req, res);
+
+    expect(res.status.calledWith(500)).to.be.true;
+    expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
+  });
+});
 
 describe("Create Navigation Function Test", function () {
   this.timeout(5000); // Increase timeout for async operations
