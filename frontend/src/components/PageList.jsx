@@ -34,9 +34,21 @@ const PageList = ({ pages, setPages, setEditingPage }) => {
               className="bg-gray-100 p-4 mb-2 rounded flex justify-between items-center"
             >
               <div>
-                <h3 className="font-bold">{page.title}</h3>
-                <p>{page.content}</p>
-                <small>Created by: {page.createdBy}</small>
+                <h3 className="font-bold">Title: {page.title}</h3>
+                <p>Slug: {page.content}</p>
+                <small>Page id: {page._id}</small>
+                <br />
+                <small>
+                  Last modified:{" "}
+                  {new Date(page.updatedAt).toLocaleDateString("en-US", {
+                    weekday: "short",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </small>
               </div>
               <div>
                 <button
