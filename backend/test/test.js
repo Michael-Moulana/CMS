@@ -3,16 +3,121 @@ const chaiHttp = require("chai-http");
 const mongoose = require("mongoose");
 const sinon = require("sinon");
 const Page = require("../models/Page");
+const Navigation = require("../models/navigation");
 const {
   createPage,
   getPages,
-  getPage,
   updatePage,
   deletePage,
 } = require("../controllers/pageController");
+
+const { createNavigation } = require("../controllers/navigationController");
+
 const { expect } = chai;
 
 chai.use(chaiHttp);
+
+describe("Create Navigation Function Test", function () {
+  this.timeout(5000); // Increase timeout for async operations
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should create a new navigation item successfully", async () => {
+    const req = {
+      body: {
+        title: "Main Menu",
+        slug: "main-menu",
+        order: 1,
+        parent: null,
+      },
+      user: { _id: new mongoose.Types.ObjectId() }, // auth middleware
+    };
+
+    const savedNav = {
+      _id: new mongoose.Types.ObjectId(),
+      ...req.body,
+      createdBy: req.user._id,
+    };
+
+    // Stub Navigation.findOne to simulate slug check
+    const findOneStub = sinon.stub(Navigation, "findOne").resolves(null);
+
+    // Stub Navigation.prototype.save to simulate DB save
+    const saveStub = sinon
+      .stub(Navigation.prototype, "save")
+      .resolves(savedNav);
+
+    const res = {
+      status: sinon.stub().returnsThis(),
+      json: sinon.spy(),
+    };
+
+    await createNavigation(req, res);
+
+    expect(findOneStub.calledOnceWithExactly({ slug: req.body.slug })).to.be
+      .true;
+    expect(saveStub.calledOnce).to.be.true;
+    expect(res.status.calledWith(201)).to.be.true;
+    expect(
+      res.json.calledWith({
+        message: "Navigation item created successfully",
+        navigation: savedNav,
+      })
+    ).to.be.true;
+  });
+
+  it("should return 400 if title or slug is missing", async () => {
+    const req = {
+      body: { title: "" },
+      user: { _id: new mongoose.Types.ObjectId() },
+    };
+    const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+
+    await createNavigation(req, res);
+
+    expect(res.status.calledWith(400)).to.be.true;
+    expect(res.json.calledWith({ error: "Title and slug are required" })).to.be
+      .true;
+  });
+
+  it("should return 400 if slug already exists", async () => {
+    const req = {
+      body: { title: "Menu", slug: "main-menu" },
+      user: { _id: new mongoose.Types.ObjectId() },
+    };
+
+    // Stub Navigation.findOne to return existing nav
+    sinon
+      .stub(Navigation, "findOne")
+      .resolves({ _id: new mongoose.Types.ObjectId() });
+
+    const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+
+    await createNavigation(req, res);
+
+    expect(res.status.calledWith(400)).to.be.true;
+    expect(res.json.calledWith({ error: "Slug already exists" })).to.be.true;
+  });
+
+  it("should return 500 if DB save fails", async () => {
+    const req = {
+      body: { title: "Main Menu", slug: "main-menu" },
+      user: { _id: new mongoose.Types.ObjectId() },
+    };
+
+    sinon.stub(Navigation, "findOne").resolves(null);
+    sinon.stub(Navigation.prototype, "save").rejects(new Error("DB Error"));
+
+    const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+
+    await createNavigation(req, res);
+
+    expect(res.status.calledWith(500)).to.be.true;
+    expect(res.json.calledWith({ error: "Server error" })).to.be.true;
+  });
+});
 
 describe("Create Page Function Test", () => {
   it("should create a new page successfully", async () => {
@@ -61,65 +166,21 @@ describe("Create Page Function Test", () => {
   });
 });
 
-// describe("Get Single Page Function Test", () => {
-//   let findByIdStub;
+describe("Update Page Function Test", function () {
+  this.timeout(5000); // avoid timeout issues
 
-//   afterEach(() => {
-//     if (findByIdStub) findByIdStub.restore();
-//   });
+  afterEach(() => {
+    sinon.restore();
+  });
 
-//   it("should return a page successfully", async () => {
-//     const pageId = new mongoose.Types.ObjectId();
-//     const page = {
-//       _id: pageId,
-//       title: "Sample Page",
-//       content: "Sample content",
-//     };
-
-//     findByIdStub = sinon.stub(Page, "findById").resolves(page);
-
-//     const req = { params: { id: pageId.toString() } };
-//     const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
-
-//     await getPage(req, res);
-
-//     expect(findByIdStub.calledOnceWith(pageId.toString())).to.be.true;
-//     expect(res.status.calledWith(200)).to.be.true;
-//     expect(res.json.calledWith(page)).to.be.true;
-//   });
-
-//   it("should return 404 if page is not found", async () => {
-//     findByIdStub = sinon.stub(Page, "findById").resolves(null);
-
-//     const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
-//     const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
-
-//     await getPage(req, res);
-
-//     expect(res.status.calledWith(404)).to.be.true;
-//     expect(res.json.calledWith({ message: "Page not found" })).to.be.true;
-//   });
-
-//   it("should return 500 if an error occurs", async () => {
-//     findByIdStub = sinon.stub(Page, "findById").rejects(new Error("DB Error"));
-
-//     const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
-//     const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
-
-//     await getPage(req, res);
-
-//     expect(res.status.calledWith(500)).to.be.true;
-//     expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
-//   });
-// });
-
-describe("Update Page Function Test", () => {
   it("should update page successfully", async () => {
     const pageId = new mongoose.Types.ObjectId();
     const updatedPage = {
       _id: pageId,
       title: "New Page",
       content: "Updated Content",
+      slug: "new-page",
+      updatedAt: new Date(),
     };
 
     const findByIdAndUpdateStub = sinon
@@ -128,7 +189,7 @@ describe("Update Page Function Test", () => {
 
     const req = {
       params: { id: pageId },
-      body: { title: "New Page", content: "Updated Content" },
+      body: { title: "New Page", content: "Updated Content", slug: "new-page" },
     };
     const res = { json: sinon.spy(), status: sinon.stub().returnsThis() };
 
@@ -140,22 +201,20 @@ describe("Update Page Function Test", () => {
         {
           title: "New Page",
           content: "Updated Content",
-          updatedAt: sinon.match.number,
+          slug: "new-page",
+          updatedAt: sinon.match.number, // allow number timestamp
         },
         { new: true }
       )
     ).to.be.true;
+
     expect(res.status.calledWith(200)).to.be.true;
     expect(res.json.calledWith({ message: "Page updated", page: updatedPage }))
       .to.be.true;
-
-    findByIdAndUpdateStub.restore();
   });
 
   it("should return 404 if page is not found", async () => {
-    const findByIdAndUpdateStub = sinon
-      .stub(Page, "findByIdAndUpdate")
-      .resolves(null);
+    sinon.stub(Page, "findByIdAndUpdate").resolves(null);
 
     const req = { params: { id: new mongoose.Types.ObjectId() }, body: {} };
     const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
@@ -164,14 +223,10 @@ describe("Update Page Function Test", () => {
 
     expect(res.status.calledWith(404)).to.be.true;
     expect(res.json.calledWith({ message: "Page not found" })).to.be.true;
-
-    findByIdAndUpdateStub.restore();
   });
 
   it("should return 500 on error", async () => {
-    const findByIdAndUpdateStub = sinon
-      .stub(Page, "findByIdAndUpdate")
-      .throws(new Error("DB Error"));
+    sinon.stub(Page, "findByIdAndUpdate").throws(new Error("DB Error"));
 
     const req = { params: { id: new mongoose.Types.ObjectId() }, body: {} };
     const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
@@ -180,8 +235,6 @@ describe("Update Page Function Test", () => {
 
     expect(res.status.calledWith(500)).to.be.true;
     expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
-
-    findByIdAndUpdateStub.restore();
   });
 });
 
