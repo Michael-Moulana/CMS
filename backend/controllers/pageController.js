@@ -17,7 +17,7 @@ exports.createPage = async (req, res) => {
 exports.getPages = async (req, res) => {
   try {
     const pages = await Page.find();
-    res.status(200).json({ pages });
+    res.status(200).json(pages);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
