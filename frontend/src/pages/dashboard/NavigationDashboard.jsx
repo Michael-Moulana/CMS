@@ -9,6 +9,7 @@ const NavigationDashboard = () => {
   const { user } = useAuth();
   const [navigation, setNavigation] = useState([]);
   const [editingNav, setEditingNav] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [flash, setFlash] = useState({ message: "", type: "" });
 
   const showFlash = (message, type) => {
@@ -30,6 +31,11 @@ const NavigationDashboard = () => {
     if (user?.token) fetchNavigation();
   }, [user]);
 
+  // Filter navs based on search term
+  const filteredNavs = navigation.filter((navigation) =>
+    navigation.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6 text-center">
@@ -49,8 +55,20 @@ const NavigationDashboard = () => {
         setEditingNav={setEditingNav}
         showFlash={showFlash}
       />
+
+      {/* Search Input */}
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search pages by title..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="border p-2 rounded w-full"
+        />
+      </div>
+
       <NavigationList
-        navigation={navigation}
+        navigation={filteredNavs}
         setNavigation={setNavigation}
         setEditingNav={setEditingNav}
         showFlash={showFlash}
