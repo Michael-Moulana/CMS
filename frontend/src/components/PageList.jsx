@@ -47,6 +47,7 @@ const PageList = ({ pages, setPages, setEditingPage }) => {
                     day: "numeric",
                     hour: "2-digit",
                     minute: "2-digit",
+                    hour12: false,
                   })}
                 </small>
               </div>
