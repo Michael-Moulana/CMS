@@ -40,9 +40,8 @@ const PageList = ({ pages, setPages, setEditingPage, showFlash }) => {
             <div>
               <h3 className="font-bold">Title: {page.title}</h3>
               <p>Slug: {page.slug}</p>
-              <small>Page id: {page._id}</small>
-              <br />
-              <small>
+              <p>Page id: {page._id}</p>
+              <p>
                 Last modified:{" "}
                 {new Date(page.updatedAt).toLocaleDateString("en-US", {
                   weekday: "short",
@@ -53,7 +52,7 @@ const PageList = ({ pages, setPages, setEditingPage, showFlash }) => {
                   minute: "2-digit",
                   hour12: false,
                 })}
-              </small>
+              </p>
             </div>
             <div>
               <button

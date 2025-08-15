@@ -40,9 +40,22 @@ const NavigationList = ({
           >
             <div>
               <h3 className="font-bold">{nav.title}</h3>
+              <p>ID: {nav._id}</p>
               <p>Slug: {nav.slug}</p>
               <p>Order: {nav.order}</p>
               <p>Parent: {nav.parent?.title || "None"}</p>
+              <p>
+                Last modified:{" "}
+                {new Date(nav.updatedAt).toLocaleDateString("en-US", {
+                  weekday: "short",
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                })}
+              </p>
             </div>
             <div>
               <button
