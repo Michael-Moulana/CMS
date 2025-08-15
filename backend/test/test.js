@@ -61,58 +61,6 @@ describe("Create Page Function Test", () => {
   });
 });
 
-// describe("Get Single Page Function Test", () => {
-//   let findByIdStub;
-
-//   afterEach(() => {
-//     if (findByIdStub) findByIdStub.restore();
-//   });
-
-//   it("should return a page successfully", async () => {
-//     const pageId = new mongoose.Types.ObjectId();
-//     const page = {
-//       _id: pageId,
-//       title: "Sample Page",
-//       content: "Sample content",
-//     };
-
-//     findByIdStub = sinon.stub(Page, "findById").resolves(page);
-
-//     const req = { params: { id: pageId.toString() } };
-//     const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
-
-//     await getPage(req, res);
-
-//     expect(findByIdStub.calledOnceWith(pageId.toString())).to.be.true;
-//     expect(res.status.calledWith(200)).to.be.true;
-//     expect(res.json.calledWith(page)).to.be.true;
-//   });
-
-//   it("should return 404 if page is not found", async () => {
-//     findByIdStub = sinon.stub(Page, "findById").resolves(null);
-
-//     const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
-//     const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
-
-//     await getPage(req, res);
-
-//     expect(res.status.calledWith(404)).to.be.true;
-//     expect(res.json.calledWith({ message: "Page not found" })).to.be.true;
-//   });
-
-//   it("should return 500 if an error occurs", async () => {
-//     findByIdStub = sinon.stub(Page, "findById").rejects(new Error("DB Error"));
-
-//     const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
-//     const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
-
-//     await getPage(req, res);
-
-//     expect(res.status.calledWith(500)).to.be.true;
-//     expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
-//   });
-// });
-
 describe("Update Page Function Test", () => {
   it("should update page successfully", async () => {
     const pageId = new mongoose.Types.ObjectId();
