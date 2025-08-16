@@ -1,4 +1,4 @@
-const Navigation = require("../models/Navigation");
+const Navigation = require("../models/navigation");
 
 // Create a new navigation item
 exports.createNavigation = async (req, res) => {
