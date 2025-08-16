@@ -14,14 +14,12 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
 
     const user = await User.create({ name, email, password });
-    res
-      .status(201)
-      .json({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        token: generateToken(user.id),
-      });
+    res.status(201).json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      token: generateToken(user.id),
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -59,7 +57,6 @@ const getProfile = async (req, res) => {
       university: user.university,
       address: user.address,
     });
-    console.log(`Profile fetched for user: ${user}`);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
