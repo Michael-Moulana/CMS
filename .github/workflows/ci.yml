@@ -47,7 +47,7 @@ jobs:
         working-directory: ./frontend
           run: |
           df -h
-          sudo rm -rf ./build
+          rm -rf ./build
           npm ci
           npm run build
 
