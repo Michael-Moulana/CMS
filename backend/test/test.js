@@ -76,7 +76,7 @@ describe("Create Navigation Function Test", function () {
     sinon.restore();
   });
 
-  it("should create a new navigation item successfully", async () => {
+  it("Should create a new navigation item successfully", async () => {
     const req = {
       body: {
         title: "Main Menu",
