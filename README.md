@@ -1,7 +1,7 @@
 
 # *CMS – Content Management System*
 
-A full-stack CMS that enables admins to create, update, and organize content across webpages with media management. Built with **Node.js**, **React.js**, and **MongoDB**.
+A full-stack CMS that enables admins to create, update, and organize content (NAvigations and Pages) across webpages. Built with **Node.js**, **React.js**, and **MongoDB**.
 
 ---
 
