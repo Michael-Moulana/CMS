@@ -40,16 +40,22 @@ jobs:
       # Install backend dependencies
       - name: Install Backend Dependencies
         working-directory: ./backend
-        run: npm ci
+        run: npm ci --prefer-offline --no-audit
+
+      # Cache frontend dependencies
+      - name: Cache Frontend Dependencies
+        uses: actions/cache@v3
+        with:
+          path: frontend/node_modules
+          key: frontend-node-modules-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: frontend-node-modules-
 
       # Install frontend dependencies + build
-      - name: Install Frontend Dependencies
+      - name: Install Frontend Dependencies & Build
         working-directory: ./frontend
         run: |
-          df -h
-          rm -rf ./build
-          npm ci
-          npm run build
+          npm ci --prefer-offline --no-audit
+          NODE_OPTIONS=--max-old-space-size=4096 npm run build
 
       # Run backend tests
       - name: Run Backend Tests
