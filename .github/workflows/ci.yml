@@ -42,17 +42,6 @@ jobs:
         working-directory: ./backend
         run: npm ci
 
-      # Cache frontend dependencies
-      - name: Cache Frontend Node Modules
-        uses: actions/cache@v3
-        with:
-          path: |
-            frontend/node_modules
-            ~/.npm
-          key: ${{ runner.os }}-node-frontend-${{ hashFiles('frontend/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-frontend-
-
       # Install frontend dependencies + build
       - name: Install Frontend Dependencies
         working-directory: ./frontend
