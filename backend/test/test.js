@@ -15,6 +15,7 @@ const {
   createNavigation,
   getNavigations,
   updateNavigation,
+  deleteNavigation,
 } = require("../controllers/navigationController");
 
 const { expect } = chai;
@@ -224,6 +225,61 @@ describe("Update Navigation Controller", () => {
 
     expect(res.status.calledWith(500)).to.be.true;
     expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
+  });
+});
+
+describe("Delete Navigation Controller Test", () => {
+  it("should delete a navigation successfully", async () => {
+    const navId = new mongoose.Types.ObjectId().toString();
+    const nav = { _id: navId };
+
+    const findByIdAndDeleteStub = sinon
+      .stub(Navigation, "findByIdAndDelete")
+      .resolves(nav);
+
+    const req = { params: { id: navId } };
+    const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+
+    await deleteNavigation(req, res);
+
+    expect(findByIdAndDeleteStub.calledOnceWith(navId)).to.be.true;
+    expect(res.status.calledWith(200)).to.be.true;
+    expect(res.json.calledWith({ message: "Navigation deleted successfully" }))
+      .to.be.true;
+
+    findByIdAndDeleteStub.restore();
+  });
+
+  it("should return 404 if navigation is not found", async () => {
+    const findByIdAndDeleteStub = sinon
+      .stub(Navigation, "findByIdAndDelete")
+      .resolves(null);
+
+    const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
+    const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+
+    await deleteNavigation(req, res);
+
+    expect(res.status.calledWith(404)).to.be.true;
+    expect(res.json.calledWith({ message: "Navigation not found" })).to.be.true;
+
+    findByIdAndDeleteStub.restore();
+  });
+
+  it("should return 500 if an error occurs", async () => {
+    const findByIdAndDeleteStub = sinon
+      .stub(Navigation, "findByIdAndDelete")
+      .throws(new Error("DB Error"));
+
+    const req = { params: { id: new mongoose.Types.ObjectId().toString() } };
+    const res = { status: sinon.stub().returnsThis(), json: sinon.spy() };
+
+    await deleteNavigation(req, res);
+
+    expect(res.status.calledWith(500)).to.be.true;
+    expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
+
+    findByIdAndDeleteStub.restore();
   });
 });
 
