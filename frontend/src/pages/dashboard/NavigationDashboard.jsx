@@ -25,7 +25,7 @@ const NavigationDashboard = () => {
         const res = await axiosInstance.get("/api/dashboard/navigation", {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        setNavigations(res.data.navigation);
+        setNavigations(res.data.navigation || []);
       } catch (err) {
         showFlash("Failed to fetch navigation", "error");
       }
@@ -33,11 +33,6 @@ const NavigationDashboard = () => {
 
     fetchNavigations();
   }, [user]);
-
-  // Filter pages based on search term
-  const filteredNavs = navigations.filter((navigation) =>
-    navigation.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <div className="container mx-auto p-6">
@@ -65,7 +60,7 @@ const NavigationDashboard = () => {
       <div className="mb-4">
         <input
           type="text"
-          placeholder="Search pages by title..."
+          placeholder="Search navigation by title..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="border p-2 rounded w-full"
@@ -73,10 +68,11 @@ const NavigationDashboard = () => {
       </div>
 
       <NavigationList
-        navigations={filteredNavs}
+        navigations={navigations} // pass full state
         setNavigations={setNavigations}
         setEditingNav={setEditingNav}
         showFlash={showFlash}
+        searchTerm={searchTerm} // pass search term
       />
     </div>
   );

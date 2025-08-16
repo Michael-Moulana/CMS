@@ -67,4 +67,13 @@ exports.updateNavigation = async (req, res) => {
   }
 };
 
-exports.deleteNavigation = async (req, res) => {};
+exports.deleteNavigation = async (req, res) => {
+  try {
+    const deleted = await Navigation.findByIdAndDelete(req.params.id);
+    if (!deleted)
+      return res.status(404).json({ message: "Navigation not found" });
+    res.status(200).json({ message: "Navigation deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
