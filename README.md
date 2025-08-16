@@ -7,8 +7,11 @@ A full-stack CMS that enables admins to create, update, and organize content (Na
 
 # *Table of Contents*
 
-* [Features](#-features)  
-* [Getting Started](#-getting-started)  
+* [Features](#-features)
+* [API Documentation](#-api-documentation)
+* [Usage](#-usage)
+* [Getting Started](#-getting-started)
+* [Prerequisites](#-prerequisites)  
 * [Run Locally](#-run-locally)   
    
 
@@ -22,6 +25,42 @@ A full-stack CMS that enables admins to create, update, and organize content (Na
 * 📊 **Admin Dashboard** for managing content  
 * ⚡ **Responsive Frontend** built with React + Tailwind  
 
+---
+
+# *API Documentation*
+
+Navigation Endpoints
+
+* GET /api/navigation: Retrieve all navigation items.
+
+* POST /api/navigation: Create a new navigation item.
+
+* PUT /api/navigation/:id: Update an existing navigation item.
+
+* DELETE /api/navigation/:id: Delete a navigation item.
+
+Pages Endpoints
+
+* GET /api/pages: Retrieve all pages.
+
+* POST /api/pages: Create a new page.
+
+* PUT /api/pages/:id: Update an existing page.
+
+* DELETE /api/pages/:id: Delete a page.
+
+
+---
+
+# *Usage*
+
+In order to use the CMS, you need to be authenticated all the time.
+
+* Login & Register: Access the login page at /login and /register.
+* Admin Dashboard: Access the dashboard at /dashboard to manage content.
+* Page Management: Access the page management route at /dashboard/page to perform CRUD operations.
+* Navigation Management: Access the navigation management route at /dashboard/navigation to perform CRUD operations.
+  
 ---
 
 # *Getting Started*
