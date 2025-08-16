@@ -9,12 +9,8 @@ A full-stack CMS that enables admins to create, update, and organize content acr
 
 * [Features](#-features)  
 * [Getting Started](#-getting-started)  
-* [Run Locally](#-run-locally)  
-* [Deployment](#-deployment)  
-* [Demo & Credentials](#-demo--credentials)  
-* [Tech Stack](#-tech-stack)  
-* [Contributing](#-contributing)  
-* [License](#-license)  
+* [Run Locally](#-run-locally)   
+   
 
 ---
 
@@ -22,7 +18,6 @@ A full-stack CMS that enables admins to create, update, and organize content acr
 
 * 🔐 **Authentication & Authorization** (JWT-based)  
 * 📝 **Pages Management** (Create, update, delete webpages)  
-* 🖼 **Media Management** (Upload and organize images/files)  
 * 🧭 **Site Navigation Management** (Custom navigation menus)  
 * 📊 **Admin Dashboard** for managing content  
 * ⚡ **Responsive Frontend** built with React + Tailwind  
