@@ -1,58 +1,65 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import axiosInstance from '../axiosConfig';
+import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
+import axiosInstance from "../axiosConfig";
 
 const Profile = () => {
-  const { user } = useAuth(); // Access user token from context
+  const { user } = useAuth(); // already contains token
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    university: '',
-    address: '',
+    name: "",
+    email: "",
+    university: "",
+    address: "",
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    // Fetch profile data from the backend
     const fetchProfile = async () => {
-      setLoading(true);
       try {
-        const response = await axiosInstance.get('/api/auth/profile', {
+        const { data } = await axiosInstance.get("/api/auth/profile", {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setFormData({
-          name: response.data.name,
-          email: response.data.email,
-          university: response.data.university || '',
-          address: response.data.address || '',
+          name: data.name || "",
+          email: data.email || "",
+          university: data.university || "",
+          address: data.address || "",
         });
       } catch (error) {
-        alert('Failed to fetch profile. Please try again.');
+        console.error(
+          "Failed to fetch profile:",
+          error.response?.data || error.message
+        );
+        alert("Failed to fetch profile.");
       } finally {
         setLoading(false);
       }
     };
 
-    if (user) fetchProfile();
-  }, [user]);
+    fetchProfile(); // always attempt, backend will reject if unauthorized
+  }, [user.token]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setUpdating(true);
     try {
-      await axiosInstance.put('/api/auth/profile', formData, {
+      await axiosInstance.put("/api/auth/profile", formData, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
-      alert('Profile updated successfully!');
+      alert("Profile updated successfully!");
     } catch (error) {
-      alert('Failed to update profile. Please try again.');
+      console.error(
+        "Failed to update profile:",
+        error.response?.data || error.message
+      );
+      alert("Failed to update profile.");
     } finally {
-      setLoading(false);
+      setUpdating(false);
     }
   };
 
   if (loading) {
-    return <div className="text-center mt-20">Loading...</div>;
+    return <div className="text-center mt-20">Loading profile...</div>;
   }
 
   return (
@@ -77,18 +84,26 @@ const Profile = () => {
           type="text"
           placeholder="University"
           value={formData.university}
-          onChange={(e) => setFormData({ ...formData, university: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, university: e.target.value })
+          }
           className="w-full mb-4 p-2 border rounded"
         />
         <input
           type="text"
           placeholder="Address"
           value={formData.address}
-          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, address: e.target.value })
+          }
           className="w-full mb-4 p-2 border rounded"
         />
-        <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded">
-          {loading ? 'Updating...' : 'Update Profile'}
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white p-2 rounded"
+          disabled={updating}
+        >
+          {updating ? "Updating..." : "Update Profile"}
         </button>
       </form>
     </div>
