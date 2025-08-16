@@ -54,7 +54,7 @@ Pages Endpoints
 
 # *Usage*
 
-In order to use the CMS, you need to be authenticated all the time.
+In order to use the CMS, you need to be authenticated all the time. So, the first step to use the app is registering, then login, and then you will get navigated to the dashboard where you can choose which CRUD you want to do, and directed to specific page.
 
 * Login & Register: Access the login page at /login and /register.
 * Admin Dashboard: Access the dashboard at /dashboard to manage content.
@@ -116,3 +116,5 @@ npm run dev
 ```
 The frontend will be available at:
 👉 http://localhost:3000
+
+
