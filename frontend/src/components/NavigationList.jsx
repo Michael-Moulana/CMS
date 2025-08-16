@@ -51,7 +51,7 @@ const NavigationList = ({
             className="bg-gray-100 p-4 mb-2 rounded flex justify-between items-center"
           >
             <div>
-              <h3 className="font-bold">{nav.title}</h3>
+              <h3 className="font-bold">Title: {nav.title}</h3>
               <p>ID: {nav._id}</p>
               <p>Slug: {nav.slug}</p>
               <p>Order: {nav.order}</p>

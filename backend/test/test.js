@@ -3,7 +3,7 @@ const chaiHttp = require("chai-http");
 const mongoose = require("mongoose");
 const sinon = require("sinon");
 const Page = require("../models/Page");
-const Navigation = require("../models/navigation");
+const Navigation = require("../models/NavigationModel");
 const {
   createPage,
   getPages,
