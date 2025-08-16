@@ -60,6 +60,7 @@ In order to use the CMS, you need to be authenticated all the time. So, the firs
 * Admin Dashboard: Access the dashboard at /dashboard to manage content.
 * Page Management: Access the page management route at /dashboard/page to perform CRUD operations.
 * Navigation Management: Access the navigation management route at /dashboard/navigation to perform CRUD operations.
+* User Profile: Access the profile management at /profile to see a logged in user credentials and perform update operation.
   
 ---
 
