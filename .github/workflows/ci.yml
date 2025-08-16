@@ -12,65 +12,50 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22] # Test on multiple Node.js versions
-
-    environment: MONGO_URI
+        node-version: [22]
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Set up Node.js
+      # Set up Node.js with npm caching
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+          cache: "npm"
 
-      - name: Print Env Secret
+      # Stop running apps
+      - run: pm2 stop all || true
 
-        env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          PORT: ${{ secrets.PORT }}
-        run: |
-          echo "Secret 1 is: $MONGO_URI"
-          echo "Secret 2 is: $JWT_SECRET"
-          echo "Secret 3 is: $PORT"
-
-      - run: pm2 stop all
-
-      # Install dependencies for backend
-      - name: Install Backend Dependencies
+      # Create .env before installing/running
+      - name: Create .env file
         working-directory: ./backend
         run: |
-          npm install --global yarn
-          yarn --version
-          yarn install
+          touch .env
+          echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          echo "PORT=${{ secrets.PORT }}" >> .env
 
-      # Install dependencies for frontend
+      # Install backend dependencies
+      - name: Install Backend Dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      # Install frontend dependencies + build
       - name: Install Frontend Dependencies
         working-directory: ./frontend
         run: |
-          df -h
-          sudo rm -rf ./build
-          yarn install
-          yarn run build
+          rm -rf ./build
+          npm ci
+          npm run build
 
       # Run backend tests
       - name: Run Backend Tests
-        env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          PORT: ${{ secrets.PORT }}
         working-directory: ./backend
         run: npm test
 
-      - run: npm ci
-      - run: |
-          cd ./backend
-          touch .env
-          echo "${{ secrets.PROD }}" > .env
-
-      - run: pm2 start all
-
-      - run: pm2 restart all
+      # Restart backend with pm2
+      - name: Restart PM2
+        run: |
+          pm2 startOrRestart ecosystem.config.js || pm2 restart all
