@@ -118,4 +118,11 @@ npm run dev
 The frontend will be available at:
 👉 http://localhost:3000
 
+Run Whole Project
+
+```bash
+cd ..
+npm start
+```
+
 
