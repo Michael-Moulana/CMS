@@ -50,12 +50,16 @@ jobs:
           key: frontend-node-modules-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: frontend-node-modules-
 
-      # Install frontend dependencies + build
-      - name: Install Frontend Dependencies & Build
+      # Install frontend dependencies
+      - name: Install Frontend Dependencies
         working-directory: ./frontend
-        run: |
-          npm ci --prefer-offline --no-audit
-          NODE_OPTIONS=--max-old-space-size=4096 npm run build
+        run: npm ci --prefer-offline --no-audit --verbose
+        timeout-minutes: 15 # Fail fast if stuck
+
+      # Build Frontend
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: NODE_OPTIONS=--max-old-space-size=4096 npm run build
 
       # Run backend tests
       - name: Run Backend Tests
