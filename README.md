@@ -122,6 +122,7 @@ Run Whole Project
 
 ```bash
 cd ..
+npm install
 npm start
 ```
 
