@@ -19,11 +19,11 @@ A full-stack CMS that enables admins to create, update, and organize content (Na
 
 # *Features*
 
-* 🔐 **Authentication & Authorization** (JWT-based)  
-* 📝 **Pages Management** (Create, update, delete webpages)  
-* 🧭 **Site Navigation Management** (Custom navigation menus)  
-* 📊 **Admin Dashboard** for managing content  
-* ⚡ **Responsive Frontend** built with React + Tailwind  
+* **Authentication & Authorization** (JWT-based)  
+* **Pages Management**
+* **Site Navigation Management**
+* **Admin Dashboard** for managing content  
+* **Responsive Frontend** built with React + Tailwind  
 
 ---
 
