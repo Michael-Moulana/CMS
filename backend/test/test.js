@@ -37,7 +37,7 @@ describe("Get Navigations Function Test", () => {
     sinon.restore();
   });
 
-  it("should return all navigations for the User", async () => {
+  it("should return all Navigations for the User", async () => {
     const navigations = [
       { _id: new mongoose.Types.ObjectId(), title: "Nav 1" },
       { _id: new mongoose.Types.ObjectId(), title: "Nav 2" },
