@@ -49,7 +49,7 @@ const NavigationForm = ({
       if (editingNav?._id) {
         // Update navigation
         res = await axiosInstance.put(
-          `/api/dashboard/navigation/${editingNav._id}`,
+          `/api/dashboard/navigations/${editingNav._id}`,
           {
             title: formData.title,
             slug: formData.slug,
@@ -70,7 +70,7 @@ const NavigationForm = ({
       } else {
         // Create new navigation
         res = await axiosInstance.post(
-          "/api/dashboard/navigation",
+          "/api/dashboard/navigations",
           {
             title: formData.title,
             slug: formData.slug,
