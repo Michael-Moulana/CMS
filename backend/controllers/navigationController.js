@@ -37,9 +37,26 @@ exports.createNavigation = async (req, res) => {
 
 exports.getNavigations = async (req, res) => {
   try {
-    const navigation = await Navigation.find({ createdBy: req.user._id })
+    const navigation = await Navigation.find()
       .sort("order")
       .populate("parent", "title");
+    res.status(200).json({ navigation });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+exports.getNavigation = async (req, res) => {
+  try {
+    const navigation = await Navigation.findById(req.params.id).populate(
+      "parent",
+      "title"
+    );
+
+    if (!navigation) {
+      return res.status(404).json({ message: "Navigation item not found" });
+    }
+
     res.status(200).json({ navigation });
   } catch (err) {
     res.status(500).json({ error: err.message });

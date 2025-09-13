@@ -22,7 +22,7 @@ const NavigationDashboard = () => {
 
     const fetchNavigations = async () => {
       try {
-        const res = await axiosInstance.get("/api/dashboard/navigation", {
+        const res = await axiosInstance.get("/api/dashboard/navigations", {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setNavigations(res.data.navigation || []);

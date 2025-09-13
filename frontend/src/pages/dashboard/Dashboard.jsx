@@ -12,7 +12,7 @@ const Dashboard = () => {
           Manage Pages
         </Link>
         <Link
-          to="/dashboard/navigation"
+          to="/dashboard/navigations"
           className="bg-green-600 text-white p-4 rounded text-center hover:bg-green-700 transition"
         >
           Manage Site Navigation
