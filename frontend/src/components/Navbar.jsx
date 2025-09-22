@@ -1,9 +1,17 @@
+// frontend/src/components/Navbar.jsx
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useLocation } from "react-router-dom";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  
+  if (location.pathname === "/login" || location.pathname === "/register") {
+    return null;
+  }
 
   const handleLogout = () => {
     logout();
@@ -33,6 +41,7 @@ const Navbar = () => {
           </>
         ) : (
           <>
+            {/* We keep these for non-auth pages if any, but navbar is hidden on /login & /register */}
             <Link to="/login" className="mr-4">
               Login
             </Link>
