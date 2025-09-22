@@ -41,7 +41,7 @@ const Navbar = () => {
           </>
         ) : (
           <>
-            {/* We keep these for non-auth pages if any, but navbar is hidden on /login & /register */}
+            
             <Link to="/login" className="mr-4">
               Login
             </Link>
