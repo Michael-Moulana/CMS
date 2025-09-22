@@ -1,25 +1,27 @@
-import { Link } from "react-router-dom";
+// Simple welcome screen to match the mock.
+// Keep it minimal; tiles/widgets can be added later.
+import React from "react";
+import { useAuth } from "../../context/AuthContext";
 
-const Dashboard = () => {
+export default function Dashboard() {
+  const { user } = useAuth();
+  const name = user?.email?.split("@")[0] || "Michael";
+
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6 text-center">Dashboard</h1>
-      <div className="flex flex-col space-y-4 max-w-sm mx-auto">
-        <Link
-          to="/dashboard/pages"
-          className="bg-blue-600 text-white p-4 rounded text-center hover:bg-blue-700 transition"
-        >
-          Manage Pages
-        </Link>
-        <Link
-          to="/dashboard/navigations"
-          className="bg-green-600 text-white p-4 rounded text-center hover:bg-green-700 transition"
-        >
-          Manage Site Navigation
-        </Link>
+    <div className="space-y-6">
+      {/* Small breadcrumb-style header area */}
+      <div>
+        <h1 className="text-xl font-semibold text-gray-800">Dashboard</h1>
+        <p className="text-xs text-gray-400">Dashboard</p>
+      </div>
+
+      {/* Welcome hero card */}
+      <div className="bg-white rounded-2xl p-10 shadow-sm border flex flex-col items-center">
+        <div className="text-5xl font-extrabold text-blue-600 leading-tight">
+          Welcome
+        </div>
+        <div className="mt-3 text-xl text-gray-500">{name}</div>
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}
