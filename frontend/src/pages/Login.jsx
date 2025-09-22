@@ -22,8 +22,8 @@ const Login = () => {
     try {
       setLoading(true);
       const response = await axiosInstance.post("/api/auth/login", formData);
-      login(response.data);             // <- same context method you already use
-      navigate("/dashboard");           // <- same navigation as before
+      login(response.data);             
+      navigate("/dashboard");           
     } catch (err) {
       alert("Login failed. Please try again.");
     } finally {
@@ -33,8 +33,7 @@ const Login = () => {
 
   return (
     <>
-      {/* Mobile: light background. md+: blue rounded background like the design. */}
-      {/* Update: per your request, use BLUE on ALL screen sizes */}
+      
       <div className="min-h-screen w-full bg-blue-600 p-4 sm:p-6 md:p-10 flex items-center justify-center">
         {/* Desktop white card with large rounded corners */}
         <div
@@ -45,10 +44,9 @@ const Login = () => {
             p-6 sm:p-8 md:p-10
           "
         >
-          {/* Logo + brand */}
+        
           <div className="flex items-center gap-3 mb-8 justify-center sm:justify-start">
-            {/* If you keep your logo in /public/img/logo.png this works. */}
-            {/* Otherwise, change the src as needed. */}
+           
             <img src="/img/logo.png" alt="Blox CMS" className="h-10 w-10" />
             <span className="font-semibold tracking-wide">BLOX CMS</span>
           </div>
