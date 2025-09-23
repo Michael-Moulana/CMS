@@ -5,11 +5,11 @@ import { useNavigate } from "react-router-dom";
 export default function ProductForm() {
   const navigate = useNavigate();
 
-  // Soft grey panel (like Figma card)
+  
   const panelClass =
     "rounded-2xl border border-gray-200 bg-[#F5F7FA] shadow-sm p-6";
 
-  // White, subtle surface inside a card
+  
   const surfaceClass =
     "rounded-2xl border border-gray-200 bg-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]";
 
@@ -104,7 +104,7 @@ export default function ProductForm() {
                 </div>
               </div>
 
-              {/* Price + Stock (sits on the same grey card) */}
+              
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -131,7 +131,7 @@ export default function ProductForm() {
           </div>
         </div>
 
-        {/* Footer actions: Cancel blue + underlined, Add Product primary */}
+        
         <div className="mt-6 flex items-center justify-end gap-6">
           <button
             type="button"
