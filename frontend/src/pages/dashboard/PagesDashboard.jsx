@@ -1,80 +1,102 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import axiosInstance from "../../axiosConfig";
+import { useAuth } from "../../context/AuthContext";
+import FlashMessage from "../../components/FlashMessage";
 import PageForm from "../../components/PageForm";
 import PageList from "../../components/PageList";
-import FlashMessage from "../../components/FlashMessage";
-import { useAuth } from "../../context/AuthContext";
-import axiosInstance from "../../axiosConfig";
 
-const PagesDashboard = () => {
+export default function PagesDashboard() {
   const { user } = useAuth();
+
   const [pages, setPages] = useState([]);
   const [editingPage, setEditingPage] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [flash, setFlash] = useState(null); // { message, type }
+  const [showForm, setShowForm] = useState(false);
+  const [flash, setFlash] = useState({ message: "", type: "" });
 
   const showFlash = (message, type) => {
     setFlash({ message, type });
+    setTimeout(() => setFlash({ message: "", type: "" }), 2500);
   };
 
-  // Fetch pages on mount
   useEffect(() => {
-    const fetchPages = async () => {
+    if (!user?.token) return;
+    (async () => {
       try {
         const res = await axiosInstance.get("/api/dashboard/pages", {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        setPages(res.data || []);
-      } catch (err) {
-        console.error(err);
+        setPages(res.data.pages || []);
+      } catch (e2) {
+        showFlash("Failed to load pages", "error");
       }
-    };
-    fetchPages();
-  }, [user.token]);
+    })();
+  }, [user]);
 
-  // Filter pages based on search term
-  const filteredPages = pages.filter((page) =>
-    page.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return pages;
+    return pages.filter((p) => (p.title || "").toLowerCase().includes(q));
+  }, [pages, searchTerm]);
+
+  useEffect(() => {
+    if (editingPage) setShowForm(true);
+  }, [editingPage]);
 
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6 text-center">Pages Management</h1>
+    <div className="space-y-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-gray-800">Pages Management</h1>
+          <p className="text-xs text-gray-400">Dashboard / Manage Pages</p>
+        </div>
 
-      {flash && (
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowForm((s) => !s)}
+            className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm bg-white hover:bg-gray-50"
+          >
+            <span className="text-blue-600">+</span> {editingPage ? "Edit Page" : "Add Page"}
+          </button>
+          <div className="w-64">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search By Title"
+              className="w-full h-10 rounded-xl border border-gray-300 px-4 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      {flash.message && (
         <FlashMessage
           message={flash.message}
           type={flash.type}
-          onClose={() => setFlash(null)}
+          onClose={() => setFlash({ message: "", type: "" })}
         />
       )}
 
-      <PageForm
-        pages={pages}
-        setPages={setPages}
-        editingPage={editingPage}
-        setEditingPage={setEditingPage}
-        showFlash={showFlash}
-      />
-
-      {/* Search Input */}
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search pages by title..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="border p-2 rounded w-full"
-        />
-      </div>
+      {showForm && (
+        <div className="bg-white rounded-2xl shadow-sm border p-5">
+          <PageForm
+            pages={pages}
+            setPages={setPages}
+            editingPage={editingPage}
+            setEditingPage={setEditingPage}
+            showFlash={showFlash}
+            onDone={() => setShowForm(false)}
+          />
+        </div>
+      )}
 
       <PageList
-        pages={filteredPages}
+        pages={filtered}
         setPages={setPages}
         setEditingPage={setEditingPage}
         showFlash={showFlash}
       />
     </div>
   );
-};
-
-export default PagesDashboard;
+}
