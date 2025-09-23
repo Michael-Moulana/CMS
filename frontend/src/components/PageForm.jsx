@@ -13,6 +13,7 @@ export default function PageForm({
   const { user } = useAuth();
   const [formData, setFormData] = useState({ title: "", slug: "", content: "" });
 
+  // prefill in edit mode
   useEffect(() => {
     if (editingPage) {
       setFormData({
@@ -40,18 +41,19 @@ export default function PageForm({
       showFlash("Not authenticated", "error");
       return;
     }
+
     try {
       if (editingPage && editingPage._id) {
+        // update
         const res = await axiosInstance.put(
           `/api/dashboard/pages/${editingPage._id}`,
           { ...formData },
           { headers: { Authorization: `Bearer ${user.token}` } }
         );
-        setPages((prev) =>
-          prev.map((p) => (p._id === res.data.page._id ? res.data.page : p))
-        );
+        setPages((prev) => prev.map((p) => (p._id === res.data.page._id ? res.data.page : p)));
         showFlash("Page updated", "success");
       } else {
+        // create
         const res = await axiosInstance.post(
           "/api/dashboard/pages",
           { ...formData },
@@ -60,11 +62,12 @@ export default function PageForm({
         setPages((prev) => [...prev, res.data.page]);
         showFlash("Page created", "success");
       }
+
       setEditingPage(null);
       setFormData({ title: "", slug: "", content: "" });
       if (onDone) onDone();
       window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (e2) {
+    } catch {
       showFlash("Save failed", "error");
     }
   };

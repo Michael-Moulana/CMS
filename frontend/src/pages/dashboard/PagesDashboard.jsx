@@ -27,7 +27,7 @@ export default function PagesDashboard() {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setPages(res.data.pages || []);
-      } catch (e2) {
+      } catch {
         showFlash("Failed to load pages", "error");
       }
     })();
@@ -45,27 +45,46 @@ export default function PagesDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-800">Pages Management</h1>
-          <p className="text-xs text-gray-400">Dashboard / Manage Pages</p>
-        </div>
+      {/* Title + subtitle */}
+      <div>
+        <h1 className="text-xl font-semibold text-gray-800">Pages Management</h1>
+        <p className="text-xs text-gray-400">Dashboard / Manage Pages</p>
+      </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowForm((s) => !s)}
-            className="inline-flex items-center gap-2 rounded-xl border px-4 py-2 text-sm bg-white hover:bg-gray-50"
-          >
-            <span className="text-blue-600">+</span> {editingPage ? "Edit Page" : "Add Page"}
-          </button>
-          <div className="w-64">
+      {/* Row: Add button (left) + Search (right) */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => setShowForm((s) => !s)}
+          className="
+            inline-flex items-center gap-2 rounded-xl px-4 h-10 text-sm
+            bg-blue-600 text-white
+            md:bg-white md:text-gray-700 md:border md:hover:bg-gray-50
+          "
+          aria-label="Add Page"
+        >
+          <span className="md:text-blue-600">+&nbsp;</span>
+          <span className="font-medium">Add Page</span>
+        </button>
+
+        <div className="w-40 sm:w-56 md:w-64">
+          <div className="relative">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search By Title"
-              className="w-full h-10 rounded-xl border border-gray-300 px-4 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full h-10 rounded-xl border border-gray-300 pl-10 pr-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
           </div>
         </div>
       </div>
