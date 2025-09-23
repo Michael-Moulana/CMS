@@ -18,7 +18,7 @@ export default function PageList({ pages, setPages, setEditingPage, showFlash })
       });
       setPages((prev) => prev.filter((p) => p._id !== id));
       showFlash("Page deleted", "success");
-    } catch (e2) {
+    } catch {
       showFlash("Delete failed", "error");
     }
   };
@@ -95,6 +95,7 @@ export default function PageList({ pages, setPages, setEditingPage, showFlash })
         </table>
       </div>
 
+      {/* Static footer UI (kept to match Figma) */}
       <div className="flex items-center justify-between p-4">
         <div className="flex gap-2">
           <button className="h-9 w-9 rounded-lg border bg-white">{'<'}</button>
