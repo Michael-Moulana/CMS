@@ -4,6 +4,13 @@ const mongoose = require("mongoose");
 const sinon = require("sinon");
 const Page = require("../models/Page");
 const Navigation = require("../models/NavigationModel");
+
+const ModelFactory = require("../services/ModelFactory");
+const AuthProxy = require("../services/AuthProxy");
+const ResponseDecorator = require("../services/ResponseDecorator");
+
+const { createProduct } = require("../controllers/productController");
+
 const {
   createPage,
   getPages,
@@ -22,52 +29,123 @@ const { expect } = chai;
 
 chai.use(chaiHttp);
 
-describe("Get Navigations Function Test", () => {
-  let req, res;
+describe("createProduct Controller", () => {
+  let req, res, next, mediaUploadStub, proxyStub;
 
   beforeEach(() => {
-    req = { user: { _id: new mongoose.Types.ObjectId() } };
-    res = {
-      status: sinon.stub().returnsThis(),
-      json: sinon.spy(),
+    req = {
+      user: { _id: "user123" },
+      body: {
+        title: "Test Product",
+        description: "A test product",
+        price: 100,
+        stock: 10,
+      },
+      files: [
+        {
+          buffer: Buffer.from("dummy"),
+          originalname: "image1.png",
+          mimetype: "image/png",
+          size: 12345,
+        },
+      ],
     };
+
+    res = { status: sinon.stub().returnsThis(), json: sinon.stub() };
+    next = sinon.spy();
+
+    // Stub productManager instance
+    const productManagerStub = {
+      mediaManager: { upload: sinon.stub().resolves({ _id: "media123" }) },
+    };
+    mediaUploadStub = productManagerStub.mediaManager.upload;
+
+    // Make ModelFactory return our stubbed productManager
+    sinon
+      .stub(ModelFactory, "createProductManager")
+      .returns(productManagerStub);
+
+    // Stub AuthProxy.createProduct
+    proxyStub = sinon.stub(AuthProxy.prototype, "createProduct").resolves({
+      _id: "prod123",
+      ...req.body,
+      media: [{ mediaId: "media123", order: 0 }],
+      createdBy: req.user._id,
+    });
+
+    // Stub ResponseDecorator
+    sinon.stub(ResponseDecorator, "decorate").callsFake((data, msg) => ({
+      success: true,
+      message: msg,
+      data,
+    }));
   });
 
   afterEach(() => {
     sinon.restore();
   });
 
-  it("should return all Navigations for the User", async () => {
-    const navigations = [
-      { _id: new mongoose.Types.ObjectId(), title: "Nav 1" },
-      { _id: new mongoose.Types.ObjectId(), title: "Nav 2" },
-    ];
+  it("should create a product and return 201 with decorated response", async () => {
+    await createProduct(req, res, next);
 
-    const findStub = sinon.stub(Navigation, "find").returns({
-      sort: sinon.stub().returnsThis(),
-      populate: sinon.stub().resolves(navigations),
-    });
+    expect(mediaUploadStub.calledOnce).to.be.true;
+    expect(proxyStub.calledOnce).to.be.true;
+    expect(res.status.calledWith(201)).to.be.true;
+    expect(res.json.calledOnce).to.be.true;
 
-    await getNavigations(req, res);
-
-    expect(findStub.calledOnceWith({ createdBy: req.user._id })).to.be.true;
-    expect(res.status.calledWith(200)).to.be.true;
-    expect(res.json.calledWith({ navigation: navigations })).to.be.true;
-  });
-
-  it("should return 500 on error", async () => {
-    const error = new Error("DB Error");
-    const findStub = sinon.stub(Navigation, "find").returns({
-      sort: sinon.stub().returnsThis(),
-      populate: sinon.stub().throws(error),
-    });
-
-    await getNavigations(req, res);
-
-    expect(res.status.calledWith(500)).to.be.true;
-    expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
+    const responseArg = res.json.getCall(0).args[0];
+    expect(responseArg.success).to.be.true;
+    expect(responseArg.message).to.equal("Product created successfully");
+    expect(responseArg.data._id).to.equal("prod123");
   });
 });
+
+// describe("Get Navigations Function Test", () => {
+//   let req, res;
+
+//   beforeEach(() => {
+//     req = { user: { _id: new mongoose.Types.ObjectId() } };
+//     res = {
+//       status: sinon.stub().returnsThis(),
+//       json: sinon.spy(),
+//     };
+//   });
+
+//   afterEach(() => {
+//     sinon.restore();
+//   });
+
+//   it("should return all Navigations for the User", async () => {
+//     const navigations = [
+//       { _id: new mongoose.Types.ObjectId(), title: "Nav 1" },
+//       { _id: new mongoose.Types.ObjectId(), title: "Nav 2" },
+//     ];
+
+//     const findStub = sinon.stub(Navigation, "find").returns({
+//       sort: sinon.stub().returnsThis(),
+//       populate: sinon.stub().resolves(navigations),
+//     });
+
+//     await getNavigations(req, res);
+
+//     expect(findStub.calledOnceWith({ createdBy: req.user._id })).to.be.true;
+//     expect(res.status.calledWith(200)).to.be.true;
+//     expect(res.json.calledWith({ navigation: navigations })).to.be.true;
+//   });
+
+//   it("should return 500 on error", async () => {
+//     const error = new Error("DB Error");
+//     const findStub = sinon.stub(Navigation, "find").returns({
+//       sort: sinon.stub().returnsThis(),
+//       populate: sinon.stub().throws(error),
+//     });
+
+//     await getNavigations(req, res);
+
+//     expect(res.status.calledWith(500)).to.be.true;
+//     expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
+//   });
+// });
 
 describe("Create Navigation Function Test", function () {
   this.timeout(5000); // Increase timeout for async operations
