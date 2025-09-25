@@ -5,7 +5,7 @@ const ProductManager = require("./ProductManager");
 const ExactSearchStrategy = require("./search/ExactSearchStrategy");
 const ProductRepository = require("../repositories/ProductRepository");
 
-class modelFactory {
+class ModelFactory {
   static createMediaManager() {
     const storage = new FileStorageAdapter();
     const model = new MediaModel();
