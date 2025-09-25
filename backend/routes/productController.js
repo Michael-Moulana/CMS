@@ -1,0 +1,24 @@
+const express = require("express");
+const router = express.Router();
+const { protect } = require("../middleware/authMiddleware");
+const upload = require("../middleware/uploadMiddleware");
+const productController = require("../controllers/productController");
+
+// ------------------- Product CRUD -------------------
+
+// Create product (multipart: product fields + optional image)
+router.post("/", protect, upload, productController.createProduct);
+
+// Get all products
+router.get("/", productController.getAllProducts);
+
+// Get single product
+router.get("/:id", productController.getProduct);
+
+// Update product (allow new image)
+router.put("/:id", protect, upload, productController.updateProduct);
+
+// ------------------- Product search -------------------
+router.get("/search/query", productController.searchProducts);
+
+module.exports = router;
