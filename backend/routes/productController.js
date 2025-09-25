@@ -18,6 +18,11 @@ router.get("/:id", productController.getProduct);
 // Update product (allow new image)
 router.put("/:id", protect, upload, productController.updateProduct);
 
+// Delete product
+router.delete("/:id", protect, productController.deleteProduct);
+
+// ------------------- Media (nested under product) -------------------
+
 // ------------------- Product search -------------------
 router.get("/search/query", productController.searchProducts);
 

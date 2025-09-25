@@ -140,6 +140,12 @@ class ProductManager {
     EventBus.emit("product.updated", product);
     return product;
   }
+
+  async deleteProduct(id) {
+    const deleted = await this.productRepository.model.findByIdAndDelete(id);
+    EventBus.emit("product.deleted", deleted);
+    return deleted;
+  }
 }
 
 module.exports = ProductManager;

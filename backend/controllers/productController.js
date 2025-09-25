@@ -112,6 +112,19 @@ const updateProduct = async (req, res, next) => {
 };
 
 /**
+ * Delete a product
+ */
+const deleteProduct = async (req, res, next) => {
+  try {
+    const proxy = new AuthProxy(req.user, productManager);
+    await proxy.deleteProduct(req.params.id);
+    res.json({ success: true, message: "Product deleted successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
  * Search products
  */
 const searchProducts = async (req, res, next) => {
@@ -129,5 +142,7 @@ module.exports = {
   createProduct,
   getAllProducts,
   getProduct,
+  updateProduct,
+  deleteProduct,
   searchProducts,
 };
