@@ -15,6 +15,9 @@ router.get("/", productController.getAllProducts);
 // Get single product
 router.get("/:id", productController.getProduct);
 
+// Update product (allow new image)
+router.put("/:id", protect, upload, productController.updateProduct);
+
 // ------------------- Product search -------------------
 router.get("/search/query", productController.searchProducts);
 

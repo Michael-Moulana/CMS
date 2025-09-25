@@ -85,6 +85,33 @@ const getProduct = async (req, res, next) => {
 };
 
 /**
+ * Update a product (fields + optional new image)
+ */
+const updateProduct = async (req, res, next) => {
+  try {
+    const proxy = new AuthProxy(req.user, productManager);
+
+    const { thumbnailMediaId, ...data } = req.body; // frontend sends thumbnailMediaId
+    const files = req.files || [];
+
+    const result = await proxy.updateProduct(req.params.id, {
+      data,
+      files,
+      thumbnailMediaId,
+      userId: req.user ? req.user._id : null,
+    });
+
+    const decorated = ResponseDecorator.decorate(
+      result,
+      "Product updated successfully"
+    );
+    res.json(decorated);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
  * Search products
  */
 const searchProducts = async (req, res, next) => {
