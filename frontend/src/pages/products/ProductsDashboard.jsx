@@ -4,16 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function ProductsDashboard() {
   const navigate = useNavigate();
-
-  // dummy sample data for UI only (backend will replace later)
-  const products = [
-    { id: 1, name: "Sample", description: "sample desc" },
-    { id: 2, name: "Sample", description: "sample desc" },
-    { id: 3, name: "Sample", description: "sample desc" },
-    { id: 4, name: "Sample", description: "sample desc" },
-    { id: 5, name: "Sample", description: "sample desc" },
-    { id: 6, name: "Sample", description: "sample desc" },
-  ];
+  const cols = ["#", "Name", "Description", "Price", "Stock", "Category", "Edit"];
 
   return (
     <div className="space-y-6">
@@ -23,80 +14,87 @@ export default function ProductsDashboard() {
         <p className="text-xs text-gray-400">Dashboard / Product</p>
       </div>
 
-      {/* Actions: button + search */}
-      <div className="flex flex-wrap items-center">
+      {/* Top row: Add + Search (match Figma spacing/look) */}
+      <div className="flex items-center gap-4">
         <button
           onClick={() => navigate("/dashboard/products/new")}
-          className="shrink-0 inline-flex items-center gap-2 h-10 px-4 rounded-xl
-                     bg-blue-600 text-white hover:bg-blue-700
-                     md:border md:bg-white md:text-blue-600 md:hover:bg-gray-50"
+          className="inline-flex items-center gap-2 h-10 px-4 rounded-2xl
+                     border border-blue-600 text-blue-600 bg-white 
+                     hover:bg-gray-50 shadow-sm"
         >
           <span className="text-lg leading-none">+</span>
-          Add Product
+          <span className="font-medium">Add Product</span>
         </button>
 
-        <div className="flex-1 min-w-[180px] md:w-64 md:flex-none ml-6 sm:ml-8">
-          <div className="h-10 rounded-xl border px-3 flex items-center gap-2 text-sm text-gray-500 bg-white">
-            <svg
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <circle cx="11" cy="11" r="7" />
-              <path d="M21 21l-4.3-4.3" />
+        <div className="ml-auto w-80">
+          <div className="h-10 rounded-2xl border border-gray-200 bg-white px-3
+                          flex items-center gap-2 text-sm text-gray-500">
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
             </svg>
-            <input
-              className="w-full outline-none"
-              placeholder="Search By Title"
-              disabled
-            />
+            <input className="w-full outline-none placeholder-gray-400" placeholder="Search By Title" disabled />
           </div>
         </div>
       </div>
 
-      {/* Product Table */}
-      <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-        <table className="min-w-full text-sm text-gray-700">
-          <thead className="bg-gray-50 border-b text-xs uppercase text-gray-500">
-            <tr>
-              <th className="px-6 py-3 text-left w-12">#</th>
-              <th className="px-6 py-3 text-left">Name</th>
-              <th className="px-6 py-3 text-left">Description</th>
-              <th className="px-6 py-3 text-center w-28">Actions</th>
+      {/* Table card + grid lines */}
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <table className="w-full table-fixed border-collapse border border-gray-200">
+          <thead className="bg-gray-50">
+            <tr className="text-xs text-gray-500">
+              {cols.map((c, i) => (
+                <th
+                  key={c}
+                  className={`px-6 py-3 text-left font-medium border border-gray-200 ${i === 0 ? "w-12" : ""}`}
+                >
+                  {c}
+                </th>
+              ))}
             </tr>
           </thead>
+
+        {/* placeholder rows for US-2 */}
           <tbody>
-            {products.map((p, i) => (
-              <tr
-                key={p.id}
-                className="border-b hover:bg-gray-50 transition-colors"
+            <tr>
+              <td
+                colSpan={cols.length}
+                className="px-6 py-16 text-center text-sm text-gray-400 border border-gray-200"
               >
-                <td className="px-6 py-3">{i + 1}</td>
-                <td className="px-6 py-3">{p.name}</td>
-                <td className="px-6 py-3">{p.description}</td>
-                <td className="px-6 py-3 flex items-center justify-center gap-2">
-                  <button className="p-2 rounded-lg border hover:bg-gray-100">
-                    ✏
-                  </button>
-                  <button className="p-2 rounded-lg bg-red-500 text-white hover:bg-red-600">
-                    🗑
-                  </button>
-                </td>
-              </tr>
-            ))}
+                Product list will appear here (US-2).
+              </td>
+            </tr>
           </tbody>
         </table>
 
-        {/* Pagination mockup */}
-        <div className="flex items-center justify-between px-6 py-3 text-sm text-gray-500 bg-gray-50">
-          <span>Showing 1–6 of 6</span>
+        {/* Pagination bar (UI only for now) */}
+        <div className="px-6 py-3 border-t border-gray-200 flex items-center justify-between">
+          <span className="text-xs text-gray-500">Showing 0–0 of 0</span>
+
           <div className="flex items-center gap-2">
-            <button className="px-3 py-1 rounded-lg border bg-white">1</button>
-            <button className="px-3 py-1 rounded-lg border bg-white">2</button>
-            <span className="px-3">…</span>
-            <button className="px-3 py-1 rounded-lg border bg-white">Next</button>
+            <button
+              className="h-8 w-8 rounded-xl border border-gray-200 bg-white text-gray-500 disabled:opacity-40"
+              disabled
+              aria-label="Previous page"
+            >
+              ‹
+            </button>
+
+            <button className="h-8 w-8 rounded-xl border border-gray-200 bg-white text-gray-600">
+              1
+            </button>
+
+            <div className="h-8 rounded-xl border border-gray-200 bg-white text-gray-600 text-sm px-3 flex items-center gap-2">
+              <span>10</span>
+              <span className="text-gray-400">/ Page</span>
+            </div>
+
+            <button
+              className="h-8 w-8 rounded-xl border border-gray-200 bg-white text-gray-500 disabled:opacity-40"
+              disabled
+              aria-label="Next page"
+            >
+              ›
+            </button>
           </div>
         </div>
       </div>
