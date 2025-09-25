@@ -1,7 +1,4 @@
-// Backend/services/AuthProxy.js
-
 // A small proxy wrapper around managers to enforce simple authorization checks.
-// Example usage: const proxy = new AuthProxy(req.user, productManager);
 // (Proxy pattern)
 
 class AuthProxy {
@@ -32,5 +29,3 @@ class AuthProxy {
     return this.real.search(q, opts);
   }
 }
-
-module.exports = AuthProxy;
