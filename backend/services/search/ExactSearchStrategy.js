@@ -1,4 +1,3 @@
-// Backend/services/search/ExactSearchStrategy.js
 const Product = require("../../models/Product");
 
 class ExactSearchStrategy {
