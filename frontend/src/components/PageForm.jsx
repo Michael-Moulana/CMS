@@ -1,118 +1,132 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axiosInstance from "../axiosConfig";
 import { useAuth } from "../context/AuthContext";
 
-const PageForm = ({
+export default function PageForm({
   pages,
   setPages,
   editingPage,
   setEditingPage,
   showFlash,
-}) => {
+  onDone,
+}) {
   const { user } = useAuth();
-  const [formData, setFormData] = useState({
-    title: "",
-    content: "",
-    slug: "",
-  });
+  const [formData, setFormData] = useState({ title: "", slug: "", content: "" });
 
+  // prefill in edit mode
   useEffect(() => {
     if (editingPage) {
-      setFormData(editingPage);
+      setFormData({
+        title: editingPage.title || "",
+        slug: editingPage.slug || "",
+        content: editingPage.content || "",
+      });
     } else {
-      setFormData({ title: "", content: "", slug: "" });
+      setFormData({ title: "", slug: "", content: "" });
     }
   }, [editingPage]);
 
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((s) => ({ ...s, [name]: value }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!formData.title || !formData.content) {
-      alert("Please fill all fields");
+      showFlash("Title and Content are required", "error");
       return;
     }
-
     if (!user?.token) {
-      alert("User not authenticated");
+      showFlash("Not authenticated", "error");
       return;
     }
 
     try {
-      let res;
-
       if (editingPage && editingPage._id) {
-        // Update page
-        res = await axiosInstance.put(
+        // update
+        const res = await axiosInstance.put(
           `/api/dashboard/pages/${editingPage._id}`,
-          {
-            title: formData.title,
-            content: formData.content,
-            slug: formData.slug,
-          },
+          { ...formData },
           { headers: { Authorization: `Bearer ${user.token}` } }
         );
-
-        // Update pages state
-        setPages(
-          pages.map((p) => (p._id === res.data.page._id ? res.data.page : p))
-        );
-        setEditingPage(null);
-        showFlash("Page updated successfully", "warning");
+        setPages((prev) => prev.map((p) => (p._id === res.data.page._id ? res.data.page : p)));
+        showFlash("Page updated", "success");
       } else {
-        // Create new page
-        res = await axiosInstance.post(
+        // create
+        const res = await axiosInstance.post(
           "/api/dashboard/pages",
-          {
-            title: formData.title,
-            content: formData.content,
-            slug: formData.slug,
-          },
+          { ...formData },
           { headers: { Authorization: `Bearer ${user.token}` } }
         );
-        setPages([...pages, res.data.page]);
-        showFlash("Page created successfully", "success");
+        setPages((prev) => [...prev, res.data.page]);
+        showFlash("Page created", "success");
       }
 
-      // Clear form
-      setFormData({ title: "", content: "", slug: "" });
-    } catch (err) {
-      console.error("Save failed:", err.response?.data || err.message);
-      alert("Failed to save page");
-      showFlash("Failed to save page", "error"); // red for errors
+      setEditingPage(null);
+      setFormData({ title: "", slug: "", content: "" });
+      if (onDone) onDone();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      showFlash("Save failed", "error");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-4 shadow rounded mb-6">
-      <input
-        type="text"
-        placeholder="Page Title"
-        value={formData.title}
-        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-        className="w-full mb-4 p-2 border rounded"
-      />
-      <input
-        type="text"
-        placeholder="Slug"
-        value={formData.slug}
-        onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-        className="w-full mb-4 p-2 border rounded"
-      />
-      <textarea
-        placeholder="Content"
-        value={formData.content}
-        onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-        className="w-full mb-4 p-2 border rounded"
-        rows={5}
-      />
-      <button
-        type="submit"
-        className="bg-blue-600 text-white px-4 py-2 rounded"
-      >
-        {editingPage ? "Update Page" : "Add Page"}
-      </button>
+    <form onSubmit={handleSubmit}>
+      <h2 className="text-sm font-medium text-gray-500 mb-4">
+        {editingPage ? "Edit Page" : "Add Page"}
+      </h2>
+
+      <div className="space-y-4">
+        <input
+          name="title"
+          type="text"
+          placeholder="Title"
+          value={formData.title}
+          onChange={handleChange}
+          className="w-full h-10 rounded-xl border border-gray-300 px-3 text-sm"
+        />
+
+        <input
+          name="slug"
+          type="text"
+          placeholder="Slug"
+          value={formData.slug}
+          onChange={handleChange}
+          className="w-full h-10 rounded-xl border border-gray-300 px-3 text-sm"
+        />
+
+        <textarea
+          name="content"
+          placeholder="Content"
+          value={formData.content}
+          onChange={handleChange}
+          rows={6}
+          className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm"
+        />
+      </div>
+
+      <div className="mt-4 flex items-center gap-3">
+        {editingPage && (
+          <button
+            type="button"
+            onClick={() => {
+              setEditingPage(null);
+              if (onDone) onDone();
+            }}
+            className="px-4 h-10 rounded-xl border text-sm"
+          >
+            Cancel
+          </button>
+        )}
+        <button
+          type="submit"
+          className="px-4 h-10 rounded-xl bg-blue-600 text-white text-sm hover:bg-blue-700"
+        >
+          {editingPage ? "Update" : "Create"}
+        </button>
+      </div>
     </form>
   );
-};
-
-export default PageForm;
+}

@@ -4,4 +4,12 @@ module.exports = {
     extend: {},
   },
   plugins: [],
+
+  theme: {
+  extend: {
+    fontFamily: {
+      rota: ["Rota", "sans-serif"],
+    },
+  },
+},
 };
