@@ -29,3 +29,5 @@ class AuthProxy {
     return this.real.search(q, opts);
   }
 }
+
+module.exports = AuthProxy;
