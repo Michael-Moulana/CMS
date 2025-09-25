@@ -15,4 +15,7 @@ router.get("/", productController.getAllProducts);
 // Get single product
 router.get("/:id", productController.getProduct);
 
+// ------------------- Product search -------------------
+router.get("/search/query", productController.searchProducts);
+
 module.exports = router;

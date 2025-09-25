@@ -84,6 +84,23 @@ const getProduct = async (req, res, next) => {
   }
 };
 
+/**
+ * Search products
+ */
+const searchProducts = async (req, res, next) => {
+  try {
+    const q = req.query.q || "";
+    const results = await productManager.search(q, { limit: 50 });
+    const decorated = ResponseDecorator.decorate(results, "Search results");
+    res.json(decorated);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createProduct,
+  getAllProducts,
+  getProduct,
+  searchProducts,
 };
