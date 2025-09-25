@@ -50,6 +50,40 @@ const createProduct = async (req, res, next) => {
   }
 };
 
+/**
+ * Get all products
+ */
+const getAllProducts = async (req, res, next) => {
+  try {
+    const products = await productManager.getAll();
+    const decorated = ResponseDecorator.decorate(
+      products,
+      "Fetched all products successfully"
+    );
+    res.json(decorated);
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * Get a single product by ID
+ */
+const getProduct = async (req, res, next) => {
+  try {
+    const product = await productManager.getById(req.params.id);
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
+    }
+    const decorated = ResponseDecorator.decorate(product);
+    res.json(decorated);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createProduct,
 };
