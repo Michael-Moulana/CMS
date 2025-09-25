@@ -3,9 +3,9 @@ const MediaModel = require("./MediaModelWrapper");
 const MediaManager = require("./MediaManager");
 const ProductManager = require("./ProductManager");
 const ExactSearchStrategy = require("./search/ExactSearchStrategy");
-const ProductRepository = require("./repositories/ProductRepository");
+const ProductRepository = require("../repositories/ProductRepository");
 
-class ModelFactory {
+class modelFactory {
   static createMediaManager() {
     const storage = new FileStorageAdapter();
     const model = new MediaModel();
