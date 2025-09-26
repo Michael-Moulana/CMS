@@ -187,6 +187,108 @@ describe("getProduct Controller", () => {
   });
 });
 
+describe("updateProduct Controller", () => {
+  let req, res, next;
+  let productManagerStub, updateProductController;
+
+  beforeEach(() => {
+    // Stub ProductManager
+    productManagerStub = {
+      updateProduct: sinon.stub(),
+      mediaManager: {
+        upload: sinon.stub(),
+        updateTitle: sinon.stub(),
+      },
+    };
+
+    // Stub AuthProxy
+    const AuthProxyStub = function (user, manager) {
+      return {
+        updateProduct: productManagerStub.updateProduct,
+      };
+    };
+
+    // Load controller with proxyquire to inject stubs
+    updateProductController = proxyquire("../controllers/productController", {
+      "../services/ModelFactory": {
+        createProductManager: () => productManagerStub,
+      },
+      "../services/AuthProxy": AuthProxyStub,
+      "../services/ResponseDecorator": ResponseDecorator,
+    });
+
+    // Stub ResponseDecorator.decorate
+    sinon.stub(ResponseDecorator, "decorate").callsFake((data, msg) => ({
+      success: true,
+      message: msg,
+      data,
+    }));
+
+    req = {
+      user: { _id: new mongoose.Types.ObjectId() },
+      params: { id: "prod123" },
+      body: { title: "Updated Product", thumbnailMediaId: "thumb123" },
+      files: [
+        {
+          buffer: Buffer.from("fake image"),
+          originalname: "image1.jpg",
+          mimetype: "image/jpeg",
+          size: 1234,
+        },
+      ],
+    };
+
+    res = {
+      json: sinon.stub(),
+    };
+
+    next = sinon.spy();
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should update a product and return decorated response", async () => {
+    const fakeUpdatedProduct = {
+      _id: "prod123",
+      title: "Updated Product",
+      media: [],
+      save: sinon.stub().resolves(),
+    };
+
+    productManagerStub.updateProduct.resolves(fakeUpdatedProduct);
+
+    await updateProductController.updateProduct(req, res, next);
+
+    expect(productManagerStub.updateProduct.calledOnce).to.be.true;
+
+    const callArgs = productManagerStub.updateProduct.getCall(0).args;
+    expect(callArgs[0]).to.equal("prod123");
+    expect(callArgs[1].data.title).to.equal("Updated Product");
+    expect(callArgs[1].files).to.have.lengthOf(1);
+    expect(callArgs[1].thumbnailMediaId).to.equal("thumb123");
+    expect(callArgs[1].userId).to.equal(req.user._id);
+
+    expect(res.json.calledOnce).to.be.true;
+    expect(res.json.getCall(0).args[0]).to.deep.equal({
+      success: true,
+      message: "Product updated successfully",
+      data: fakeUpdatedProduct,
+    });
+  });
+
+  it("should call next(err) if updateProduct fails", async () => {
+    const error = new Error("Update failed");
+    productManagerStub.updateProduct.rejects(error);
+
+    await updateProductController.updateProduct(req, res, next);
+
+    expect(next.calledOnce).to.be.true;
+    expect(next.firstCall.args[0]).to.equal(error);
+  });
+});
+
 describe("deleteProduct Controller", () => {
   let req, res, next, proxyStub;
 
