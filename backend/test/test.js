@@ -92,76 +92,52 @@ describe("deleteProduct Controller", () => {
   });
 });
 
-// describe("createProduct Controller", () => {
-//   let req, res, next, mediaUploadStub, proxyStub;
+describe("createProduct Controller", () => {
+  let req, res, next, stubCreate, stubDecorate;
 
-//   beforeEach(() => {
-//     req = {
-//       user: { _id: "user123" },
-//       body: {
-//         title: "Test Product",
-//         description: "A test product",
-//         price: 100,
-//         stock: 10,
-//       },
-//       files: [
-//         {
-//           buffer: Buffer.from("dummy"),
-//           originalname: "image1.png",
-//           mimetype: "image/png",
-//           size: 12345,
-//         },
-//       ],
-//     };
+  beforeEach(() => {
+    req = {
+      user: { _id: "user123" },
+      body: { name: "Test Product" },
+      files: [],
+    };
+    res = {
+      status: sinon.stub().returnsThis(),
+      json: sinon.stub(),
+    };
+    next = sinon.stub();
 
-//     res = { status: sinon.stub().returnsThis(), json: sinon.stub() };
-//     next = sinon.spy();
+    // Stub prototype method (instance method)
+    stubCreate = sinon
+      .stub(AuthProxy.prototype, "createProduct")
+      .resolves({ _id: "p1", name: "Test Product" });
 
-//     // Stub productManager instance
-//     const productManagerStub = {
-//       mediaManager: { upload: sinon.stub().resolves({ _id: "media123" }) },
-//     };
-//     mediaUploadStub = productManagerStub.mediaManager.upload;
+    // Stub decorator to just return what’s passed
+    stubDecorate = sinon
+      .stub(ResponseDecorator, "decorate")
+      .callsFake((data, msg) => ({
+        data,
+        message: msg,
+      }));
+  });
 
-//     // Make ModelFactory return our stubbed productManager
-//     sinon
-//       .stub(ModelFactory, "createProductManager")
-//       .returns(productManagerStub);
+  afterEach(() => {
+    sinon.restore();
+  });
 
-//     // Stub AuthProxy.createProduct
-//     proxyStub = sinon.stub(AuthProxy.prototype, "createProduct").resolves({
-//       _id: "prod123",
-//       ...req.body,
-//       media: [{ mediaId: "media123", order: 0 }],
-//       createdBy: req.user._id,
-//     });
+  it("should create a product and return 201 with decorated response", async () => {
+    await createProduct(req, res, next);
 
-//     // Stub ResponseDecorator
-//     sinon.stub(ResponseDecorator, "decorate").callsFake((data, msg) => ({
-//       success: true,
-//       message: msg,
-//       data,
-//     }));
-//   });
+    expect(stubCreate.calledOnce).to.be.true;
+    expect(stubCreate.firstCall.args[0]).to.include({
+      userId: "user123",
+    });
 
-//   afterEach(() => {
-//     sinon.restore();
-//   });
-
-//   it("should create a product and return 201 with decorated response", async () => {
-//     await createProduct(req, res, next);
-
-//     expect(mediaUploadStub.calledOnce).to.be.true;
-//     expect(proxyStub.calledOnce).to.be.true;
-//     expect(res.status.calledWith(201)).to.be.true;
-//     expect(res.json.calledOnce).to.be.true;
-
-//     const responseArg = res.json.getCall(0).args[0];
-//     expect(responseArg.success).to.be.true;
-//     expect(responseArg.message).to.equal("Product created successfully");
-//     expect(responseArg.data._id).to.equal("prod123");
-//   });
-// });
+    expect(stubDecorate.calledOnce).to.be.true;
+    expect(res.status.calledWith(201)).to.be.true;
+    expect(res.json.calledOnce).to.be.true;
+  });
+});
 
 // describe("Get Navigations Function Test", () => {
 //   let req, res;
