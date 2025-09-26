@@ -13,7 +13,6 @@ const ResponseDecorator = require("../services/ResponseDecorator");
 const {
   createProduct,
   deleteProduct,
-  addMediaToProduct,
 } = require("../controllers/productController");
 
 const {
@@ -25,7 +24,6 @@ const {
 
 const {
   createNavigation,
-  getNavigations,
   updateNavigation,
   deleteNavigation,
 } = require("../controllers/navigationController");
