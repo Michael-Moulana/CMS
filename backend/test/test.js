@@ -611,6 +611,116 @@ describe("deleteMediaFromProduct Controller", () => {
   });
 });
 
+describe("updateMediaDetails Controller", () => {
+  let updateMediaDetails;
+  let req, res, next;
+  let productManagerStub;
+
+  beforeEach(() => {
+    // Stub productManager
+    productManagerStub = { updateMediaDetails: sinon.stub() };
+
+    // Stub ModelFactory to return our stub
+    sinon
+      .stub(ModelFactory, "createProductManager")
+      .returns(productManagerStub);
+
+    // Stub ResponseDecorator
+    sinon.stub(ResponseDecorator, "decorate").callsFake((data, msg) => ({
+      success: true,
+      message: msg || "decorated",
+      data,
+    }));
+
+    // Require controller after stubbing factory
+    updateMediaDetails = proxyquire(
+      "../controllers/productController",
+      {}
+    ).updateMediaDetails;
+
+    req = {
+      params: { id: "prod123", mediaId: "media456" },
+      body: { title: "New Title", order: 2 },
+    };
+    res = { status: sinon.stub().returnsThis(), json: sinon.stub() };
+    next = sinon.spy();
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should update media and return decorated response", async () => {
+    const fakeResult = { mediaId: "media456", title: "New Title", order: 2 };
+    productManagerStub.updateMediaDetails.resolves(fakeResult);
+
+    await updateMediaDetails(req, res, next);
+
+    expect(
+      productManagerStub.updateMediaDetails.calledOnceWith(
+        "prod123",
+        "media456",
+        { title: "New Title", order: 2 }
+      )
+    ).to.be.true;
+    expect(
+      res.json.calledOnceWith({
+        success: true,
+        message: "Media updated successfully",
+        data: fakeResult,
+      })
+    ).to.be.true;
+  });
+
+  it("should return 400 if order is invalid", async () => {
+    req.body.order = -1;
+
+    await updateMediaDetails(req, res, next);
+
+    expect(res.status.calledOnceWith(400)).to.be.true;
+    expect(
+      res.json.calledOnceWith({
+        success: false,
+        message: "Order must be a non-negative integer",
+      })
+    ).to.be.true;
+    expect(productManagerStub.updateMediaDetails.notCalled).to.be.true;
+  });
+
+  it("should return 404 if product not found", async () => {
+    productManagerStub.updateMediaDetails.rejects(
+      new Error("Product not found")
+    );
+
+    await updateMediaDetails(req, res, next);
+
+    expect(res.status.calledOnceWith(404)).to.be.true;
+    expect(
+      res.json.calledOnceWith({ success: false, message: "Product not found" })
+    ).to.be.true;
+  });
+
+  it("should return 404 if media not found", async () => {
+    productManagerStub.updateMediaDetails.rejects(new Error("Media not found"));
+
+    await updateMediaDetails(req, res, next);
+
+    expect(res.status.calledOnceWith(404)).to.be.true;
+    expect(
+      res.json.calledOnceWith({ success: false, message: "Media not found" })
+    ).to.be.true;
+  });
+
+  it("should call next(err) for unexpected errors", async () => {
+    const error = new Error("Database error");
+    productManagerStub.updateMediaDetails.rejects(error);
+
+    await updateMediaDetails(req, res, next);
+
+    expect(next.calledOnceWith(error)).to.be.true;
+  });
+});
+
 // describe("Get Navigations Function Test", () => {
 //   let req, res;
 
