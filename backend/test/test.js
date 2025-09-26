@@ -1,6 +1,7 @@
 const chai = require("chai");
 const chaiHttp = require("chai-http");
 const mongoose = require("mongoose");
+const proxyquire = require("proxyquire");
 const sinon = require("sinon");
 const Page = require("../models/Page");
 const Navigation = require("../models/NavigationModel");
@@ -11,6 +12,8 @@ const ResponseDecorator = require("../services/ResponseDecorator");
 
 const {
   createProduct,
+  getAllProducts,
+  getProduct,
   deleteProduct,
 } = require("../controllers/productController");
 
@@ -31,6 +34,78 @@ const {
 const { expect } = chai;
 
 chai.use(chaiHttp);
+
+describe("getAllProducts Controller", () => {
+  let req, res, next, productManagerStub, getAllProducts;
+
+  beforeEach(() => {
+    req = {};
+    res = { json: sinon.stub() };
+    next = sinon.spy();
+
+    productManagerStub = { getAll: sinon.stub() };
+
+    // Use proxyquire to replace ModelFactory.createProductManager
+    const productController = proxyquire("../controllers/productController", {
+      "../services/ModelFactory": {
+        createProductManager: () => productManagerStub,
+      },
+      "../services/ResponseDecorator": ResponseDecorator,
+    });
+
+    getAllProducts = productController.getAllProducts;
+
+    // Stub ResponseDecorator.decorate
+    sinon.stub(ResponseDecorator, "decorate").callsFake((data, msg) => ({
+      success: true,
+      message: msg,
+      data,
+    }));
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should fetch all products and return decorated response", async () => {
+    const fakeProducts = [
+      {
+        _id: new mongoose.Types.ObjectId(),
+        title: "Cool Sneakers",
+        description: "High quality sneakers",
+        price: 79.99,
+        stock: 20,
+        categories: ["footwear", "sports"],
+        media: [],
+        createdBy: new mongoose.Types.ObjectId(),
+      },
+    ];
+
+    productManagerStub.getAll.resolves(fakeProducts);
+
+    await getAllProducts(req, res, next);
+
+    expect(productManagerStub.getAll.calledOnce).to.be.true;
+    expect(res.json.calledOnce).to.be.true;
+    const responseArg = res.json.getCall(0).args[0];
+
+    expect(responseArg).to.deep.equal({
+      success: true,
+      message: "Fetched all products successfully",
+      data: fakeProducts,
+    });
+  });
+
+  it("should call next(err) if getAll fails", async () => {
+    const error = new Error("Database error");
+    productManagerStub.getAll.rejects(error);
+
+    await getAllProducts(req, res, next);
+
+    expect(next.calledOnce).to.be.true;
+    expect(next.firstCall.args[0]).to.equal(error);
+  });
+});
 
 describe("deleteProduct Controller", () => {
   let req, res, next, proxyStub;
