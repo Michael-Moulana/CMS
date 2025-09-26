@@ -138,6 +138,51 @@ const searchProducts = async (req, res, next) => {
   }
 };
 
+/**
+ * Add media to product
+ */
+const addMediaToProduct = async (req, res, next) => {
+  try {
+    const files = req.files || [];
+    if (files.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "No image files provided" });
+    }
+
+    const result = await productManager.addMediaToProduct(
+      req.params.id,
+      files,
+      req.user._id
+    );
+
+    const decorated = ResponseDecorator.decorate(
+      result,
+      `${files.length} media file(s) added to product`
+    );
+    res.status(201).json(decorated);
+  } catch (err) {
+    // handle product not found
+    if (err.message.includes("Product not found")) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    // handle the "max images reached" case
+    if (err.message.includes("already has 3 images")) {
+      return res.status(400).json({
+        success: false,
+        message: err.message,
+      });
+    }
+
+    // fallback to global error handler
+    next(err);
+  }
+};
+
 module.exports = {
   createProduct,
   getAllProducts,
@@ -145,4 +190,5 @@ module.exports = {
   updateProduct,
   deleteProduct,
   searchProducts,
+  addMediaToProduct,
 };
