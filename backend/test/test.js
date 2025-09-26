@@ -12,8 +12,6 @@ const ResponseDecorator = require("../services/ResponseDecorator");
 
 const {
   createProduct,
-  getAllProducts,
-  getProduct,
   deleteProduct,
 } = require("../controllers/productController");
 
@@ -26,7 +24,6 @@ const {
 
 const {
   createNavigation,
-  getNavigations,
   updateNavigation,
   deleteNavigation,
 } = require("../controllers/navigationController");
@@ -393,6 +390,334 @@ describe("createProduct Controller", () => {
     expect(stubDecorate.calledOnce).to.be.true;
     expect(res.status.calledWith(201)).to.be.true;
     expect(res.json.calledOnce).to.be.true;
+  });
+});
+
+describe("addMediaToProduct Controller", () => {
+  let req, res, next, productManagerStub, addMediaToProduct;
+
+  beforeEach(() => {
+    // Stub productManager methods
+    productManagerStub = {
+      addMediaToProduct: sinon.stub(),
+    };
+
+    // Use proxyquire to override the productManager in the controller
+    const controller = require("proxyquire")(
+      "../controllers/productController",
+      {
+        "../services/ModelFactory": {
+          createProductManager: () => productManagerStub,
+        },
+      }
+    );
+
+    addMediaToProduct = controller.addMediaToProduct;
+
+    // Stub ResponseDecorator
+    sinon.stub(ResponseDecorator, "decorate").callsFake((data, msg) => ({
+      success: true,
+      message: msg,
+      data,
+    }));
+
+    // Default request and response objects
+    req = {
+      params: { id: "prod123" },
+      user: { _id: new mongoose.Types.ObjectId() },
+      files: [
+        { originalname: "image1.jpg", buffer: Buffer.from("fake image") },
+      ],
+    };
+
+    res = {
+      status: sinon.stub().returnsThis(),
+      json: sinon.stub(),
+    };
+
+    next = sinon.spy();
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should add media files and return decorated response", async () => {
+    const fakeResult = { _id: "prod123", media: ["image1"] };
+    productManagerStub.addMediaToProduct.resolves(fakeResult);
+
+    await addMediaToProduct(req, res, next);
+
+    expect(
+      productManagerStub.addMediaToProduct.calledOnceWith(
+        "prod123",
+        req.files,
+        req.user._id
+      )
+    ).to.be.true;
+
+    expect(res.status.calledOnceWith(201)).to.be.true;
+    expect(res.json.calledOnce).to.be.true;
+    expect(res.json.getCall(0).args[0]).to.deep.equal({
+      success: true,
+      message: "1 media file(s) added to product",
+      data: fakeResult,
+    });
+  });
+
+  it("should return 400 if no files are provided", async () => {
+    req.files = [];
+
+    await addMediaToProduct(req, res, next);
+
+    expect(res.status.calledOnceWith(400)).to.be.true;
+    expect(
+      res.json.calledOnceWith({
+        success: false,
+        message: "No image files provided",
+      })
+    ).to.be.true;
+  });
+
+  it("should return 404 if product not found", async () => {
+    const error = new Error("Product not found");
+    productManagerStub.addMediaToProduct.rejects(error);
+
+    await addMediaToProduct(req, res, next);
+
+    expect(res.status.calledOnceWith(404)).to.be.true;
+    expect(
+      res.json.calledOnceWith({
+        success: false,
+        message: "Product not found",
+      })
+    ).to.be.true;
+  });
+
+  it("should return 400 if max images reached", async () => {
+    const error = new Error("Product already has 3 images");
+    productManagerStub.addMediaToProduct.rejects(error);
+
+    await addMediaToProduct(req, res, next);
+
+    expect(res.status.calledOnceWith(400)).to.be.true;
+    expect(
+      res.json.calledOnceWith({
+        success: false,
+        message: "Product already has 3 images",
+      })
+    ).to.be.true;
+  });
+
+  it("should call next(err) for unexpected errors", async () => {
+    const error = new Error("Database error");
+    productManagerStub.addMediaToProduct.rejects(error);
+
+    await addMediaToProduct(req, res, next);
+
+    expect(next.calledOnce).to.be.true;
+    expect(next.firstCall.args[0].message).to.equal("Database error");
+  });
+});
+
+describe("deleteMediaFromProduct Controller", () => {
+  let deleteMediaFromProduct;
+  let req, res, next;
+  let productManagerStub;
+
+  beforeEach(() => {
+    // Stub the productManager instance
+    productManagerStub = { deleteMediaFromProduct: sinon.stub() };
+
+    // Stub ModelFactory to return our stub
+    sinon
+      .stub(ModelFactory, "createProductManager")
+      .returns(productManagerStub);
+
+    // Stub ResponseDecorator
+    sinon.stub(ResponseDecorator, "decorate").callsFake((data, msg) => ({
+      success: true,
+      message: msg || "decorated",
+      data,
+    }));
+
+    // Require controller AFTER stubbing factory
+    deleteMediaFromProduct = proxyquire(
+      "../controllers/productController",
+      {}
+    ).deleteMediaFromProduct;
+
+    req = { params: { id: "prod123", mediaId: "media456" } };
+    res = { json: sinon.stub(), status: sinon.stub().returnsThis() };
+    next = sinon.spy();
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should delete media and return success message", async () => {
+    productManagerStub.deleteMediaFromProduct.resolves();
+
+    await deleteMediaFromProduct(req, res, next);
+
+    expect(
+      productManagerStub.deleteMediaFromProduct.calledOnceWith(
+        "prod123",
+        "media456"
+      )
+    ).to.be.true;
+    expect(
+      res.json.calledOnceWith({
+        success: true,
+        message: "Media deleted successfully",
+      })
+    ).to.be.true;
+  });
+
+  it("should return 404 if product not found", async () => {
+    productManagerStub.deleteMediaFromProduct.rejects(
+      new Error("Product not found")
+    );
+
+    await deleteMediaFromProduct(req, res, next);
+
+    expect(res.status.calledOnceWith(404)).to.be.true;
+    expect(
+      res.json.calledOnceWith({ success: false, message: "Product not found" })
+    ).to.be.true;
+  });
+
+  it("should return 404 if media not found", async () => {
+    productManagerStub.deleteMediaFromProduct.rejects(
+      new Error("Media not found")
+    );
+
+    await deleteMediaFromProduct(req, res, next);
+
+    expect(res.status.calledOnceWith(404)).to.be.true;
+    expect(
+      res.json.calledOnceWith({ success: false, message: "Media not found" })
+    ).to.be.true;
+  });
+
+  it("should call next(err) for unexpected errors", async () => {
+    const error = new Error("Database error");
+    productManagerStub.deleteMediaFromProduct.rejects(error);
+
+    await deleteMediaFromProduct(req, res, next);
+
+    expect(next.calledOnceWith(error)).to.be.true;
+  });
+});
+
+describe("updateMediaDetails Controller", () => {
+  let updateMediaDetails;
+  let req, res, next;
+  let productManagerStub;
+
+  beforeEach(() => {
+    // Stub productManager
+    productManagerStub = { updateMediaDetails: sinon.stub() };
+
+    // Stub ModelFactory to return our stub
+    sinon
+      .stub(ModelFactory, "createProductManager")
+      .returns(productManagerStub);
+
+    // Stub ResponseDecorator
+    sinon.stub(ResponseDecorator, "decorate").callsFake((data, msg) => ({
+      success: true,
+      message: msg || "decorated",
+      data,
+    }));
+
+    // Require controller after stubbing factory
+    updateMediaDetails = proxyquire(
+      "../controllers/productController",
+      {}
+    ).updateMediaDetails;
+
+    req = {
+      params: { id: "prod123", mediaId: "media456" },
+      body: { title: "New Title", order: 2 },
+    };
+    res = { status: sinon.stub().returnsThis(), json: sinon.stub() };
+    next = sinon.spy();
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should update media and return decorated response", async () => {
+    const fakeResult = { mediaId: "media456", title: "New Title", order: 2 };
+    productManagerStub.updateMediaDetails.resolves(fakeResult);
+
+    await updateMediaDetails(req, res, next);
+
+    expect(
+      productManagerStub.updateMediaDetails.calledOnceWith(
+        "prod123",
+        "media456",
+        { title: "New Title", order: 2 }
+      )
+    ).to.be.true;
+    expect(
+      res.json.calledOnceWith({
+        success: true,
+        message: "Media updated successfully",
+        data: fakeResult,
+      })
+    ).to.be.true;
+  });
+
+  it("should return 400 if order is invalid", async () => {
+    req.body.order = -1;
+
+    await updateMediaDetails(req, res, next);
+
+    expect(res.status.calledOnceWith(400)).to.be.true;
+    expect(
+      res.json.calledOnceWith({
+        success: false,
+        message: "Order must be a non-negative integer",
+      })
+    ).to.be.true;
+    expect(productManagerStub.updateMediaDetails.notCalled).to.be.true;
+  });
+
+  it("should return 404 if product not found", async () => {
+    productManagerStub.updateMediaDetails.rejects(
+      new Error("Product not found")
+    );
+
+    await updateMediaDetails(req, res, next);
+
+    expect(res.status.calledOnceWith(404)).to.be.true;
+    expect(
+      res.json.calledOnceWith({ success: false, message: "Product not found" })
+    ).to.be.true;
+  });
+
+  it("should return 404 if media not found", async () => {
+    productManagerStub.updateMediaDetails.rejects(new Error("Media not found"));
+
+    await updateMediaDetails(req, res, next);
+
+    expect(res.status.calledOnceWith(404)).to.be.true;
+    expect(
+      res.json.calledOnceWith({ success: false, message: "Media not found" })
+    ).to.be.true;
+  });
+
+  it("should call next(err) for unexpected errors", async () => {
+    const error = new Error("Database error");
+    productManagerStub.updateMediaDetails.rejects(error);
+
+    await updateMediaDetails(req, res, next);
+
+    expect(next.calledOnceWith(error)).to.be.true;
   });
 });
 

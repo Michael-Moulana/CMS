@@ -34,6 +34,23 @@ class MediaManager {
     return doc;
   }
 
+  async updateTitle(mediaId, title) {
+    return this.model.updateTitle(mediaId, title);
+  }
+
+  async listAll(limit = 100) {
+    return this.model.findAll({}, { limit });
+  }
+
+  async delete(mediaId) {
+    const m = await this.model.findById(mediaId);
+    if (!m) return null;
+    await this.storage.deleteFile(m.path);
+    await this.model.delete(mediaId);
+    EventBus.emit("media.deleted", m);
+    return m;
+  }
+
   getFileStream(path) {
     return this.storage.getFileStream(path);
   }

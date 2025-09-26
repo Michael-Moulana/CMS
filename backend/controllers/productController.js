@@ -183,6 +183,82 @@ const addMediaToProduct = async (req, res, next) => {
   }
 };
 
+/**
+ * Delete media from product
+ */
+const deleteMediaFromProduct = async (req, res, next) => {
+  try {
+    await productManager.deleteMediaFromProduct(
+      req.params.id,
+      req.params.mediaId
+    );
+    res.json({ success: true, message: "Media deleted successfully" });
+  } catch (err) {
+    // Product not found
+    if (err.message.includes("Product not found")) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    // Media not found
+    if (err.message.includes("Media not found")) {
+      return res.status(404).json({
+        success: false,
+        message: "Media not found",
+      });
+    }
+
+    // fallback to global error handler
+    next(err);
+  }
+};
+
+/**
+ * Update media details (title/order)
+ */
+const updateMediaDetails = async (req, res, next) => {
+  try {
+    const { title, order } = req.body;
+    const productId = req.params.id;
+    const mediaId = req.params.mediaId;
+
+    // Validate order if provided
+    if (order !== undefined && (!Number.isInteger(order) || order < 0)) {
+      return res.status(400).json({
+        success: false,
+        message: "Order must be a non-negative integer",
+      });
+    }
+
+    const result = await productManager.updateMediaDetails(productId, mediaId, {
+      title,
+      order,
+    });
+
+    const decorated = ResponseDecorator.decorate(
+      result,
+      "Media updated successfully"
+    );
+    res.json(decorated);
+  } catch (err) {
+    // Handle specific errors
+    if (err.message === "Product not found") {
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
+    }
+    if (err.message === "Media not found") {
+      return res
+        .status(404)
+        .json({ success: false, message: "Media not found" });
+    }
+
+    next(err); // fallback to global error handler
+  }
+};
+
 module.exports = {
   createProduct,
   getAllProducts,
@@ -191,4 +267,6 @@ module.exports = {
   deleteProduct,
   searchProducts,
   addMediaToProduct,
+  deleteMediaFromProduct,
+  updateMediaDetails,
 };
