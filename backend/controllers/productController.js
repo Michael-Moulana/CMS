@@ -183,6 +183,38 @@ const addMediaToProduct = async (req, res, next) => {
   }
 };
 
+/**
+ * Delete media from product
+ */
+const deleteMediaFromProduct = async (req, res, next) => {
+  try {
+    await productManager.deleteMediaFromProduct(
+      req.params.id,
+      req.params.mediaId
+    );
+    res.json({ success: true, message: "Media deleted successfully" });
+  } catch (err) {
+    // Product not found
+    if (err.message.includes("Product not found")) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    // Media not found
+    if (err.message.includes("Media not found")) {
+      return res.status(404).json({
+        success: false,
+        message: "Media not found",
+      });
+    }
+
+    // fallback to global error handler
+    next(err);
+  }
+};
+
 module.exports = {
   createProduct,
   getAllProducts,
@@ -191,4 +223,5 @@ module.exports = {
   deleteProduct,
   searchProducts,
   addMediaToProduct,
+  deleteMediaFromProduct,
 };

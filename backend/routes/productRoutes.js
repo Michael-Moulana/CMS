@@ -26,6 +26,13 @@ router.delete("/:id", protect, productController.deleteProduct);
 // Add media to product
 router.post("/:id/media", protect, upload, productController.addMediaToProduct);
 
+// Delete media from product
+router.delete(
+  "/:id/media/:mediaId",
+  protect,
+  productController.deleteMediaFromProduct
+);
+
 // ------------------- Product search -------------------
 router.get("/search/query", productController.searchProducts);
 

@@ -522,6 +522,97 @@ describe("addMediaToProduct Controller", () => {
   });
 });
 
+describe("deleteMediaFromProduct Controller", () => {
+  let deleteMediaFromProduct;
+  let req, res, next;
+  let productManagerStub;
+
+  beforeEach(() => {
+    // Stub the productManager instance
+    productManagerStub = { deleteMediaFromProduct: sinon.stub() };
+
+    // Stub ModelFactory to return our stub
+    sinon
+      .stub(ModelFactory, "createProductManager")
+      .returns(productManagerStub);
+
+    // Stub ResponseDecorator
+    sinon.stub(ResponseDecorator, "decorate").callsFake((data, msg) => ({
+      success: true,
+      message: msg || "decorated",
+      data,
+    }));
+
+    // Require controller AFTER stubbing factory
+    deleteMediaFromProduct = proxyquire(
+      "../controllers/productController",
+      {}
+    ).deleteMediaFromProduct;
+
+    req = { params: { id: "prod123", mediaId: "media456" } };
+    res = { json: sinon.stub(), status: sinon.stub().returnsThis() };
+    next = sinon.spy();
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should delete media and return success message", async () => {
+    productManagerStub.deleteMediaFromProduct.resolves();
+
+    await deleteMediaFromProduct(req, res, next);
+
+    expect(
+      productManagerStub.deleteMediaFromProduct.calledOnceWith(
+        "prod123",
+        "media456"
+      )
+    ).to.be.true;
+    expect(
+      res.json.calledOnceWith({
+        success: true,
+        message: "Media deleted successfully",
+      })
+    ).to.be.true;
+  });
+
+  it("should return 404 if product not found", async () => {
+    productManagerStub.deleteMediaFromProduct.rejects(
+      new Error("Product not found")
+    );
+
+    await deleteMediaFromProduct(req, res, next);
+
+    expect(res.status.calledOnceWith(404)).to.be.true;
+    expect(
+      res.json.calledOnceWith({ success: false, message: "Product not found" })
+    ).to.be.true;
+  });
+
+  it("should return 404 if media not found", async () => {
+    productManagerStub.deleteMediaFromProduct.rejects(
+      new Error("Media not found")
+    );
+
+    await deleteMediaFromProduct(req, res, next);
+
+    expect(res.status.calledOnceWith(404)).to.be.true;
+    expect(
+      res.json.calledOnceWith({ success: false, message: "Media not found" })
+    ).to.be.true;
+  });
+
+  it("should call next(err) for unexpected errors", async () => {
+    const error = new Error("Database error");
+    productManagerStub.deleteMediaFromProduct.rejects(error);
+
+    await deleteMediaFromProduct(req, res, next);
+
+    expect(next.calledOnceWith(error)).to.be.true;
+  });
+});
+
 // describe("Get Navigations Function Test", () => {
 //   let req, res;
 

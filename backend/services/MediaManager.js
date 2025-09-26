@@ -34,6 +34,15 @@ class MediaManager {
     return doc;
   }
 
+  async delete(mediaId) {
+    const m = await this.model.findById(mediaId);
+    if (!m) return null;
+    await this.storage.deleteFile(m.path);
+    await this.model.delete(mediaId);
+    EventBus.emit("media.deleted", m);
+    return m;
+  }
+
   getFileStream(path) {
     return this.storage.getFileStream(path);
   }
