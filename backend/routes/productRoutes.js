@@ -23,6 +23,9 @@ router.delete("/:id", protect, productController.deleteProduct);
 
 // ------------------- Media (nested under product) -------------------
 
+// Add media to product
+router.post("/:id/media", protect, upload, productController.addMediaToProduct);
+
 // ------------------- Product search -------------------
 router.get("/search/query", productController.searchProducts);
 
