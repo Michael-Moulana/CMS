@@ -33,6 +33,13 @@ router.delete(
   productController.deleteMediaFromProduct
 );
 
+// Update media details (title/order)
+router.put(
+  "/:id/media/:mediaId",
+  protect,
+  productController.updateMediaDetails
+);
+
 // ------------------- Product search -------------------
 router.get("/search/query", productController.searchProducts);
 
