@@ -1,6 +1,7 @@
 const chai = require("chai");
 const chaiHttp = require("chai-http");
 const mongoose = require("mongoose");
+const proxyquire = require("proxyquire");
 const sinon = require("sinon");
 const Page = require("../models/Page");
 const Navigation = require("../models/NavigationModel");
@@ -9,7 +10,12 @@ const ModelFactory = require("../services/ModelFactory");
 const AuthProxy = require("../services/AuthProxy");
 const ResponseDecorator = require("../services/ResponseDecorator");
 
-const { createProduct } = require("../controllers/productController");
+const {
+  createProduct,
+  getAllProducts,
+  getProduct,
+  deleteProduct,
+} = require("../controllers/productController");
 
 const {
   createPage,
@@ -29,49 +35,284 @@ const { expect } = chai;
 
 chai.use(chaiHttp);
 
-describe("createProduct Controller", () => {
-  let req, res, next, mediaUploadStub, proxyStub;
+describe("getAllProducts Controller", () => {
+  let req, res, next, productManagerStub, getAllProducts;
 
   beforeEach(() => {
-    req = {
-      user: { _id: "user123" },
-      body: {
-        title: "Test Product",
-        description: "A test product",
-        price: 100,
-        stock: 10,
+    req = {};
+    res = { json: sinon.stub() };
+    next = sinon.spy();
+
+    productManagerStub = { getAll: sinon.stub() };
+
+    // Use proxyquire to replace ModelFactory.createProductManager
+    const productController = proxyquire("../controllers/productController", {
+      "../services/ModelFactory": {
+        createProductManager: () => productManagerStub,
       },
+      "../services/ResponseDecorator": ResponseDecorator,
+    });
+
+    getAllProducts = productController.getAllProducts;
+
+    // Stub ResponseDecorator.decorate
+    sinon.stub(ResponseDecorator, "decorate").callsFake((data, msg) => ({
+      success: true,
+      message: msg,
+      data,
+    }));
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should fetch all products and return decorated response", async () => {
+    const fakeProducts = [
+      {
+        _id: new mongoose.Types.ObjectId(),
+        title: "Cool Sneakers",
+        description: "High quality sneakers",
+        price: 79.99,
+        stock: 20,
+        categories: ["footwear", "sports"],
+        media: [],
+        createdBy: new mongoose.Types.ObjectId(),
+      },
+    ];
+
+    productManagerStub.getAll.resolves(fakeProducts);
+
+    await getAllProducts(req, res, next);
+
+    expect(productManagerStub.getAll.calledOnce).to.be.true;
+    expect(res.json.calledOnce).to.be.true;
+    const responseArg = res.json.getCall(0).args[0];
+
+    expect(responseArg).to.deep.equal({
+      success: true,
+      message: "Fetched all products successfully",
+      data: fakeProducts,
+    });
+  });
+
+  it("should call next(err) if getAll fails", async () => {
+    const error = new Error("Database error");
+    productManagerStub.getAll.rejects(error);
+
+    await getAllProducts(req, res, next);
+
+    expect(next.calledOnce).to.be.true;
+    expect(next.firstCall.args[0]).to.equal(error);
+  });
+});
+
+describe("getProduct Controller", () => {
+  let req, res, next, productManagerStub, getProduct;
+
+  beforeEach(() => {
+    req = { params: { id: "prod123" } };
+    res = {
+      json: sinon.stub(),
+      status: sinon.stub().returnsThis(),
+    };
+    next = sinon.spy();
+
+    // Stub ProductManager
+    productManagerStub = { getById: sinon.stub() };
+
+    // Use proxyquire to replace ModelFactory before loading the controller
+    const productController = proxyquire("../controllers/productController", {
+      "../services/ModelFactory": {
+        createProductManager: () => productManagerStub,
+      },
+      "../services/ResponseDecorator": ResponseDecorator,
+    });
+
+    getProduct = productController.getProduct;
+
+    // Stub ResponseDecorator.decorate
+    sinon.stub(ResponseDecorator, "decorate").callsFake((data) => ({
+      success: true,
+      data,
+    }));
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should fetch a product and return decorated response", async () => {
+    const fakeProduct = {
+      _id: new mongoose.Types.ObjectId(),
+      title: "Cool Sneakers",
+    };
+    productManagerStub.getById.resolves(fakeProduct);
+
+    await getProduct(req, res, next);
+
+    expect(productManagerStub.getById.calledOnceWith("prod123")).to.be.true;
+    expect(res.json.calledOnce).to.be.true;
+
+    const responseArg = res.json.getCall(0).args[0];
+    expect(responseArg).to.deep.equal({
+      success: true,
+      data: fakeProduct,
+    });
+  });
+
+  it("should return 404 if product not found", async () => {
+    productManagerStub.getById.resolves(null);
+
+    await getProduct(req, res, next);
+
+    expect(res.status.calledOnceWith(404)).to.be.true;
+    expect(res.json.calledOnce).to.be.true;
+
+    const responseArg = res.json.getCall(0).args[0];
+    expect(responseArg).to.deep.equal({
+      success: false,
+      message: "Product not found",
+    });
+  });
+
+  it("should call next(err) if getById fails", async () => {
+    const error = new Error("Database error");
+    productManagerStub.getById.rejects(error);
+
+    await getProduct(req, res, next);
+
+    expect(next.calledOnce).to.be.true;
+    expect(next.firstCall.args[0]).to.equal(error);
+  });
+});
+
+describe("updateProduct Controller", () => {
+  let req, res, next;
+  let productManagerStub, updateProductController;
+
+  beforeEach(() => {
+    // Stub ProductManager
+    productManagerStub = {
+      updateProduct: sinon.stub(),
+      mediaManager: {
+        upload: sinon.stub(),
+        updateTitle: sinon.stub(),
+      },
+    };
+
+    // Stub AuthProxy
+    const AuthProxyStub = function (user, manager) {
+      return {
+        updateProduct: productManagerStub.updateProduct,
+      };
+    };
+
+    // Load controller with proxyquire to inject stubs
+    updateProductController = proxyquire("../controllers/productController", {
+      "../services/ModelFactory": {
+        createProductManager: () => productManagerStub,
+      },
+      "../services/AuthProxy": AuthProxyStub,
+      "../services/ResponseDecorator": ResponseDecorator,
+    });
+
+    // Stub ResponseDecorator.decorate
+    sinon.stub(ResponseDecorator, "decorate").callsFake((data, msg) => ({
+      success: true,
+      message: msg,
+      data,
+    }));
+
+    req = {
+      user: { _id: new mongoose.Types.ObjectId() },
+      params: { id: "prod123" },
+      body: { title: "Updated Product", thumbnailMediaId: "thumb123" },
       files: [
         {
-          buffer: Buffer.from("dummy"),
-          originalname: "image1.png",
-          mimetype: "image/png",
-          size: 12345,
+          buffer: Buffer.from("fake image"),
+          originalname: "image1.jpg",
+          mimetype: "image/jpeg",
+          size: 1234,
         },
       ],
     };
 
-    res = { status: sinon.stub().returnsThis(), json: sinon.stub() };
+    res = {
+      json: sinon.stub(),
+    };
+
+    next = sinon.spy();
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should update a product and return decorated response", async () => {
+    const fakeUpdatedProduct = {
+      _id: "prod123",
+      title: "Updated Product",
+      media: [],
+      save: sinon.stub().resolves(),
+    };
+
+    productManagerStub.updateProduct.resolves(fakeUpdatedProduct);
+
+    await updateProductController.updateProduct(req, res, next);
+
+    expect(productManagerStub.updateProduct.calledOnce).to.be.true;
+
+    const callArgs = productManagerStub.updateProduct.getCall(0).args;
+    expect(callArgs[0]).to.equal("prod123");
+    expect(callArgs[1].data.title).to.equal("Updated Product");
+    expect(callArgs[1].files).to.have.lengthOf(1);
+    expect(callArgs[1].thumbnailMediaId).to.equal("thumb123");
+    expect(callArgs[1].userId).to.equal(req.user._id);
+
+    expect(res.json.calledOnce).to.be.true;
+    expect(res.json.getCall(0).args[0]).to.deep.equal({
+      success: true,
+      message: "Product updated successfully",
+      data: fakeUpdatedProduct,
+    });
+  });
+
+  it("should call next(err) if updateProduct fails", async () => {
+    const error = new Error("Update failed");
+    productManagerStub.updateProduct.rejects(error);
+
+    await updateProductController.updateProduct(req, res, next);
+
+    expect(next.calledOnce).to.be.true;
+    expect(next.firstCall.args[0]).to.equal(error);
+  });
+});
+
+describe("deleteProduct Controller", () => {
+  let req, res, next, proxyStub;
+
+  beforeEach(() => {
+    req = {
+      user: { _id: new mongoose.Types.ObjectId() },
+      params: { id: "prod123" },
+    };
+
+    res = {
+      json: sinon.stub(),
+    };
     next = sinon.spy();
 
-    // Stub productManager instance
-    const productManagerStub = {
-      mediaManager: { upload: sinon.stub().resolves({ _id: "media123" }) },
-    };
-    mediaUploadStub = productManagerStub.mediaManager.upload;
-
-    // Make ModelFactory return our stubbed productManager
+    // Stub productManager
+    const productManagerStub = {};
     sinon
       .stub(ModelFactory, "createProductManager")
       .returns(productManagerStub);
 
-    // Stub AuthProxy.createProduct
-    proxyStub = sinon.stub(AuthProxy.prototype, "createProduct").resolves({
-      _id: "prod123",
-      ...req.body,
-      media: [{ mediaId: "media123", order: 0 }],
-      createdBy: req.user._id,
-    });
+    // Stub AuthProxy.deleteProduct
+    proxyStub = sinon
+      .stub(AuthProxy.prototype, "deleteProduct")
+      .resolves({ _id: req.params.id });
 
     // Stub ResponseDecorator
     sinon.stub(ResponseDecorator, "decorate").callsFake((data, msg) => ({
@@ -85,18 +326,73 @@ describe("createProduct Controller", () => {
     sinon.restore();
   });
 
-  it("should create a product and return 201 with decorated response", async () => {
-    await createProduct(req, res, next);
+  it("should delete a product and return decorated response", async () => {
+    await deleteProduct(req, res, next);
 
-    expect(mediaUploadStub.calledOnce).to.be.true;
-    expect(proxyStub.calledOnce).to.be.true;
-    expect(res.status.calledWith(201)).to.be.true;
+    expect(proxyStub.calledOnceWithExactly("prod123")).to.be.true;
     expect(res.json.calledOnce).to.be.true;
 
     const responseArg = res.json.getCall(0).args[0];
-    expect(responseArg.success).to.be.true;
-    expect(responseArg.message).to.equal("Product created successfully");
-    expect(responseArg.data._id).to.equal("prod123");
+    expect(responseArg).to.deep.equal({
+      success: true,
+      message: "Product deleted successfully",
+    });
+  });
+
+  it("should call next(err) if deletion fails", async () => {
+    proxyStub.rejects(new Error("Deletion failed"));
+
+    await deleteProduct(req, res, next);
+
+    expect(next.calledOnce).to.be.true;
+    expect(next.firstCall.args[0].message).to.equal("Deletion failed");
+  });
+});
+
+describe("createProduct Controller", () => {
+  let req, res, next, stubCreate, stubDecorate;
+
+  beforeEach(() => {
+    req = {
+      user: { _id: "user123" },
+      body: { name: "Test Product" },
+      files: [],
+    };
+    res = {
+      status: sinon.stub().returnsThis(),
+      json: sinon.stub(),
+    };
+    next = sinon.stub();
+
+    // Stub prototype method (instance method)
+    stubCreate = sinon
+      .stub(AuthProxy.prototype, "createProduct")
+      .resolves({ _id: "p1", name: "Test Product" });
+
+    // Stub decorator to just return what’s passed
+    stubDecorate = sinon
+      .stub(ResponseDecorator, "decorate")
+      .callsFake((data, msg) => ({
+        data,
+        message: msg,
+      }));
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should create a product and return 201 with decorated response", async () => {
+    await createProduct(req, res, next);
+
+    expect(stubCreate.calledOnce).to.be.true;
+    expect(stubCreate.firstCall.args[0]).to.include({
+      userId: "user123",
+    });
+
+    expect(stubDecorate.calledOnce).to.be.true;
+    expect(res.status.calledWith(201)).to.be.true;
+    expect(res.json.calledOnce).to.be.true;
   });
 });
 
