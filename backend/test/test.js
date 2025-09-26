@@ -107,6 +107,86 @@ describe("getAllProducts Controller", () => {
   });
 });
 
+describe("getProduct Controller", () => {
+  let req, res, next, productManagerStub, getProduct;
+
+  beforeEach(() => {
+    req = { params: { id: "prod123" } };
+    res = {
+      json: sinon.stub(),
+      status: sinon.stub().returnsThis(),
+    };
+    next = sinon.spy();
+
+    // Stub ProductManager
+    productManagerStub = { getById: sinon.stub() };
+
+    // Use proxyquire to replace ModelFactory before loading the controller
+    const productController = proxyquire("../controllers/productController", {
+      "../services/ModelFactory": {
+        createProductManager: () => productManagerStub,
+      },
+      "../services/ResponseDecorator": ResponseDecorator,
+    });
+
+    getProduct = productController.getProduct;
+
+    // Stub ResponseDecorator.decorate
+    sinon.stub(ResponseDecorator, "decorate").callsFake((data) => ({
+      success: true,
+      data,
+    }));
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should fetch a product and return decorated response", async () => {
+    const fakeProduct = {
+      _id: new mongoose.Types.ObjectId(),
+      title: "Cool Sneakers",
+    };
+    productManagerStub.getById.resolves(fakeProduct);
+
+    await getProduct(req, res, next);
+
+    expect(productManagerStub.getById.calledOnceWith("prod123")).to.be.true;
+    expect(res.json.calledOnce).to.be.true;
+
+    const responseArg = res.json.getCall(0).args[0];
+    expect(responseArg).to.deep.equal({
+      success: true,
+      data: fakeProduct,
+    });
+  });
+
+  it("should return 404 if product not found", async () => {
+    productManagerStub.getById.resolves(null);
+
+    await getProduct(req, res, next);
+
+    expect(res.status.calledOnceWith(404)).to.be.true;
+    expect(res.json.calledOnce).to.be.true;
+
+    const responseArg = res.json.getCall(0).args[0];
+    expect(responseArg).to.deep.equal({
+      success: false,
+      message: "Product not found",
+    });
+  });
+
+  it("should call next(err) if getById fails", async () => {
+    const error = new Error("Database error");
+    productManagerStub.getById.rejects(error);
+
+    await getProduct(req, res, next);
+
+    expect(next.calledOnce).to.be.true;
+    expect(next.firstCall.args[0]).to.equal(error);
+  });
+});
+
 describe("deleteProduct Controller", () => {
   let req, res, next, proxyStub;
 
