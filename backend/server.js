@@ -19,7 +19,7 @@ app.use("/api/dashboard/navigations", require("./routes/navigationRoutes"));
 app.use("/api/dashboard/products", require("./routes/productRoutes"));
 
 //  Products API (this must exist for /api/products)
-app.use("/api/products", require("./routes/productController"));
+app.use("/api/products", require("./routes/productRoutes"));
 
 if (require.main === module) {
   connectDB();
