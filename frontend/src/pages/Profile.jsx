@@ -63,7 +63,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-20">
+    <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto mt-20 px-4">
       <form onSubmit={handleSubmit} className="bg-white p-6 shadow-md rounded">
         <h1 className="text-2xl font-bold mb-4 text-center">Your Profile</h1>
         <input
