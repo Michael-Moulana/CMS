@@ -16,6 +16,7 @@ app.use(express.json());
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/dashboard/pages", require("./routes/pageRoutes"));
 app.use("/api/dashboard/navigations", require("./routes/navigationRoutes"));
+app.use("/api/dashboard/products", require("./routes/productRoutes"));
 
 //  Products API (this must exist for /api/products)
 app.use("/api/products", require("./routes/productController"));

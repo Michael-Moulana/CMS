@@ -269,4 +269,6 @@ module.exports = {
   addMediaToProduct,
   deleteMediaFromProduct,
   updateMediaDetails,
+
 };
+
