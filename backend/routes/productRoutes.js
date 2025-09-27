@@ -40,6 +40,9 @@ router.put(
   productController.updateMediaDetails
 );
 
+// ------------------- Helpers - Media -------------------
+router.delete("/media/:mediaId", productController.deleteMediaById);
+
 // ------------------- Product search -------------------
 router.get("/search/query", productController.searchProducts);
 

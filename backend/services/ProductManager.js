@@ -141,10 +141,166 @@ class ProductManager {
     return product;
   }
 
+  async addMediaToProduct(productId, files = [], userId) {
+    const product = await this.productRepository.model.findById(productId);
+    if (!product) throw new Error("Product not found");
+
+    // Check limit before uploading
+    const currentCount = product.media.length;
+    if (currentCount >= 3) {
+      throw new Error(
+        "This product already has 3 images. Delete one before adding new ones."
+      );
+    }
+    if (currentCount + files.length > 3) {
+      throw new Error(`You can only add ${3 - currentCount} more image(s).`);
+    }
+
+    // Upload new files
+    const mediaDocs = [];
+    for (const file of files) {
+      const mediaDoc = await this.mediaManager.upload({
+        buffer: file.buffer,
+        originalName: file.originalname,
+        mimeType: file.mimetype,
+        size: file.size,
+        userId,
+      });
+      mediaDocs.push(mediaDoc);
+    }
+
+    product.media.push(
+      ...mediaDocs.map((m, i) => ({
+        mediaId: m._id,
+        order: product.media.length + i,
+      }))
+    );
+
+    await product.save();
+    EventBus.emit("product.mediaAdded", { product, mediaDocs });
+    return product;
+  }
+
   async deleteProduct(id) {
+    // Find the product first
+    const product = await this.productRepository.model.findById(id);
+    if (!product) return null;
+
+    // Delete attached media
+    if (product.media && product.media.length > 0) {
+      for (const m of product.media) {
+        try {
+          await this.mediaManager.delete(m.mediaId);
+        } catch (err) {
+          console.error(`Failed to delete media ${m.mediaId}:`, err.message);
+        }
+      }
+    }
+
+    // Delete the product itself
     const deleted = await this.productRepository.model.findByIdAndDelete(id);
+
     EventBus.emit("product.deleted", deleted);
     return deleted;
+  }
+
+  async updateMediaDetails(productId, mediaId, { title, order }) {
+    const product = await this.productRepository.model
+      .findById(productId)
+      .populate("media.mediaId");
+
+    if (!product) throw new Error("Product not found");
+
+    const mediaItem = product.media.find(
+      (m) => m.mediaId._id.toString() === mediaId
+    );
+    if (!mediaItem) throw new Error("Media not found");
+
+    // Update title if provided
+    if (title) {
+      await this.mediaManager.updateTitle(mediaId, title);
+    }
+
+    // Update order if provided
+    if (order !== undefined) {
+      if (order < 0 || order >= product.media.length) {
+        throw new Error(
+          `Order must be between 0 and ${product.media.length - 1}`
+        );
+      }
+
+      // Remove the item temporarily
+      const otherMedia = product.media.filter(
+        (m) => m.mediaId._id.toString() !== mediaId
+      );
+
+      // Insert it at the new position
+      otherMedia.splice(order, 0, mediaItem);
+
+      // Reassign orders
+      product.media = otherMedia.map((m, idx) => ({
+        ...(m.toObject?.() ?? m),
+        order: idx,
+      }));
+    }
+
+    await product.save();
+    return product;
+  }
+
+  async deleteMediaFromProduct(productId, mediaId) {
+    const product = await this.productRepository.model.findById(productId);
+    if (!product) throw new Error("Product not found");
+
+    const index = product.media.findIndex(
+      (m) => m.mediaId.toString() === mediaId
+    );
+    if (index === -1) throw new Error("Media not found");
+
+    const removed = product.media.splice(index, 1)[0];
+    await this.mediaManager.delete(removed.mediaId);
+
+    // Re-sequence
+    product.media = product.media.map((m, idx) => ({ ...m, order: idx }));
+
+    await product.save();
+    return product;
+  }
+
+  async updateThumbnail(productId, mediaId) {
+    const product = await this.productRepository.model.findById(productId);
+    if (!product) throw new Error("Product not found");
+
+    product.media = this._reorderWithThumbnail(product.media, mediaId);
+
+    await product.save();
+    EventBus.emit("product.thumbnailUpdated", { product, mediaId });
+    return product;
+  }
+
+  async search(q, opts = {}) {
+    if (
+      !this.searchStrategy ||
+      typeof this.searchStrategy.search !== "function"
+    ) {
+      throw new Error("Search strategy not configured");
+    }
+    return this.searchStrategy.search(q, opts);
+  }
+
+  // --- private helper
+  _reorderWithThumbnail(media, thumbId) {
+    const thumbFirst = [];
+    const others = [];
+    for (const m of media) {
+      if (m.mediaId.toString() === thumbId) thumbFirst.push(m);
+      else others.push(m);
+    }
+    const reordered = [...thumbFirst, ...others].map((m, idx) => ({
+      ...(m.toObject?.() ?? m),
+      order: idx,
+    }));
+    return reordered;
   }
 }
 

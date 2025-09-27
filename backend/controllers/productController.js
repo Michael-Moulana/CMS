@@ -37,6 +37,7 @@ const createProduct = async (req, res, next) => {
 
     const result = await proxy.createProduct({
       data: productData,
+      files,
       userId: req.user._id,
     });
 
@@ -259,6 +260,33 @@ const updateMediaDetails = async (req, res, next) => {
   }
 };
 
+//------------------ Helper to delete media by ID directly ------------------//
+/**
+ * Delete a media file directly by its ID (independent of product)
+ */
+const deleteMediaById = async (req, res, next) => {
+  try {
+    const mediaId = req.params.mediaId;
+
+    const deletedMedia = await productManager.mediaManager.delete(mediaId);
+
+    if (!deletedMedia) {
+      return res.status(404).json({
+        success: false,
+        message: "Media not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Media deleted successfully",
+      media: deletedMedia,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createProduct,
   getAllProducts,
@@ -269,4 +297,5 @@ module.exports = {
   addMediaToProduct,
   deleteMediaFromProduct,
   updateMediaDetails,
+  deleteMediaById,
 };
