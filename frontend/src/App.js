@@ -64,6 +64,7 @@ function AppRoutes() {
           {/* NEW: Products routes */}
           <Route path="products" element={<ProductsDashboard />} />
           <Route path="products/new" element={<ProductForm />} />
+          <Route path="products/:id/edit" element={<ProductForm />} /> 
         </Route>
       </Routes>
     </>
