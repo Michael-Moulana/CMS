@@ -108,7 +108,7 @@ export default function ProductForm() {
         await createProduct(form);
       }
 
-      // one-shot flash (same pattern as Pages)
+      // one-shot flash 
       const flash = {
         message: mode === "edit" ? "Product updated" : "Product created",
         type: "success",

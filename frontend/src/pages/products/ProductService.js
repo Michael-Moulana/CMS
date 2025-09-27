@@ -56,7 +56,7 @@ export async function getProductById(id) {
   return res?.data?.data ?? null;
 }
 
-// ---------- UPDATE ----------
+// ---------- UPDATE func ----------
 export async function updateProduct(id, form) {
   const fd = new FormData();
 
