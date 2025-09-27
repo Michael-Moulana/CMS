@@ -56,7 +56,7 @@ export default function ProductsDashboard() {
     }
   }, [location.state, location.pathname, navigate]);
 
-  // fetch products
+  // fetch products list
   useEffect(() => {
     let cancelled = false;
     (async () => {
