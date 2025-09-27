@@ -13,7 +13,7 @@ export default function PageList({ pages, setPages, setEditingPage, showFlash })
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this page?")) return;
     try {
-      await axiosInstance.delete(`/dashboard/pages/${id}`, {
+      await axiosInstance.delete(`/api/dashboard/pages/${id}`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       setPages((prev) => prev.filter((p) => p._id !== id));
