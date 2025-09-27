@@ -8,15 +8,16 @@ dotenv.config();
 
 const app = express();
 
+// CORS + JSON
 app.use(cors());
 app.use(express.json());
 
-// EXISTING ROUTES
+// Existing routes
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/dashboard/pages", require("./routes/pageRoutes"));
 app.use("/api/dashboard/navigations", require("./routes/navigationRoutes"));
 
-
+//  Products API (this must exist for /api/products)
 app.use("/api/products", require("./routes/productController"));
 
 if (require.main === module) {

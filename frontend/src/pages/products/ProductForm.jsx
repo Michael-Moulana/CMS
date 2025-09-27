@@ -6,35 +6,44 @@ import { createProduct } from "./ProductService";
 export default function ProductForm() {
   const navigate = useNavigate();
 
+  // Form state (UI uses name; mapped to title on submit)
   const [form, setForm] = useState({
     name: "",
     description: "",
     category: "",
     price: "",
     stock: "",
-    thumbnail: "", // optional media id; keep as simple text for now
+    thumbnail: "",      // optional mediaId
+    images: null,       // optional FileList
   });
 
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
   const onChange = (e) => {
-    const { name, value } = e.target;
-    setForm((p) => ({ ...p, [name]: value }));
+    const { name, value, files } = e.target;
+    if (name === "images") {
+      setForm((p) => ({ ...p, images: files })); // FileList
+    } else {
+      setForm((p) => ({ ...p, [name]: value }));
+    }
   };
 
+  // Simple validation for this story
   const validate = () => {
     const e = {};
     if (!form.name.trim()) e.name = "Product name is required";
-    if (!form.price || isNaN(form.price) || Number(form.price) <= 0)
+    if (!form.price || isNaN(form.price) || Number(form.price) <= 0) {
       e.price = "Price must be a positive number";
+    }
     if (
       form.stock === "" ||
       isNaN(form.stock) ||
       !Number.isInteger(Number(form.stock)) ||
       Number(form.stock) < 0
-    )
+    ) {
       e.stock = "Stock must be a whole number (0 or more)";
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -66,29 +75,35 @@ export default function ProductForm() {
 
   return (
     <form onSubmit={handleSubmit} className="p-6">
-      {/* header */}
       <div className="mb-6">
         <h1 className="text-xl font-semibold">Product</h1>
         <p className="text-sm text-gray-500">Dashboard / Product / Add New</p>
       </div>
 
-      {/* 2 columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* left: Image placeholder only */}
+        {/* Left: Images (optional) */}
         <section className="rounded-2xl bg-gray-50 border border-gray-200 p-6">
           <h2 className="font-semibold mb-3">Images</h2>
-          <div className="rounded-xl border border-gray-200 bg-white/60 h-56 flex items-center justify-center text-gray-400">
-            <div className="text-center">
-              <div className="text-sm font-medium text-gray-500">Image</div>
-              <div className="text-xs text-gray-400">
-                Media upload will be done in the Media story.
-              </div>
-            </div>
+
+          <div className="rounded-xl border border-gray-200 bg-white/60 p-4 flex flex-col gap-3">
+            <label className="text-sm text-gray-600">Image</label>
+            <p className="text-xs text-gray-400">
+              (Optional) You can attach up to 3 images now.
+            </p>
+            <input
+              type="file"
+              name="images"
+              accept="image/png,image/jpeg"
+              multiple
+              onChange={onChange}
+              className="text-sm"
+            />
           </div>
-          <div className="mt-4 rounded-xl bg-white/60 border border-gray-200 h-14" />
+
+          <div className="mt-4 rounded-xl bg-white/60 border border-gray-200 h-14 flex items-center justify-end px-4 gap-3" />
         </section>
 
-        {/* right: fields */}
+        {/* Right: Product details */}
         <section className="rounded-2xl bg-gray-50 border border-gray-200 p-6">
           <h2 className="font-semibold mb-4">Product Details</h2>
 
@@ -111,9 +126,9 @@ export default function ProductForm() {
               name="description"
               value={form.description}
               onChange={onChange}
-              rows={4}
               placeholder="Brief description..."
               className={inputClass("description")}
+              rows={4}
             />
           </div>
 
@@ -130,7 +145,9 @@ export default function ProductForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Select Thumbnail (media id)</label>
+              <label className="block text-sm font-medium mb-1">
+                Select Thumbnail (media id)
+              </label>
               <input
                 name="thumbnail"
                 value={form.thumbnail}

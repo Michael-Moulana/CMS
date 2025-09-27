@@ -1,29 +1,14 @@
 // frontend/src/pages/products/ProductsDashboard.jsx
-import React from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-<<<<<<< Updated upstream
-=======
-import { getProducts } from "./ProductService";
->>>>>>> Stashed changes
+import api from "../../axiosConfig.jsx";
 
 export default function ProductsDashboard() {
   const navigate = useNavigate();
-
-<<<<<<< Updated upstream
-  // dummy sample data for UI only (backend will replace later)
-  const products = [
-    { id: 1, name: "Sample", description: "sample desc" },
-    { id: 2, name: "Sample", description: "sample desc" },
-    { id: 3, name: "Sample", description: "sample desc" },
-    { id: 4, name: "Sample", description: "sample desc" },
-    { id: 5, name: "Sample", description: "sample desc" },
-    { id: 6, name: "Sample", description: "sample desc" },
-  ];
-=======
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [sort, setSort] = useState({ key: "title", dir: "asc" });
+  const [sort, setSort] = useState({ key: "name", dir: "asc" });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
@@ -31,21 +16,37 @@ export default function ProductsDashboard() {
     let cancelled = false;
     (async () => {
       try {
-        const data = await getProducts();
-        if (!cancelled) setProducts(Array.isArray(data) ? data : []);
-      } catch {
+        const res = await api.get("/products");
+        // ResponseDecorator => { success, message, data }
+        const payload = res.data?.data || res.data || [];
+        if (!cancelled) {
+          // Your UI uses p.name; backend uses title. Map once here.
+          const mapped = Array.isArray(payload)
+            ? payload.map((p) => ({
+                ...p,
+                name: p.name || p.title || "",
+                category:
+                  p.category ||
+                  (Array.isArray(p.categories) ? p.categories.join(", ") : ""),
+              }))
+            : [];
+          setProducts(mapped);
+        }
+      } catch (e) {
         if (!cancelled) setProducts([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     let rows = q
-      ? products.filter((p) => String(p.title || "").toLowerCase().includes(q))
+      ? products.filter((p) => String(p.name || "").toLowerCase().includes(q))
       : products;
 
     if (sort.key) {
@@ -57,7 +58,9 @@ export default function ProductsDashboard() {
         const r =
           aNum && bNum
             ? Number(av) - Number(bv)
-            : String(av ?? "").localeCompare(String(bv ?? ""), undefined, { sensitivity: "base" });
+            : String(av ?? "").localeCompare(String(bv ?? ""), undefined, {
+                sensitivity: "base",
+              });
         return sort.dir === "asc" ? r : -r;
       });
     }
@@ -87,7 +90,6 @@ export default function ProductsDashboard() {
       {sort.key === col ? (sort.dir === "asc" ? "▲" : "▼") : ""}
     </button>
   );
->>>>>>> Stashed changes
 
   return (
     <div className="space-y-6">
@@ -96,105 +98,35 @@ export default function ProductsDashboard() {
         <p className="text-xs text-gray-400">Dashboard / Product</p>
       </div>
 
-<<<<<<< Updated upstream
-      {/* Actions: button + search */}
-      <div className="flex flex-wrap items-center">
-        <button
-          onClick={() => navigate("/dashboard/products/new")}
-          className="shrink-0 inline-flex items-center gap-2 h-10 px-4 rounded-xl
-                     bg-blue-600 text-white hover:bg-blue-700
-                     md:border md:bg-white md:text-blue-600 md:hover:bg-gray-50"
-=======
-      {/* Actions */}
       <div className="flex items-center gap-3 flex-nowrap">
         <button
           onClick={() => navigate("/dashboard/products/new")}
           className="inline-flex items-center gap-2 h-10 px-4 rounded-2xl
                      bg-blue-600 text-white border border-blue-600 hover:bg-blue-700
                      md:bg-white md:text-blue-600 md:hover:bg-gray-50"
->>>>>>> Stashed changes
         >
           <span className="text-lg leading-none">+</span>
-          Add Product
+          <span className="font-medium">Add Product</span>
         </button>
 
-<<<<<<< Updated upstream
-        <div className="flex-1 min-w-[180px] md:w-64 md:flex-none ml-6 sm:ml-8">
-          <div className="h-10 rounded-xl border px-3 flex items-center gap-2 text-sm text-gray-500 bg-white">
-            <svg
-              className="h-4 w-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-=======
         <div className="ml-auto shrink-0 w-[150px] sm:w-[220px] md:w-80 min-w-0">
           <div className="h-10 rounded-2xl border border-gray-200 bg-white px-3
                           flex items-center gap-2 text-sm text-gray-500">
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
->>>>>>> Stashed changes
               <circle cx="11" cy="11" r="7" />
               <path d="M21 21l-4.3-4.3" />
             </svg>
             <input
-              className="w-full outline-none"
+              className="w-full outline-none placeholder-gray-400"
               placeholder="Search By Title"
-<<<<<<< Updated upstream
-              disabled
-=======
               value={query}
               onChange={(e) => { setQuery(e.target.value); setPage(1); }}
->>>>>>> Stashed changes
             />
           </div>
         </div>
       </div>
 
-<<<<<<< Updated upstream
-      {/* Product Table */}
-      <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-        <table className="min-w-full text-sm text-gray-700">
-          <thead className="bg-gray-50 border-b text-xs uppercase text-gray-500">
-            <tr>
-              <th className="px-6 py-3 text-left w-12">#</th>
-              <th className="px-6 py-3 text-left">Name</th>
-              <th className="px-6 py-3 text-left">Description</th>
-              <th className="px-6 py-3 text-center w-28">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((p, i) => (
-              <tr
-                key={p.id}
-                className="border-b hover:bg-gray-50 transition-colors"
-              >
-                <td className="px-6 py-3">{i + 1}</td>
-                <td className="px-6 py-3">{p.name}</td>
-                <td className="px-6 py-3">{p.description}</td>
-                <td className="px-6 py-3 flex items-center justify-center gap-2">
-                  <button className="p-2 rounded-lg border hover:bg-gray-100">
-                    ✏
-                  </button>
-                  <button className="p-2 rounded-lg bg-red-500 text-white hover:bg-red-600">
-                    🗑
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Pagination mockup */}
-        <div className="flex items-center justify-between px-6 py-3 text-sm text-gray-500 bg-gray-50">
-          <span>Showing 1–6 of 6</span>
-          <div className="flex items-center gap-2">
-            <button className="px-3 py-1 rounded-lg border bg-white">1</button>
-            <button className="px-3 py-1 rounded-lg border bg-white">2</button>
-            <span className="px-3">…</span>
-            <button className="px-3 py-1 rounded-lg border bg-white">Next</button>
-=======
-      {/* Desktop/Tablet table */}
+      {/* Desktop/tablet table */}
       <div className="hidden sm:block bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full table-fixed border-collapse border border-gray-200">
@@ -202,7 +134,7 @@ export default function ProductsDashboard() {
               <tr className="text-[11px] md:text-xs text-gray-500">
                 <th className="px-3 md:px-6 py-3 text-left font-medium border border-gray-200 w-10 md:w-12">#</th>
                 <th className="px-3 md:px-6 py-3 text-left font-medium border border-gray-200 w-[22%]">
-                  <SortBtn label="Name" col="title" />
+                  <SortBtn label="Name" col="name" />
                 </th>
                 <th className="px-3 md:px-6 py-3 text-left font-medium border border-gray-200 hidden lg:table-cell w-[28%]">
                   Description
@@ -214,7 +146,7 @@ export default function ProductsDashboard() {
                   <SortBtn label="Stock" col="stock" />
                 </th>
                 <th className="px-3 md:px-6 py-3 text-left font-medium border border-gray-200 hidden lg:table-cell w-[15%]">
-                  Category
+                  <SortBtn label="Category" col="category" />
                 </th>
                 <th className="px-3 md:px-6 py-3 text-left font-medium border border-gray-200 hidden xl:table-cell w-[8%]">
                   Edit
@@ -237,17 +169,15 @@ export default function ProductsDashboard() {
                 </tr>
               ) : (
                 pageRows.map((p, i) => (
-                  <tr key={p._id ?? `${p.title}-${startIdx + i}`} className="text-xs md:text-sm text-gray-700">
+                  <tr key={p._id ?? `${p.name}-${startIdx + i}`} className="text-xs md:text-sm text-gray-700">
                     <td className="px-3 md:px-6 py-3 border border-gray-200">{startIdx + i + 1}</td>
-                    <td className="px-3 md:px-6 py-3 border border-gray-200 whitespace-nowrap">{p.title}</td>
+                    <td className="px-3 md:px-6 py-3 border border-gray-200 whitespace-nowrap">{p.name}</td>
                     <td className="px-3 md:px-6 py-3 border border-gray-200 hidden lg:table-cell truncate">
                       {p.description}
                     </td>
                     <td className="px-3 md:px-6 py-3 border border-gray-200 hidden md:table-cell">{p.price}</td>
                     <td className="px-3 md:px-6 py-3 border border-gray-200 hidden md:table-cell">{p.stock}</td>
-                    <td className="px-3 md:px-6 py-3 border border-gray-200 hidden lg:table-cell">
-                      {(p.categories || [])[0] || ""}
-                    </td>
+                    <td className="px-3 md:px-6 py-3 border border-gray-200 hidden lg:table-cell">{p.category}</td>
                     <td className="px-3 md:px-6 py-3 border border-gray-200 hidden xl:table-cell text-gray-400">—</td>
                   </tr>
                 ))
@@ -275,15 +205,14 @@ export default function ProductsDashboard() {
         ) : total === 0 ? (
           <div className="px-6 py-16 text-center text-sm text-gray-400">
             Product list will appear here (US-2).
->>>>>>> Stashed changes
           </div>
         ) : (
           <ul className="divide-y divide-gray-100">
             {pageRows.map((p, i) => (
-              <li key={p._id ?? `${p.title}-${startIdx + i}`} className="px-4 py-3 flex items-center">
+              <li key={p._id ?? `${p.name}-${startIdx + i}`} className="px-4 py-3 flex items-center">
                 <span className="w-6 text-sm text-gray-500">{startIdx + i + 1}</span>
                 <div className="ml-3 flex-1 min-w-0">
-                  <div className="font-medium text-gray-800 truncate">{p.title}</div>
+                  <div className="font-medium text-gray-800 truncate">{p.name}</div>
                   <div className="text-xs text-gray-400 truncate">{p.description}</div>
                 </div>
                 <div className="ml-3 text-xs text-gray-500 whitespace-nowrap">
