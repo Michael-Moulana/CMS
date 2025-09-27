@@ -23,7 +23,7 @@ export default function PagesDashboard() {
     if (!user?.token) return;
     (async () => {
       try {
-        const res = await axiosInstance.get("/api/dashboard/pages", {
+        const res = await axiosInstance.get("/dashboard/pages", {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setPages(res.data.pages || []);

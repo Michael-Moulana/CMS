@@ -1,3 +1,4 @@
+// backend/server.js
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
@@ -9,14 +10,17 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// EXISTING ROUTES
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/dashboard/pages", require("./routes/pageRoutes"));
 app.use("/api/dashboard/navigations", require("./routes/navigationRoutes"));
 
-// Export the app object for testing
+
+app.use("/api/products", require("./routes/productController"));
+
 if (require.main === module) {
   connectDB();
-  // If the file is run directly, start the server
   const PORT = process.env.PORT || 5001;
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }

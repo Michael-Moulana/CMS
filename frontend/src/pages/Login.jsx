@@ -1,7 +1,7 @@
 // frontend/src/pages/Login.jsx
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import axiosInstance from ".././axiosConfig";
+import axiosInstance from "../axiosConfig";
 import { useAuth } from ".././context/AuthContext";
 
 const Login = () => {
@@ -21,7 +21,7 @@ const Login = () => {
 
     try {
       setLoading(true);
-      const response = await axiosInstance.post("/api/auth/login", formData);
+      const response = await axiosInstance.post("/auth/login", formData);
       login(response.data);             
       navigate("/dashboard");           
     } catch (err) {
