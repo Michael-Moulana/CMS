@@ -5,6 +5,8 @@ import FlashMessage from "../../components/FlashMessage";
 import PageForm from "../../components/PageForm";
 import PageList from "../../components/PageList";
 
+const CACHE_KEY = "blox-pages-cache";
+
 export default function PagesDashboard() {
   const { user } = useAuth();
 
@@ -14,24 +16,43 @@ export default function PagesDashboard() {
   const [showForm, setShowForm] = useState(false);
   const [flash, setFlash] = useState({ message: "", type: "" });
 
+  // flash helper
   const showFlash = (message, type) => {
     setFlash({ message, type });
-    setTimeout(() => setFlash({ message: "", type: "" }), 2500);
+    const t = setTimeout(() => setFlash({ message: "", type: "" }), 2000);
+    return () => clearTimeout(t);
+  };
+
+  // load from cache immediately for snappy UI
+  useEffect(() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "[]");
+      if (Array.isArray(cached) && cached.length) setPages(cached);
+    } catch {}
+  }, []);
+
+  // fetch from backend (authoritative)
+  const fetchPages = async () => {
+    if (!user?.token) return;
+    const res = await axiosInstance.get("/dashboard/pages", {
+      headers: { Authorization: `Bearer ${user.token}` },
+    });
+    const list = res.data?.pages || [];
+    setPages(list);
+    // refresh cache
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(list));
+    } catch {}
   };
 
   useEffect(() => {
-    if (!user?.token) return;
-    (async () => {
-      try {
-        const res = await axiosInstance.get("/api/dashboard/pages", {
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
-        setPages(res.data.pages || []);
-      } catch {
-        showFlash("Failed to load pages", "error");
-      }
-    })();
-  }, [user]);
+    fetchPages().catch(() => showFlash("Failed to load pages", "error"));
+  }, [user]); // refetch when auth context changes
+
+  // keep the form open if we are editing
+  useEffect(() => {
+    if (editingPage) setShowForm(true);
+  }, [editingPage]);
 
   const filtered = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
@@ -39,27 +60,32 @@ export default function PagesDashboard() {
     return pages.filter((p) => (p.title || "").toLowerCase().includes(q));
   }, [pages, searchTerm]);
 
+  // ensure cache always mirrors state
   useEffect(() => {
-    if (editingPage) setShowForm(true);
-  }, [editingPage]);
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify(pages));
+    } catch {}
+  }, [pages]);
 
   return (
     <div className="space-y-6">
-      {/* Title + subtitle */}
+      {/* Title + breadcrumb */}
       <div>
         <h1 className="text-xl font-semibold text-gray-800">Pages Management</h1>
-        <p className="text-xs text-gray-400">Dashboard / Manage Pages</p>
+        <p className="text-xs text-gray-400">
+          Dashboard / Manage Pages{editingPage ? " / Edit Page" : ""}
+        </p>
       </div>
 
       {/* Row: Add button (left) + Search (right) */}
       <div className="flex items-center justify-between">
         <button
-          onClick={() => setShowForm((s) => !s)}
-          className="
-            inline-flex items-center gap-2 rounded-xl px-4 h-10 text-sm
-            bg-blue-600 text-white
-            md:bg-white md:text-gray-700 md:border md:hover:bg-gray-50
-          "
+          onClick={() => {
+            setEditingPage(null);
+            setShowForm((s) => !s);
+          }}
+          className="inline-flex items-center gap-2 rounded-xl px-4 h-10 text-sm
+                     bg-blue-600 text-white md:bg-white md:text-gray-700 md:border md:hover:bg-gray-50"
           aria-label="Add Page"
         >
           <span className="md:text-blue-600">+&nbsp;</span>
@@ -98,23 +124,35 @@ export default function PagesDashboard() {
       )}
 
       {showForm && (
-        <div className="bg-white rounded-2xl shadow-sm border p-5">
+        <div className="rounded-2xl border bg-gray-50 p-5">
           <PageForm
             pages={pages}
             setPages={setPages}
             editingPage={editingPage}
             setEditingPage={setEditingPage}
             showFlash={showFlash}
-            onDone={() => setShowForm(false)}
+            onDone={() => {
+              setShowForm(false);
+              fetchPages().catch(() => {}); // refresh from backend after save
+            }}
           />
         </div>
       )}
 
       <PageList
         pages={filtered}
-        setPages={setPages}
+        setPages={(updater) => {
+          setPages(typeof updater === "function" ? updater(pages) : updater);
+          // also sync cache when list changes via list component (delete)
+          try {
+            const next =
+              typeof updater === "function" ? updater(pages) : updater;
+            localStorage.setItem(CACHE_KEY, JSON.stringify(next));
+          } catch {}
+        }}
         setEditingPage={setEditingPage}
         showFlash={showFlash}
+        afterDelete={() => fetchPages().catch(() => {})}
       />
     </div>
   );
