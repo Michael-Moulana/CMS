@@ -137,7 +137,7 @@ export default function ProductsDashboard() {
         <h1 className="text-xl font-semibold text-gray-800">Product</h1>
         <p className="text-xs text-gray-400">Dashboard / Product</p>
       </div>
-
+//flash messsage config
       {flash.message && (
         <FlashMessage
           message={flash.message}

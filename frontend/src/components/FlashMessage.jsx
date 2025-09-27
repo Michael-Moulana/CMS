@@ -17,7 +17,7 @@ const FlashMessage = ({ message, type = "success", onClose, ms = 2500 }) => {
       bgColor = "bg-gray-500";
   }
 
-  // auto-dismiss after ms
+  // auto-dismiss after some time
   useEffect(() => {
     if (!message) return;
     const timer = setTimeout(() => {
