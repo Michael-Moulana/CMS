@@ -287,6 +287,36 @@ const deleteMediaById = async (req, res, next) => {
   }
 };
 
+const getAllMedia = async (req, res, next) => {
+  try {
+    const media = await productManager.mediaManager.listAll();
+    const decorated = ResponseDecorator.decorate(
+      media,
+      "All media fetched successfully"
+    );
+    res.status(200).json(decorated);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getMediaById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const media = await productManager.mediaManager.getMediaById(id);
+    if (!media) {
+      return res.status(404).json({ message: "Media not found" });
+    }
+    const decorated = ResponseDecorator.decorate(
+      media,
+      "Media fetched successfully"
+    );
+    res.status(200).json(decorated);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createProduct,
   getAllProducts,
@@ -298,4 +328,6 @@ module.exports = {
   deleteMediaFromProduct,
   updateMediaDetails,
   deleteMediaById,
+  getAllMedia,
+  getMediaById,
 };

@@ -42,6 +42,10 @@ class MediaManager {
     return this.model.findAll({}, { limit });
   }
 
+  async getMediaById(id) {
+    return this.model.findById(id);
+  }
+
   async delete(mediaId) {
     const m = await this.model.findById(mediaId);
     if (!m) return null;

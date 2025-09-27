@@ -9,12 +9,6 @@ const productController = require("../controllers/productController");
 // Create product (multipart: product fields + optional image)
 router.post("/", protect, upload, productController.createProduct);
 
-// Get all products
-router.get("/", productController.getAllProducts);
-
-// Get single product
-router.get("/:id", productController.getProduct);
-
 // Update product (allow new image)
 router.put("/:id", protect, upload, productController.updateProduct);
 
@@ -41,7 +35,18 @@ router.put(
 );
 
 // ------------------- Helpers - Media -------------------
+router.get("/media", productController.getAllMedia);
+
+router.get("/media/:id", productController.getMediaById);
+
 router.delete("/media/:mediaId", productController.deleteMediaById);
+// -------------------------------------------------------
+
+// Get all products
+router.get("/", protect, productController.getAllProducts);
+
+// Get single product
+router.get("/:id", protect, productController.getProduct);
 
 // ------------------- Product search -------------------
 router.get("/search/query", productController.searchProducts);
