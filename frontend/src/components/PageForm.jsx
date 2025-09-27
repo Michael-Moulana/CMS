@@ -46,7 +46,7 @@ export default function PageForm({
       if (editingPage && editingPage._id) {
         // update
         const res = await axiosInstance.put(
-          `/api/dashboard/pages/${editingPage._id}`,
+          `/dashboard/pages/${editingPage._id}`,
           { ...formData },
           { headers: { Authorization: `Bearer ${user.token}` } }
         );
@@ -55,7 +55,7 @@ export default function PageForm({
       } else {
         // create
         const res = await axiosInstance.post(
-          "/api/dashboard/pages",
+          "/dashboard/pages",
           { ...formData },
           { headers: { Authorization: `Bearer ${user.token}` } }
         );

@@ -70,7 +70,7 @@ const NavigationForm = ({
       } else {
         // Create new navigation
         res = await axiosInstance.post(
-          "/api/dashboard/navigations",
+          "/dashboard/navigations",
           {
             title: formData.title,
             slug: formData.slug,
