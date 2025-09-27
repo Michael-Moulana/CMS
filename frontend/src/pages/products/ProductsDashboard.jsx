@@ -12,17 +12,11 @@ export default function ProductsDashboard() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-
-
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
-  const [sort, setSort] = useState({ key: "name", dir: "asc" });
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
-
-
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.get("/products");
         // ResponseDecorator => { success, message, data }
         const payload = res.data?.data || res.data || [];
         if (!cancelled) {
@@ -40,7 +34,6 @@ export default function ProductsDashboard() {
         }
       } catch (e) {
         if (!cancelled) setProducts([]);
-
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -50,17 +43,6 @@ export default function ProductsDashboard() {
     };
   }, []);
 
-
-  function stub() {
-    return Array.from({ length: 16 }).map((_, i) => ({
-      id: i + 1,
-      name: "Sample",
-      description: "sample desc",
-      price: (i + 1) * 10,
-      stock: (i + 1) * 2,
-      category: "Sample",
-    }));
-  
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     let rows = q
@@ -73,7 +55,6 @@ export default function ProductsDashboard() {
         const bv = b[sort.key];
         const aNum = typeof av === "number" || !isNaN(parseFloat(av));
         const bNum = typeof bv === "number" || !isNaN(parseFloat(bv));
-
         const r =
           aNum && bNum
             ? Number(av) - Number(bv)
@@ -117,18 +98,16 @@ export default function ProductsDashboard() {
         <p className="text-xs text-gray-400">Dashboard / Product</p>
       </div>
 
-
       <div className="flex items-center gap-3 flex-nowrap">
         <button
           onClick={() => navigate("/dashboard/products/new")}
           className="inline-flex items-center gap-2 h-10 px-4 rounded-2xl
                      bg-blue-600 text-white border border-blue-600 hover:bg-blue-700
                      md:bg-white md:text-blue-600 md:hover:bg-gray-50"
-
+        >
           <span className="text-lg leading-none">+</span>
           <span className="font-medium">Add Product</span>
         </button>
-
 
         <div className="ml-auto shrink-0 w-[150px] sm:w-[220px] md:w-80 min-w-0">
           <div className="h-10 rounded-2xl border border-gray-200 bg-white px-3
@@ -136,20 +115,16 @@ export default function ProductsDashboard() {
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="7" />
               <path d="M21 21l-4.3-4.3" />
-
             </svg>
             <input
               className="w-full outline-none placeholder-gray-400"
               placeholder="Search By Title"
               value={query}
-
               onChange={(e) => { setQuery(e.target.value); setPage(1); }}
-
             />
           </div>
         </div>
       </div>
-
 
       {/* Desktop/tablet table */}
       <div className="hidden sm:block bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
@@ -230,7 +205,6 @@ export default function ProductsDashboard() {
         ) : total === 0 ? (
           <div className="px-6 py-16 text-center text-sm text-gray-400">
             Product list will appear here (US-2).
-
           </div>
         ) : (
           <ul className="divide-y divide-gray-100">
