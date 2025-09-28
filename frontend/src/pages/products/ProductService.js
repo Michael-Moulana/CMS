@@ -65,6 +65,8 @@ export async function updateProduct(id, form) {
   fd.append("price", String(form.price));
   fd.append("stock", String(form.stock));
 
+ 
+
   // send categories as JSON array (matches backend ProductManager)
   const cats = toCategoriesArray(form.category);
   fd.append("categories", JSON.stringify(cats));

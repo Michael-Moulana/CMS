@@ -45,7 +45,7 @@ export default function ProductsDashboard() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await api.get("/products"); // your /api/products proxy in server.js
+        const res = await api.get("/products"); 
         const list = res?.data?.data ?? res?.data ?? [];
         setRows(Array.isArray(list) ? list : []);
       } catch (e) {
@@ -63,6 +63,7 @@ export default function ProductsDashboard() {
       (r.title || r.name || "").toLowerCase().includes(s)
     );
   }, [rows, q]);
+//added delete funciton
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this product?")) return;
@@ -190,7 +191,7 @@ export default function ProductsDashboard() {
           </table>
         </div>
 
-        {/* footer (visual only) */}
+        {/* footer  */}
         <div className="flex items-center justify-between p-4 border-top">
           <div className="text-xs text-gray-500 px-2">
             Showing 1–{Math.min(filtered.length, 10)} of {filtered.length}
