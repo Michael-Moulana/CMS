@@ -1,6 +1,9 @@
+// frontend/src/pages/products/ProductForm.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { createProduct, getProductById, updateProduct } from "./ProductService";
+import MediaPickerModal from "../media/MediaPickerModal.jsx";
+import MediaUploadDialog from "../media/MediaUploadDialog.jsx";
 
 export default function ProductForm() {
   const navigate = useNavigate();
@@ -13,16 +16,22 @@ export default function ProductForm() {
     category: "",
     price: "",
     stock: "",
-    thumbnail: "",   // media id
-    images: null,    // kept for shape; no picker in UI
+    thumbnail: "",
+    images: null, // will hold an array of File objects on "add"
   });
 
-  const [thumbOptions, setThumbOptions] = useState([]); // [{id,label}]
+  const [thumbOptions, setThumbOptions] = useState([]);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
 
-  // Prefill (and build thumbnail options) on edit
+  // dialogs
+  const [mediaOpen, setMediaOpen] = useState(false);   // picker (edit)
+  const [uploadOpen, setUploadOpen] = useState(false); // upload (add/edit standalone)
+
+  // local images to be sent on create
+  const [localImages, setLocalImages] = useState([]); // File[]
+
   useEffect(() => {
     if (mode !== "edit") return;
     let alive = true;
@@ -63,8 +72,19 @@ export default function ProductForm() {
         if (alive) setLoading(false);
       }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [mode, id]);
+
+  // whenever localImages changes, reflect into form.images so ProductService can send them
+  useEffect(() => {
+    if (localImages.length) {
+      setForm((s) => ({ ...s, images: localImages }));
+    } else {
+      setForm((s) => ({ ...s, images: null }));
+    }
+  }, [localImages]);
 
   const onChange = (e) => {
     const { name, value } = e.target;
@@ -108,7 +128,6 @@ export default function ProductForm() {
         await createProduct(form);
       }
 
-      // one-shot flash 
       const flash = {
         message: mode === "edit" ? "Product updated" : "Product created",
         type: "success",
@@ -136,15 +155,66 @@ export default function ProductForm() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Images: no file picker, just guidance */}
+        {/* IMAGES — matches Figma */}
         <section className="rounded-2xl bg-gray-50 border border-gray-200 p-6">
-          <h2 className="font-semibold mb-3">Images</h2>
-          <div className="rounded-xl border border-gray-200 bg-white/60 p-5 text-sm text-gray-600">
-            Image upload & editing is handled in <span className="font-medium">Media</span>.
-            Add images there and (on edit) select a thumbnail below.
+          <h2 className="font-semibold mb-4">Images</h2>
+
+          <div className="relative rounded-2xl border border-gray-200 bg-white/60 p-5">
+            {/* grid: big primary (top), two squares + plus square (bottom) */}
+            <div className="grid grid-cols-3 gap-4">
+              {/* primary spans all cols */}
+              <div className="col-span-3 h-64 md:h-72 rounded-xl border border-dashed border-gray-300 bg-white/70 grid place-items-center">
+                {/* image icon */}
+                <svg className="w-10 h-10 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="3" y="4" width="18" height="16" rx="2" />
+                  <path d="M8 13l2.5-3 3.5 4 2-2 3 4H6z" />
+                  <circle cx="9" cy="9" r="1.5" />
+                </svg>
+              </div>
+
+              {/* two image squares */}
+              {Array.from({ length: 2 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="h-32 rounded-xl border border-dashed border-gray-300 bg-white/70 grid place-items-center"
+                >
+                  <svg className="w-8 h-8 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="3" y="4" width="18" height="16" rx="2" />
+                    <path d="M8 13l2.5-3 3.5 4 2-2 3 4H6z" />
+                    <circle cx="9" cy="9" r="1.5" />
+                  </svg>
+                </div>
+              ))}
+
+              {/* plus square */}
+              <button
+                type="button"
+                onClick={() => setUploadOpen(true)}
+                className="h-32 rounded-xl border border-gray-300 bg-white grid place-items-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                aria-label="Add image"
+              >
+                <svg className="w-8 h-8 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </button>
+            </div>
           </div>
+
+          {/* manage images (edit only) */}
+          {mode === "edit" && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => setMediaOpen(true)}
+                className="px-3 py-1.5 rounded-lg border bg-white text-sm"
+              >
+                Manage Images
+              </button>
+            </div>
+          )}
         </section>
 
+        {/* PRODUCT DETAILS */}
         <section className="rounded-2xl bg-gray-50 border border-gray-200 p-6">
           <h2 className="font-semibold mb-4">Product Details</h2>
 
@@ -200,7 +270,9 @@ export default function ProductForm() {
                 >
                   <option value="">— No thumbnail —</option>
                   {thumbOptions.map((o) => (
-                    <option key={o.id} value={o.id}>{o.label}</option>
+                    <option key={o.id} value={o.id}>
+                      {o.label}
+                    </option>
                   ))}
                 </select>
               )}
@@ -256,6 +328,32 @@ export default function ProductForm() {
           </div>
         </section>
       </div>
+
+      {/* picker for edit */}
+      {mode === "edit" && (
+        <MediaPickerModal
+          productId={id}
+          open={mediaOpen}
+          onClose={() => setMediaOpen(false)}
+          onPickThumbnail={(mediaId) => {
+            setForm((f) => ({ ...f, thumbnail: String(mediaId) }));
+            setMediaOpen(false);
+          }}
+        />
+      )}
+
+      {/* upload dialog for the "+" box */}
+      <MediaUploadDialog
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        onAdd={(file) => {
+          setLocalImages((prev) => {
+            const next = [...prev, file].slice(0, 3);
+            return next;
+          });
+          setUploadOpen(false);
+        }}
+      />
     </form>
   );
 }
