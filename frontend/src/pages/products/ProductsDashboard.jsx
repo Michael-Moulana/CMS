@@ -17,10 +17,8 @@ export default function ProductsDashboard() {
     (async () => {
       try {
         const res = await api.get("/products");
-        // ResponseDecorator => { success, message, data }
         const payload = res.data?.data || res.data || [];
         if (!cancelled) {
-          // Your UI uses p.name; backend uses title. Map once here.
           const mapped = Array.isArray(payload)
             ? payload.map((p) => ({
                 ...p,
@@ -32,7 +30,7 @@ export default function ProductsDashboard() {
             : [];
           setProducts(mapped);
         }
-      } catch (e) {
+      } catch {
         if (!cancelled) setProducts([]);
       } finally {
         if (!cancelled) setLoading(false);
@@ -91,6 +89,17 @@ export default function ProductsDashboard() {
     </button>
   );
 
+  /* minimal delete hook for mobile buttons (no service change) */
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this product?")) return;
+    try {
+      await api.delete(`/products/${id}`);
+      setProducts((prev) => prev.filter((x) => x._id !== id));
+    } catch (e) {
+      alert("Delete failed");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -126,7 +135,7 @@ export default function ProductsDashboard() {
         </div>
       </div>
 
-      {/* Desktop/tablet table */}
+      {/* Desktop/tablet table (unchanged) */}
       <div className="hidden sm:block bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full table-fixed border-collapse border border-gray-200">
@@ -198,8 +207,8 @@ export default function ProductsDashboard() {
         />
       </div>
 
-      {/* Phone list */}
-      <div className="sm:hidden bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      {/* Phone list — updated to match your Figma (cards + edit/delete buttons) */}
+      <div className="sm:hidden">
         {loading ? (
           <div className="px-6 py-16 text-center text-sm text-gray-400">Loading…</div>
         ) : total === 0 ? (
@@ -207,33 +216,76 @@ export default function ProductsDashboard() {
             Product list will appear here (US-2).
           </div>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <div className="p-3 space-y-3">
             {pageRows.map((p, i) => (
-              <li key={p._id ?? `${p.name}-${startIdx + i}`} className="px-4 py-3 flex items-center">
-                <span className="w-6 text-sm text-gray-500">{startIdx + i + 1}</span>
-                <div className="ml-3 flex-1 min-w-0">
-                  <div className="font-medium text-gray-800 truncate">{p.name}</div>
-                  <div className="text-xs text-gray-400 truncate">{p.description}</div>
+              <div
+                key={p._id ?? `${p.name}-${startIdx + i}`}
+                className="rounded-2xl border border-gray-200 bg-white shadow-sm p-4"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="pr-3">
+                    <div className="text-xs text-gray-400">{startIdx + i + 1}</div>
+                    <div className="mt-1 font-semibold text-gray-800">{p.name}</div>
+                    {p.description ? (
+                      <div className="text-xs text-gray-500 mt-1 line-clamp-2">{p.description}</div>
+                    ) : null}
+                    <div className="text-xs text-gray-500 mt-1">
+                      <span className="font-medium text-gray-600">Price:</span> {p.price ?? "-"}
+                      <span className="ml-3 font-medium text-gray-600">Stock:</span> {p.stock ?? "-"}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      <span className="font-medium text-gray-600">Category:</span> {p.category || "-"}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    {/* edit (white) */}
+                    <button
+                      onClick={() => navigate(`/dashboard/products/${p._id}/edit`)}
+                      className="h-9 w-9 rounded-xl border bg-white hover:bg-gray-100 grid place-items-center"
+                      title="Edit"
+                      aria-label="Edit"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z" />
+                      </svg>
+                    </button>
+
+                    {/* delete (red) */}
+                    <button
+                      onClick={() => handleDelete(p._id)}
+                      className="h-9 w-9 rounded-xl bg-red-500 hover:bg-red-600 grid place-items-center text-white"
+                      title="Delete"
+                      aria-label="Delete"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-                <div className="ml-3 text-xs text-gray-500 whitespace-nowrap">
-                  ${p.price} • {p.stock}
-                </div>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
 
-        <Pagination
-          total={total}
-          startIdx={startIdx}
-          endIdx={endIdx}
-          totalPages={totalPages}
-          currentPage={currentPage}
-          setPage={setPage}
-          pageSize={pageSize}
-          setPageSize={setPageSize}
-          compact
-        />
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+          <Pagination
+            total={total}
+            startIdx={startIdx}
+            endIdx={endIdx}
+            totalPages={totalPages}
+            currentPage={currentPage}
+            setPage={setPage}
+            pageSize={pageSize}
+            setPageSize={setPageSize}
+            compact
+          />
+        </div>
       </div>
     </div>
   );
