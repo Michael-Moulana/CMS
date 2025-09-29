@@ -1,49 +1,88 @@
-// frontend/src/pages/products/ProductForm.jsx
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createProduct } from "./ProductService";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { createProduct, getProductById, updateProduct } from "./ProductService";
 
 export default function ProductForm() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const mode = useMemo(() => (id ? "edit" : "add"), [id]);
 
-  // Form state (UI uses name; mapped to title on submit)
   const [form, setForm] = useState({
     name: "",
     description: "",
     category: "",
     price: "",
     stock: "",
-    thumbnail: "",      // optional mediaId
-    images: null,       // optional FileList
+    thumbnail: "",   // media id
+    images: null,    // kept for shape; no picker in UI
   });
 
+  const [thumbOptions, setThumbOptions] = useState([]); // [{id,label}]
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
 
+  // Prefill (and build thumbnail options) on edit
+  useEffect(() => {
+    if (mode !== "edit") return;
+    let alive = true;
+    (async () => {
+      try {
+        const p = await getProductById(id);
+        if (!alive || !p) return;
+
+        const opts = Array.isArray(p.media)
+          ? p.media
+              .map((m) => {
+                const mid = m?.mediaId?._id || m?.mediaId || m?._id;
+                if (!mid) return null;
+                const label =
+                  m?.mediaId?.originalName ||
+                  m?.mediaId?.filename ||
+                  (typeof m?.mediaId === "string" ? m.mediaId : String(mid));
+                return { id: String(mid), label };
+              })
+              .filter(Boolean)
+          : [];
+
+        setThumbOptions(opts);
+
+        const currentThumb =
+          (Array.isArray(p.media) && p.media.find((x) => x.order === 0)?.mediaId?._id) || "";
+
+        setForm({
+          name: p.name || p.title || "",
+          description: p.description || "",
+          category: Array.isArray(p.categories) ? p.categories.join(", ") : p.category || "",
+          price: p.price ?? "",
+          stock: p.stock ?? "",
+          thumbnail: currentThumb ? String(currentThumb) : "",
+          images: null,
+        });
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, [mode, id]);
+
   const onChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === "images") {
-      setForm((p) => ({ ...p, images: files })); // FileList
-    } else {
-      setForm((p) => ({ ...p, [name]: value }));
-    }
+    const { name, value } = e.target;
+    setForm((s) => ({ ...s, [name]: value }));
   };
 
-  // Simple validation for this story
   const validate = () => {
     const e = {};
     if (!form.name.trim()) e.name = "Product name is required";
-    if (!form.price || isNaN(form.price) || Number(form.price) <= 0) {
+    if (!form.price || isNaN(form.price) || Number(form.price) <= 0)
       e.price = "Price must be a positive number";
-    }
     if (
       form.stock === "" ||
       isNaN(form.stock) ||
       !Number.isInteger(Number(form.stock)) ||
       Number(form.stock) < 0
-    ) {
+    )
       e.stock = "Stock must be a whole number (0 or more)";
-    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -63,8 +102,20 @@ export default function ProductForm() {
 
     setSaving(true);
     try {
-      await createProduct(form);
-      navigate("/dashboard/products");
+      if (mode === "edit") {
+        await updateProduct(id, form);
+      } else {
+        await createProduct(form);
+      }
+
+      // one-shot flash 
+      const flash = {
+        message: mode === "edit" ? "Product updated" : "Product created",
+        type: "success",
+        ts: Date.now(),
+      };
+      sessionStorage.setItem("products_flash", JSON.stringify(flash));
+      navigate("/dashboard/products", { state: { flash } });
     } catch (err) {
       console.error(err);
       alert("Could not save the product. Please try again.");
@@ -73,37 +124,27 @@ export default function ProductForm() {
     }
   };
 
+  if (loading) return <div className="p-6 text-sm text-gray-500">Loading…</div>;
+
   return (
     <form onSubmit={handleSubmit} className="p-6">
       <div className="mb-6">
         <h1 className="text-xl font-semibold">Product</h1>
-        <p className="text-sm text-gray-500">Dashboard / Product / Add New</p>
+        <p className="text-sm text-gray-500">
+          Dashboard / Product / {mode === "edit" ? "Edit" : "Add New"}
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: Images (optional) */}
+        {/* Images: no file picker, just guidance */}
         <section className="rounded-2xl bg-gray-50 border border-gray-200 p-6">
           <h2 className="font-semibold mb-3">Images</h2>
-
-          <div className="rounded-xl border border-gray-200 bg-white/60 p-4 flex flex-col gap-3">
-            <label className="text-sm text-gray-600">Image</label>
-            <p className="text-xs text-gray-400">
-              (Optional) You can attach up to 3 images now.
-            </p>
-            <input
-              type="file"
-              name="images"
-              accept="image/png,image/jpeg"
-              multiple
-              onChange={onChange}
-              className="text-sm"
-            />
+          <div className="rounded-xl border border-gray-200 bg-white/60 p-5 text-sm text-gray-600">
+            Image upload & editing is handled in <span className="font-medium">Media</span>.
+            Add images there and (on edit) select a thumbnail below.
           </div>
-
-          <div className="mt-4 rounded-xl bg-white/60 border border-gray-200 h-14 flex items-center justify-end px-4 gap-3" />
         </section>
 
-        {/* Right: Product details */}
         <section className="rounded-2xl bg-gray-50 border border-gray-200 p-6">
           <h2 className="font-semibold mb-4">Product Details</h2>
 
@@ -145,16 +186,24 @@ export default function ProductForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">
-                Select Thumbnail (media id)
-              </label>
-              <input
-                name="thumbnail"
-                value={form.thumbnail}
-                onChange={onChange}
-                placeholder="Optional media id"
-                className={inputClass("thumbnail")}
-              />
+              <label className="block text-sm font-medium mb-1">Select Thumbnail</label>
+              {mode === "add" ? (
+                <select className={`${inputClass("thumbnail")} bg-gray-100`} disabled>
+                  <option>No images yet — add via Media</option>
+                </select>
+              ) : (
+                <select
+                  name="thumbnail"
+                  value={form.thumbnail}
+                  onChange={onChange}
+                  className={inputClass("thumbnail")}
+                >
+                  <option value="">— No thumbnail —</option>
+                  {thumbOptions.map((o) => (
+                    <option key={o.id} value={o.id}>{o.label}</option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 
@@ -202,7 +251,7 @@ export default function ProductForm() {
               disabled={saving}
               className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md"
             >
-              {saving ? "Saving..." : "Add Product"}
+              {saving ? "Saving..." : mode === "edit" ? "Save Changes" : "Add Product"}
             </button>
           </div>
         </section>

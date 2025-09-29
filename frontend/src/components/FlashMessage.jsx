@@ -1,4 +1,6 @@
-const FlashMessage = ({ message, type = "success", onClose }) => {
+import { useEffect } from "react";
+
+const FlashMessage = ({ message, type = "success", onClose, ms = 2500 }) => {
   let bgColor;
 
   switch (type) {
@@ -14,6 +16,17 @@ const FlashMessage = ({ message, type = "success", onClose }) => {
     default:
       bgColor = "bg-gray-500";
   }
+
+  // auto-dismiss after some time
+  useEffect(() => {
+    if (!message) return;
+    const timer = setTimeout(() => {
+      onClose?.();
+    }, ms);
+    return () => clearTimeout(timer);
+  }, [message, ms, onClose]);
+
+  if (!message) return null;
 
   return (
     <div

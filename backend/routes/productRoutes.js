@@ -12,6 +12,9 @@ router.post("/", protect, upload, productController.createProduct);
 // Get all products
 router.get("/", productController.getAllProducts);
 
+// ------------------- Product search (must be BEFORE :id) -------------------
+router.get("/search/query", productController.searchProducts);
+
 // Get single product
 router.get("/:id", productController.getProduct);
 
@@ -39,8 +42,5 @@ router.put(
   protect,
   productController.updateMediaDetails
 );
-
-// ------------------- Product search -------------------
-router.get("/search/query", productController.searchProducts);
 
 module.exports = router;
