@@ -16,7 +16,8 @@ class FileStorageAdapter {
     await this._ensureDir();
     const filepath = path.join(this.baseDir, filename);
     await fsp.writeFile(filepath, buffer);
-    return filepath;
+
+    return `/uploads/${filename}`;
   }
 
   async deleteFile(filepath) {

@@ -1,13 +1,52 @@
-import { useEffect, useMemo, useState } from "react";
+// frontend/src/pages/products/ProductForm.jsx
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { createProduct, getProductById, updateProduct } from "./ProductService";
 
 // media
+import { getProductMedia, uploadMediaToProduct } from "../media/MediaService.js";
 import MediaPickerModal from "../media/MediaPickerModal.jsx";
 import MediaUploadDialog from "../media/MediaUploadDialog.jsx";
 import ImageSlot from "../media/ImageSlot.jsx";
+import api from "../../axiosConfig.jsx"; 
 
 const MAX_LOCAL = 3;
+
+/* ---------- Build absolute URL for an image coming from backend ---------- */
+function getServerOrigin() {
+  const base = (api?.defaults?.baseURL || "").replace(/\/+$/, "");
+  if (/^https?:\/\//i.test(base)) return base.replace(/\/api$/i, "");
+  try {
+    const u = new URL(window.location.origin);
+    if (u.port === "3000") u.port = "5001";
+    return u.toString().replace(/\/+$/, "");
+  } catch {
+    return "http://localhost:5001";
+  }
+}
+const SERVER_ORIGIN = getServerOrigin();
+
+const mediaUrl = (m) => {
+  const file =
+    m?.mediaId?.url ||
+    m?.mediaId?.path ||
+    m?.mediaId?.filename ||
+    m?.filename ||
+    "";
+  if (!file) return "";
+  if (/^https?:\/\//i.test(file)) return file;
+  const name = String(file).split(/[\\/]/).pop();
+  return `${SERVER_ORIGIN}/uploads/${name}`;
+};
+/* ------------------------------------------------------------------------ */
+
+
+const PANEL = "rounded-2xl border border-gray-200 bg-gray-100 p-5 md:p-6";
+// Keep both columns tall and aligned
+const PANEL_MIN_H = "min-h-[560px]";
+// Image slot heights
+const HERO_H = "h-80 md:h-96";
+const THUMB_H = "h-36";
 
 export default function ProductForm() {
   const navigate = useNavigate();
@@ -20,76 +59,124 @@ export default function ProductForm() {
     category: "",
     price: "",
     stock: "",
-    thumbnail: "",     // media id (edit mode)
-    images: null,      // FileList | File[] for create
+    thumbnail: "",
+    images: null,
   });
 
-  // local preview state for create mode
   const [localImages, setLocalImages] = useState([]); // File[]
+  const [editImages, setEditImages] = useState([]);   // [{ relId, mediaId, order, title, url }]
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const [thumbOptions, setThumbOptions] = useState([]);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
 
-  // modals
-  const [mediaOpen, setMediaOpen] = useState(false);     // picker (edit mode)
-  const [uploadOpen, setUploadOpen] = useState(false);   // add-mode uploader
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+
+  // load product (for fields + thumbnail select)
+  const loadProduct = useCallback(async () => {
+    if (mode !== "edit") return;
+    const p = await getProductById(id);
+
+    const opts = Array.isArray(p.media)
+      ? p.media
+          .map((m) => {
+            const fileId = m?.mediaId?._id || m?.mediaId;
+            if (!fileId) return null;
+            const label =
+              m?.mediaId?.title ||
+              m?.mediaId?.originalName ||
+              m?.mediaId?.filename ||
+              String(fileId);
+            return { id: String(fileId), label };
+          })
+          .filter(Boolean)
+      : [];
+
+    const currentThumb =
+      (Array.isArray(p.media) && p.media.find((x) => x.order === 0)?.mediaId?._id) || "";
+
+    // Normalize category field to a clean comma-separated string
+    let categoryStr = "";
+    if (Array.isArray(p.categories)) {
+      categoryStr = p.categories.join(", ");
+    } else if (typeof p.category === "string") {
+      categoryStr = p.category;
+    } else if (typeof p.categories === "string") {
+      try {
+        const parsed = JSON.parse(p.categories);
+        categoryStr = Array.isArray(parsed) ? parsed.join(", ") : String(p.categories);
+      } catch {
+        categoryStr = String(p.categories || "");
+      }
+    }
+
+    setThumbOptions(opts);
+    setForm({
+      name: p.name || p.title || "",
+      description: p.description || "",
+      category: categoryStr,
+      price: p.price ?? "",
+      stock: p.stock ?? "",
+      thumbnail: currentThumb ? String(currentThumb) : "",
+      images: null,
+    });
+  }, [mode, id]);
+
+  // load media list (relation ids + urls)
+  const loadMedia = useCallback(async () => {
+    if (mode !== "edit") return;
+    const list = await getProductMedia(id);
+    const mapped = (Array.isArray(list) ? list : [])
+      .map((m) => ({
+        ...m,
+        relId: String(m?._id),
+        mediaId: String(m?.mediaId?._id ?? m?.mediaId),
+        url: mediaUrl(m),
+        title:
+          m?.mediaId?.title ||
+          m?.mediaId?.originalName ||
+          m?.mediaId?.filename ||
+          String(m?.mediaId?._id ?? m?._id),
+        order: Number(m?.order ?? 0),
+      }))
+      .sort((a, b) => a.order - b.order)
+      .slice(0, 3);
+    setEditImages(mapped);
+  }, [mode, id]);
 
   useEffect(() => {
     if (mode !== "edit") return;
     let alive = true;
     (async () => {
       try {
-        const p = await getProductById(id);
-        if (!alive || !p) return;
-
-        const opts = Array.isArray(p.media)
-          ? p.media
-              .map((m) => {
-                const mid = m?.mediaId?._id || m?.mediaId || m?._id;
-                if (!mid) return null;
-                const label =
-                  m?.mediaId?.originalName ||
-                  m?.mediaId?.filename ||
-                  (typeof m?.mediaId === "string" ? m.mediaId : String(mid));
-                return { id: String(mid), label };
-              })
-              .filter(Boolean)
-          : [];
-
-        setThumbOptions(opts);
-
-        const currentThumb =
-          (Array.isArray(p.media) && p.media.find((x) => x.order === 0)?.mediaId?._id) || "";
-
-        setForm({
-          name: p.name || p.title || "",
-          description: p.description || "",
-          category: Array.isArray(p.categories) ? p.categories.join(", ") : p.category || "",
-          price: p.price ?? "",
-          stock: p.stock ?? "",
-          thumbnail: currentThumb ? String(currentThumb) : "",
-          images: null,
-        });
+        await loadProduct();
+        await loadMedia();
       } finally {
         if (alive) setLoading(false);
       }
     })();
     return () => { alive = false; };
-  }, [mode, id]);
+  }, [mode, loadProduct, loadMedia]);
 
   const onChange = (e) => {
     const { name, value } = e.target;
     setForm((s) => ({ ...s, [name]: value }));
   };
 
-  // when user picks files in the dialog (create mode)
-  const handleAddLocal = (files) => {
-    // cap to 3 and update both local preview + form.images for submit
-    const merged = [...localImages, ...files].slice(0, MAX_LOCAL);
-    setLocalImages(merged);
-    setForm((s) => ({ ...s, images: merged })); // ProductService already appends s.images
+  const handleAddLocal = async (files) => {
+    if (mode === "add") {
+      const merged = [...localImages, ...files].slice(0, MAX_LOCAL);
+      setLocalImages(merged);
+      setForm((s) => ({ ...s, images: merged }));
+      return;
+    }
+    const f = Array.from(files || [])[0];
+    if (!f) return;
+    await uploadMediaToProduct(id, [f]);
+    await loadMedia();
   };
 
   const validate = () => {
@@ -111,7 +198,7 @@ export default function ProductForm() {
   const inputClass = (field) =>
     [
       "w-full rounded-md px-3 py-2 outline-none",
-      "bg-gray-50 border",
+      "bg-white border",
       errors[field] ? "border-red-500" : "border-gray-200",
       "focus:ring-2",
       errors[field] ? "focus:ring-red-200" : "focus:ring-blue-200",
@@ -120,7 +207,6 @@ export default function ProductForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-
     setSaving(true);
     try {
       if (mode === "edit") {
@@ -143,15 +229,34 @@ export default function ProductForm() {
     }
   };
 
-  if (loading) return <div className="p-6 text-sm text-gray-500">Loading…</div>;
+  if (loading) return <div className="p-6 text-sm text-gray-500 bg-white">Loading…</div>;
 
-  // helpers for slots in add mode
-  const s0 = localImages[0] || null;
-  const s1 = localImages[1] || null;
-  const s2 = localImages[2] || null;
+  // slots
+  const s0 = mode === "add" ? localImages[0] || null : editImages[0]?.url || null;
+  const s1 = mode === "add" ? localImages[1] || null : editImages[1]?.url || null;
+  const s2 = mode === "add" ? localImages[2] || null : editImages[2]?.url || null;
+
+  const handleSlotClick = (idx) => {
+    if (mode === "add") {
+      setUploadOpen(true);
+      return;
+    }
+    const item = editImages[idx];
+    if (item) {
+      setSelectedItem(item);
+      setEditModalOpen(true);
+    } else {
+      setUploadOpen(true);
+    }
+  };
+
+  const canShowPlus =
+    (mode === "add" && (localImages?.length ?? 0) < 3) ||
+    (mode === "edit" && editImages.length < 3);
 
   return (
-    <form onSubmit={handleSubmit} className="p-6">
+    // whole header/page area explicitly white
+    <form onSubmit={handleSubmit} className="p-4 md:p-6 bg-white">
       <div className="mb-6">
         <h1 className="text-xl font-semibold">Product</h1>
         <p className="text-sm text-gray-500">
@@ -159,158 +264,146 @@ export default function ProductForm() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Images – matches figma structure */}
-        <section className="rounded-2xl bg-gray-50 border border-gray-200 p-6">
+      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 ${PANEL_MIN_H}`}>
+        {/* Images PANEL — single grey box, no inner white card */}
+        <section className={`${PANEL} ${PANEL_MIN_H} flex flex-col`}>
           <h2 className="font-semibold mb-4">Images</h2>
 
-          <div className="rounded-2xl border border-gray-200 bg-white/60 p-5">
-            {/* Primary */}
+          {/* Big hero */}
+          <ImageSlot
+            fileOrUrl={s0}
+            label=""
+            onClick={() => handleSlotClick(0)}
+            className={`${HERO_H} mb-4`}
+          />
+
+          {/* Thumbs + add */}
+          <div className="grid grid-cols-3 gap-4">
             <ImageSlot
-              fileOrUrl={s0}
+              fileOrUrl={s1}
               label=""
-              onClick={() => setUploadOpen(true)}
-              className="h-64 md:h-72 mb-4"
+              onClick={() => handleSlotClick(1)}
+              className={THUMB_H}
+            />
+            <ImageSlot
+              fileOrUrl={s2}
+              label=""
+              onClick={() => handleSlotClick(2)}
+              className={THUMB_H}
             />
 
-            {/* Row of two + optional plus box */}
-            <div className="grid grid-cols-3 gap-4">
-              <ImageSlot
-                fileOrUrl={s1}
-                label=""
+            {canShowPlus && (
+              <button
+                type="button"
                 onClick={() => setUploadOpen(true)}
-                className="h-32"
-              />
-              <ImageSlot
-                fileOrUrl={s2}
-                label=""
-                onClick={() => setUploadOpen(true)}
-                className="h-32"
-              />
-              {/* plus box */}
-              {localImages.length < 3 && (
-                <button
-                  type="button"
-                  onClick={() => setUploadOpen(true)}
-                  className="h-32 rounded-xl border border-gray-400 bg-white/70 grid place-items-center hover:border-gray-600"
-                  title="Add image"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                </button>
-              )}
-            </div>
-
-            {/* Optional manage images (edit only) */}
-            {mode === "edit" && (
-              <div className="mt-4">
-                <button
-                  type="button"
-                  onClick={() => setMediaOpen(true)}
-                  className="px-3 py-1.5 rounded-lg border bg-white text-sm"
-                >
-                  Manage Images
-                </button>
-              </div>
+                className="h-36 rounded-xl border border-gray-300 bg-white/80 grid place-items-center hover:border-gray-600"
+                title="Add image"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </button>
             )}
           </div>
         </section>
 
-        {/* Product details */}
-        <section className="rounded-2xl bg-gray-50 border border-gray-200 p-6">
+        {/* Product Details PANEL — single grey box, inputs inside */}
+        <section className={`${PANEL} ${PANEL_MIN_H} flex flex-col`}>
           <h2 className="font-semibold mb-4">Product Details</h2>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Product Name</label>
-            <input
-              name="name"
-              value={form.name}
-              onChange={onChange}
-              placeholder="e.g. Cotton Shirt"
-              className={inputClass("name")}
-              aria-invalid={!!errors.name}
-            />
-            {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Product Description</label>
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={onChange}
-              placeholder="Brief description..."
-              className={inputClass("description")}
-              rows={4}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Category</label>
+          <div className="grow">
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Product Name</label>
               <input
-                name="category"
-                value={form.category}
+                name="name"
+                value={form.name}
                 onChange={onChange}
-                placeholder="e.g. Apparel"
-                className={inputClass("category")}
+                placeholder="e.g. Cotton Shirt"
+                className={inputClass("name")}
+                aria-invalid={!!errors.name}
+              />
+              {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Product Description</label>
+              <textarea
+                name="description"
+                value={form.description}
+                onChange={onChange}
+                placeholder="Brief description..."
+                className={inputClass("description")}
+                rows={4}
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">Select Thumbnail</label>
-              {mode === "add" ? (
-                <select className={`${inputClass("thumbnail")} bg-gray-100`} disabled>
-                  <option>No images yet — add via Media</option>
-                </select>
-              ) : (
-                <select
-                  name="thumbnail"
-                  value={form.thumbnail}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Category</label>
+                <input
+                  name="category"
+                  value={form.category}
                   onChange={onChange}
-                  className={inputClass("thumbnail")}
-                >
-                  <option value="">— No thumbnail —</option>
-                  {thumbOptions.map((o) => (
-                    <option key={o.id} value={o.id}>{o.label}</option>
-                  ))}
-                </select>
-              )}
+                  placeholder="e.g. Apparel"
+                  className={inputClass("category")}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Select Thumbnail</label>
+                {mode === "add" ? (
+                  <select className={`${inputClass("thumbnail")} bg-gray-100`} disabled>
+                    <option>No images yet — add via Media</option>
+                  </select>
+                ) : (
+                  <select
+                    name="thumbnail"
+                    value={form.thumbnail}
+                    onChange={onChange}
+                    className={inputClass("thumbnail")}
+                  >
+                    <option value="">— No thumbnail —</option>
+                    {thumbOptions.map((o) => (
+                      <option key={o.id} value={o.id}>{o.label}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Price</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="price"
+                  value={form.price}
+                  onChange={onChange}
+                  placeholder="e.g. 49.99"
+                  className={inputClass("price")}
+                  aria-invalid={!!errors.price}
+                />
+                {errors.price && <p className="text-sm text-red-600 mt-1">{errors.price}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Stock</label>
+                <input
+                  type="number"
+                  name="stock"
+                  value={form.stock}
+                  onChange={onChange}
+                  placeholder="e.g. 10"
+                  className={inputClass("stock")}
+                  aria-invalid={!!errors.stock}
+                />
+                {errors.stock && <p className="text-sm text-red-600 mt-1">{errors.stock}</p>}
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Price</label>
-              <input
-                type="number"
-                step="0.01"
-                name="price"
-                value={form.price}
-                onChange={onChange}
-                placeholder="e.g. 49.99"
-                className={inputClass("price")}
-                aria-invalid={!!errors.price}
-              />
-              {errors.price && <p className="text-sm text-red-600 mt-1">{errors.price}</p>}
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Stock</label>
-              <input
-                type="number"
-                name="stock"
-                value={form.stock}
-                onChange={onChange}
-                placeholder="e.g. 10"
-                className={inputClass("stock")}
-                aria-invalid={!!errors.stock}
-              />
-              {errors.stock && <p className="text-sm text-red-600 mt-1">{errors.stock}</p>}
-            </div>
-          </div>
-
-          <div className="mt-6 flex justify-end items-center gap-6">
+          {/* Buttons kept visible near bottom of the panel */}
+          <div className="mt-6 flex justify-end items-center gap-4">
             <button
               type="button"
               onClick={() => navigate("/dashboard/products")}
@@ -329,24 +422,26 @@ export default function ProductForm() {
         </section>
       </div>
 
-      {/* Media picker for EDIT mode */}
+      {/* Single-image editor modal (EDIT) */}
       {mode === "edit" && (
         <MediaPickerModal
           productId={id}
-          open={mediaOpen}
-          onClose={() => setMediaOpen(false)}
-          onPickThumbnail={(mediaId) => {
-            setForm((f) => ({ ...f, thumbnail: String(mediaId) }));
-            setMediaOpen(false);
+          open={editModalOpen}
+          item={selectedItem}
+          onClose={() => setEditModalOpen(false)}
+          onSaved={async () => {
+            await loadMedia();
+            setEditModalOpen(false);
           }}
         />
       )}
 
-      {/* Upload dialog for ADD mode (used by + box / any slot click) */}
+      {/* Upload dialog (ADD and "+") */}
       <MediaUploadDialog
         open={uploadOpen}
         onClose={() => setUploadOpen(false)}
         onAdd={(files) => {
+          setUploadOpen(false);
           handleAddLocal(files);
         }}
       />
