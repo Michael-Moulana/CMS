@@ -1,9 +1,13 @@
-// frontend/src/pages/products/ProductForm.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { createProduct, getProductById, updateProduct } from "./ProductService";
+
+// media
 import MediaPickerModal from "../media/MediaPickerModal.jsx";
 import MediaUploadDialog from "../media/MediaUploadDialog.jsx";
+import ImageSlot from "../media/ImageSlot.jsx";
+
+const MAX_LOCAL = 3;
 
 export default function ProductForm() {
   const navigate = useNavigate();
@@ -16,21 +20,21 @@ export default function ProductForm() {
     category: "",
     price: "",
     stock: "",
-    thumbnail: "",
-    images: null, // will hold an array of File objects on "add"
+    thumbnail: "",     // media id (edit mode)
+    images: null,      // FileList | File[] for create
   });
+
+  // local preview state for create mode
+  const [localImages, setLocalImages] = useState([]); // File[]
 
   const [thumbOptions, setThumbOptions] = useState([]);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
 
-  // dialogs
-  const [mediaOpen, setMediaOpen] = useState(false);   // picker (edit)
-  const [uploadOpen, setUploadOpen] = useState(false); // upload (add/edit standalone)
-
-  // local images to be sent on create
-  const [localImages, setLocalImages] = useState([]); // File[]
+  // modals
+  const [mediaOpen, setMediaOpen] = useState(false);     // picker (edit mode)
+  const [uploadOpen, setUploadOpen] = useState(false);   // add-mode uploader
 
   useEffect(() => {
     if (mode !== "edit") return;
@@ -72,23 +76,20 @@ export default function ProductForm() {
         if (alive) setLoading(false);
       }
     })();
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [mode, id]);
-
-  // whenever localImages changes, reflect into form.images so ProductService can send them
-  useEffect(() => {
-    if (localImages.length) {
-      setForm((s) => ({ ...s, images: localImages }));
-    } else {
-      setForm((s) => ({ ...s, images: null }));
-    }
-  }, [localImages]);
 
   const onChange = (e) => {
     const { name, value } = e.target;
     setForm((s) => ({ ...s, [name]: value }));
+  };
+
+  // when user picks files in the dialog (create mode)
+  const handleAddLocal = (files) => {
+    // cap to 3 and update both local preview + form.images for submit
+    const merged = [...localImages, ...files].slice(0, MAX_LOCAL);
+    setLocalImages(merged);
+    setForm((s) => ({ ...s, images: merged })); // ProductService already appends s.images
   };
 
   const validate = () => {
@@ -127,7 +128,6 @@ export default function ProductForm() {
       } else {
         await createProduct(form);
       }
-
       const flash = {
         message: mode === "edit" ? "Product updated" : "Product created",
         type: "success",
@@ -145,6 +145,11 @@ export default function ProductForm() {
 
   if (loading) return <div className="p-6 text-sm text-gray-500">Loading…</div>;
 
+  // helpers for slots in add mode
+  const s0 = localImages[0] || null;
+  const s1 = localImages[1] || null;
+  const s2 = localImages[2] || null;
+
   return (
     <form onSubmit={handleSubmit} className="p-6">
       <div className="mb-6">
@@ -155,66 +160,64 @@ export default function ProductForm() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* IMAGES — matches Figma */}
+        {/* Images – matches figma structure */}
         <section className="rounded-2xl bg-gray-50 border border-gray-200 p-6">
           <h2 className="font-semibold mb-4">Images</h2>
 
-          <div className="relative rounded-2xl border border-gray-200 bg-white/60 p-5">
-            {/* grid: big primary (top), two squares + plus square (bottom) */}
+          <div className="rounded-2xl border border-gray-200 bg-white/60 p-5">
+            {/* Primary */}
+            <ImageSlot
+              fileOrUrl={s0}
+              label=""
+              onClick={() => setUploadOpen(true)}
+              className="h-64 md:h-72 mb-4"
+            />
+
+            {/* Row of two + optional plus box */}
             <div className="grid grid-cols-3 gap-4">
-              {/* primary spans all cols */}
-              <div className="col-span-3 h-64 md:h-72 rounded-xl border border-dashed border-gray-300 bg-white/70 grid place-items-center">
-                {/* image icon */}
-                <svg className="w-10 h-10 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <rect x="3" y="4" width="18" height="16" rx="2" />
-                  <path d="M8 13l2.5-3 3.5 4 2-2 3 4H6z" />
-                  <circle cx="9" cy="9" r="1.5" />
-                </svg>
-              </div>
-
-              {/* two image squares */}
-              {Array.from({ length: 2 }).map((_, idx) => (
-                <div
-                  key={idx}
-                  className="h-32 rounded-xl border border-dashed border-gray-300 bg-white/70 grid place-items-center"
-                >
-                  <svg className="w-8 h-8 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <rect x="3" y="4" width="18" height="16" rx="2" />
-                    <path d="M8 13l2.5-3 3.5 4 2-2 3 4H6z" />
-                    <circle cx="9" cy="9" r="1.5" />
-                  </svg>
-                </div>
-              ))}
-
-              {/* plus square */}
-              <button
-                type="button"
+              <ImageSlot
+                fileOrUrl={s1}
+                label=""
                 onClick={() => setUploadOpen(true)}
-                className="h-32 rounded-xl border border-gray-300 bg-white grid place-items-center hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                aria-label="Add image"
-              >
-                <svg className="w-8 h-8 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-              </button>
+                className="h-32"
+              />
+              <ImageSlot
+                fileOrUrl={s2}
+                label=""
+                onClick={() => setUploadOpen(true)}
+                className="h-32"
+              />
+              {/* plus box */}
+              {localImages.length < 3 && (
+                <button
+                  type="button"
+                  onClick={() => setUploadOpen(true)}
+                  className="h-32 rounded-xl border border-gray-400 bg-white/70 grid place-items-center hover:border-gray-600"
+                  title="Add image"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                </button>
+              )}
             </div>
-          </div>
 
-          {/* manage images (edit only) */}
-          {mode === "edit" && (
-            <div className="mt-3">
-              <button
-                type="button"
-                onClick={() => setMediaOpen(true)}
-                className="px-3 py-1.5 rounded-lg border bg-white text-sm"
-              >
-                Manage Images
-              </button>
-            </div>
-          )}
+            {/* Optional manage images (edit only) */}
+            {mode === "edit" && (
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => setMediaOpen(true)}
+                  className="px-3 py-1.5 rounded-lg border bg-white text-sm"
+                >
+                  Manage Images
+                </button>
+              </div>
+            )}
+          </div>
         </section>
 
-        {/* PRODUCT DETAILS */}
+        {/* Product details */}
         <section className="rounded-2xl bg-gray-50 border border-gray-200 p-6">
           <h2 className="font-semibold mb-4">Product Details</h2>
 
@@ -270,9 +273,7 @@ export default function ProductForm() {
                 >
                   <option value="">— No thumbnail —</option>
                   {thumbOptions.map((o) => (
-                    <option key={o.id} value={o.id}>
-                      {o.label}
-                    </option>
+                    <option key={o.id} value={o.id}>{o.label}</option>
                   ))}
                 </select>
               )}
@@ -294,7 +295,6 @@ export default function ProductForm() {
               />
               {errors.price && <p className="text-sm text-red-600 mt-1">{errors.price}</p>}
             </div>
-
             <div>
               <label className="block text-sm font-medium mb-1">Stock</label>
               <input
@@ -329,7 +329,7 @@ export default function ProductForm() {
         </section>
       </div>
 
-      {/* picker for edit */}
+      {/* Media picker for EDIT mode */}
       {mode === "edit" && (
         <MediaPickerModal
           productId={id}
@@ -342,16 +342,12 @@ export default function ProductForm() {
         />
       )}
 
-      {/* upload dialog for the "+" box */}
+      {/* Upload dialog for ADD mode (used by + box / any slot click) */}
       <MediaUploadDialog
         open={uploadOpen}
         onClose={() => setUploadOpen(false)}
-        onAdd={(file) => {
-          setLocalImages((prev) => {
-            const next = [...prev, file].slice(0, 3);
-            return next;
-          });
-          setUploadOpen(false);
+        onAdd={(files) => {
+          handleAddLocal(files);
         }}
       />
     </form>

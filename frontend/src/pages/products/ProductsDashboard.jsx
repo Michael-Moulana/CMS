@@ -8,12 +8,10 @@ import FlashMessage from "../../components/FlashMessage.jsx";
 function prettyCats(value) {
   if (!value) return "—";
   try {
-    // array already
     if (Array.isArray(value)) return value.join(", ");
-    // string that might be JSON
-    const maybe = typeof value === "string" ? value.trim() : value;
-    if (typeof maybe === "string" && maybe.startsWith("[") && maybe.endsWith("]")) {
-      const arr = JSON.parse(maybe);
+    const s = typeof value === "string" ? value.trim() : value;
+    if (typeof s === "string" && s.startsWith("[") && s.endsWith("]")) {
+      const arr = JSON.parse(s);
       return Array.isArray(arr) ? arr.join(", ") : String(value);
     }
     return String(value);
@@ -33,7 +31,10 @@ export default function ProductsDashboard() {
   const [flash, setFlash] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // pick flash from create/edit page
+  // sorting
+  const [sort, setSort] = useState({ key: "name", dir: "asc" });
+
+  // grab flash from form pages
   useEffect(() => {
     if (location.state?.flash) {
       setFlash(location.state.flash);
@@ -45,10 +46,10 @@ export default function ProductsDashboard() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await api.get("/products"); 
+        const res = await api.get("/products");
         const list = res?.data?.data ?? res?.data ?? [];
         setRows(Array.isArray(list) ? list : []);
-      } catch (e) {
+      } catch {
         setFlash({ type: "error", message: "Failed to load products" });
       } finally {
         setLoading(false);
@@ -56,15 +57,34 @@ export default function ProductsDashboard() {
     })();
   }, []);
 
-  const filtered = useMemo(() => {
+  // search + sort (client-side)
+  const data = useMemo(() => {
     const s = q.trim().toLowerCase();
-    if (!s) return rows;
-    return rows.filter((r) =>
-      (r.title || r.name || "").toLowerCase().includes(s)
-    );
-  }, [rows, q]);
-//added delete funciton
+    const filtered = s
+      ? rows.filter((r) => (r.title || r.name || "").toLowerCase().includes(s))
+      : rows.slice();
 
+    const { key, dir } = sort;
+    const get = (r) => {
+      switch (key) {
+        case "name": return (r.title || r.name || "").toString().toLowerCase();
+        case "description": return (r.description || "").toString().toLowerCase();
+        case "price": return Number(r.price) || 0;
+        case "stock": return Number(r.stock) || 0;
+        case "category": return prettyCats(r.categories ?? r.category).toLowerCase();
+        default: return "";
+      }
+    };
+    filtered.sort((a, b) => {
+      const A = get(a); const B = get(b);
+      if (A < B) return dir === "asc" ? -1 : 1;
+      if (A > B) return dir === "asc" ? 1 : -1;
+      return 0;
+    });
+    return filtered;
+  }, [rows, q, sort]);
+
+  // delete
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this product?")) return;
     try {
@@ -76,14 +96,34 @@ export default function ProductsDashboard() {
     }
   };
 
+  // tiny head cell with sort arrow
+  const ThSort = ({ k, children, extra = "" }) => (
+    <th className={`text-left font-medium px-6 py-4 ${extra}`}>
+      <button
+        type="button"
+        className="inline-flex items-center gap-1 text-gray-600"
+        onClick={() =>
+          setSort((s) => (s.key === k ? { key: k, dir: s.dir === "asc" ? "desc" : "asc" } : { key: k, dir: "asc" }))
+        }
+        title="Sort"
+      >
+        <span>{children}</span>
+        <span className="text-xs text-gray-400">
+          {sort.key === k ? (sort.dir === "asc" ? "▲" : "▼") : "↕"}
+        </span>
+      </button>
+    </th>
+  );
+
+  const cell = "px-6 py-4 border-r last:border-r-0";
+
   return (
     <div className="max-w-[1200px] mx-auto">
       {/* Header */}
       <div className="mb-6 flex items-center gap-3">
         <button
           onClick={() => navigate("/dashboard/products/new")}
-          className="inline-flex items-center gap-2 h-10 px-4 rounded-2xl
-                     border border-blue-600 text-blue-600 bg-white hover:bg-blue-50"
+          className="inline-flex items-center gap-2 h-10 px-4 rounded-2xl border border-blue-600 text-blue-600 bg-white hover:bg-blue-50"
         >
           <span className="text-lg leading-none">+</span>
           <span className="font-medium">Add Product</span>
@@ -116,21 +156,23 @@ export default function ProductsDashboard() {
         />
       )}
 
-      {/* Table */}
-      <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
+      {/* Table (with grid lines like Figma) */}
+      <div className="rounded-2xl ring-1 ring-gray-200 bg-white shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead>
-              <tr className="text-gray-500 border-b">
+            <thead className="bg-gray-50 border-b">
+              <tr className="text-gray-600">
                 <th className="text-left font-medium px-6 py-4 w-12">#</th>
-                <th className="text-left font-medium px-6 py-4">Name</th>
-                <th className="text-left font-medium px-6 py-4">Description</th>
-                <th className="text-left font-medium px-6 py-4">Price</th>
-                <th className="text-left font-medium px-6 py-4">Stock</th>
-                <th className="text-left font-medium px-6 py-4">Category</th>
-                <th className="text-right font-medium px-6 py-4">Edit</th>
+                <ThSort k="name">Name</ThSort>
+                <ThSort k="description">Description</ThSort>
+                <ThSort k="price">Price</ThSort>
+                <ThSort k="stock">Stock</ThSort>
+                <ThSort k="category">Category</ThSort>
+                {/* Blue Edit header text to match Figma */}
+                <th className="text-right font-medium px-6 py-4 text-blue-600">Edit</th>
               </tr>
             </thead>
+
             <tbody>
               {loading ? (
                 <tr>
@@ -138,24 +180,24 @@ export default function ProductsDashboard() {
                     Loading…
                   </td>
                 </tr>
-              ) : filtered.length === 0 ? (
+              ) : data.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-16 text-center text-gray-400">
                     No products found.
                   </td>
                 </tr>
               ) : (
-                filtered.map((p, i) => (
-                  <tr key={p._id} className="border-t hover:bg-gray-50">
-                    <td className="px-6 py-4">{i + 1}</td>
-                    <td className="px-6 py-4 font-medium">{p.title || p.name}</td>
-                    <td className="px-6 py-4 text-gray-600">{p.description || "—"}</td>
-                    <td className="px-6 py-4">{fmt(p.price)}</td>
-                    <td className="px-6 py-4">{fmt(p.stock)}</td>
-                    <td className="px-6 py-4">{prettyCats(p.categories ?? p.category)}</td>
+                data.map((p, i) => (
+                  <tr key={p._id} className="border-t hover:bg-gray-50/60">
+                    <td className={cell}>{i + 1}</td>
+                    <td className={`${cell} font-medium`}>{p.title || p.name}</td>
+                    <td className={`${cell} text-gray-600 truncate`}>{p.description || "—"}</td>
+                    <td className={cell}>{fmt(p.price)}</td>
+                    <td className={cell}>{fmt(p.stock)}</td>
+                    <td className={cell}>{prettyCats(p.categories ?? p.category)}</td>
                     <td className="px-6 py-4">
                       <div className="flex justify-end gap-2">
-                        {/* Pencil (edit) */}
+                        {/* edit */}
                         <button
                           onClick={() => navigate(`/dashboard/products/${p._id}/edit`)}
                           className="h-9 w-9 rounded-xl border bg-white hover:bg-gray-100 grid place-items-center"
@@ -167,8 +209,7 @@ export default function ProductsDashboard() {
                             <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z" />
                           </svg>
                         </button>
-
-                        {/* Trash (delete) */}
+                        {/* delete */}
                         <button
                           onClick={() => handleDelete(p._id)}
                           className="h-9 w-9 rounded-xl bg-red-500 hover:bg-red-600 grid place-items-center text-white"
@@ -191,10 +232,10 @@ export default function ProductsDashboard() {
           </table>
         </div>
 
-        {/* footer  */}
-        <div className="flex items-center justify-between p-4 border-top">
+        {/* footer */}
+        <div className="flex items-center justify-between p-4 border-t bg-gray-50">
           <div className="text-xs text-gray-500 px-2">
-            Showing 1–{Math.min(filtered.length, 10)} of {filtered.length}
+            Showing 1–{Math.min(data.length, 10)} of {data.length}
           </div>
           <div className="flex items-center gap-2">
             <button className="h-9 w-9 rounded-lg border bg-white">{"<"}</button>
