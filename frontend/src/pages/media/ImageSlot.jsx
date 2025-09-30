@@ -1,52 +1,69 @@
-import { useEffect, useMemo, useState } from "react";
+// frontend/src/pages/media/ImageSlot.jsx
+import React, { useEffect, useMemo } from "react";
 
 /**
- * Square/rect box that shows either a faint image icon or a real image.
- * - fileOrUrl: File | string | null
- * - rounded: tailwind radius class for the card corners around it (optional)
- * - onClick: open the upload dialog when user clicks the box
- * - icon: optional SVG (fallback is a simple image icon)
+ * Clickable image slot:
+ * - If fileOrUrl present, shows full-bleed preview (cover)
+ * - Otherwise shows centered image icon
+ * - Absolutely no scrollbars/strips (overflow-hidden)
  */
-export default function ImageSlot({ fileOrUrl, label, onClick, className = "" }) {
-  const [objectUrl, setObjectUrl] = useState("");
-
-  // Support File input (from dialog) AND URL (future-proof for edit mode)
+export default function ImageSlot({
+  fileOrUrl,
+  onClick,
+  className = "",
+  ariaLabel = "Select image",
+}) {
   const src = useMemo(() => {
     if (!fileOrUrl) return "";
-    if (typeof fileOrUrl === "string") return fileOrUrl;
-    return URL.createObjectURL(fileOrUrl);
+    if (typeof fileOrUrl === "string") return fileOrUrl;     // URL already
+    try {
+      return URL.createObjectURL(fileOrUrl);                 // File -> blob URL
+    } catch {
+      return "";
+    }
   }, [fileOrUrl]);
 
+  // Clean up blob URL
   useEffect(() => {
-    if (typeof fileOrUrl === "object" && fileOrUrl) {
-      setObjectUrl(src);
-      return () => URL.revokeObjectURL(src);
-    }
-  }, [fileOrUrl, src]);
+    return () => {
+      if (src && src.startsWith("blob:")) URL.revokeObjectURL(src);
+    };
+  }, [src]);
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`relative overflow-hidden rounded-xl border border-gray-300 bg-white/70
-                  grid place-items-center group ${className}`}
-      title={label || "Add image"}
+      aria-label={ariaLabel}
+      className={[
+        "relative w-full rounded-2xl border border-gray-300 bg-white",
+        "hover:border-gray-500 transition-colors",
+        "overflow-hidden",               // ← kills the left “strip”
+        "grid place-items-center",       // centers the icon when empty
+        className,
+      ].join(" ")}
     >
-      {/* image preview */}
       {src ? (
         <img
           src={src}
-          alt={label || "image"}
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover" // full-bleed cover
+          draggable={false}
         />
       ) : (
-        <div className="flex flex-col items-center justify-center text-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 mb-1 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-            <rect x="3" y="3" width="18" height="14" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
-            <path d="M21 13l-5-5-4 4-2-2-5 5"/>
-          </svg>
-          {label && <span className="text-xs opacity-70">{label}</span>}
-        </div>
+        // placeholder icon
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-7 w-7 text-gray-400"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        >
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <circle cx="9" cy="10" r="2" />
+          <path d="M21 17l-5.5-5.5a1 1 0 0 0-1.4 0L7 18" />
+        </svg>
       )}
     </button>
   );

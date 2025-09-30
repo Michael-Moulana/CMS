@@ -71,12 +71,18 @@ const getAllProducts = async (req, res, next) => {
  */
 const getProduct = async (req, res, next) => {
   try {
-    const product = await productManager.getById(req.params.id);
+    let product = await productManager.getById(req.params.id);
     if (!product) {
       return res
         .status(404)
         .json({ success: false, message: "Product not found" });
     }
+
+    // populate mediaId if the underlying object supports populate()
+    if (typeof product.populate === "function") {
+      product = await product.populate("media.mediaId");
+    }
+
     const decorated = ResponseDecorator.decorate(product);
     res.json(decorated);
   } catch (err) {
@@ -224,8 +230,11 @@ const updateMediaDetails = async (req, res, next) => {
     const productId = req.params.id;
     const mediaId = req.params.mediaId;
 
+    // Coerce to number for validation
+    const numericOrder = order === undefined ? undefined : Number(order);
+
     // Validate order if provided
-    if (order !== undefined && (!Number.isInteger(order) || order < 0)) {
+    if (numericOrder !== undefined && (!Number.isInteger(numericOrder) || numericOrder < 0)) {
       return res.status(400).json({
         success: false,
         message: "Order must be a non-negative integer",
@@ -234,7 +243,7 @@ const updateMediaDetails = async (req, res, next) => {
 
     const result = await productManager.updateMediaDetails(productId, mediaId, {
       title,
-      order,
+      order: numericOrder,
     });
 
     const decorated = ResponseDecorator.decorate(

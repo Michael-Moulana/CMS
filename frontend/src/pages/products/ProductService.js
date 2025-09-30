@@ -25,6 +25,7 @@ export async function createProduct(form) {
   const cats = toCategoriesArray(form.category);
   fd.append("categories", JSON.stringify(cats));
 
+  // createProduct() in backend expects "thumbnail"
   if (form.thumbnail) fd.append("thumbnail", form.thumbnail);
 
   if (form.images && form.images.length) {
@@ -60,7 +61,8 @@ export async function updateProduct(id, form) {
   const cats = toCategoriesArray(form.category);
   fd.append("categories", JSON.stringify(cats));
 
-  if (form.thumbnail) fd.append("thumbnail", form.thumbnail);
+ 
+  if (form.thumbnail) fd.append("thumbnailMediaId", form.thumbnail);
 
   if (form.images && form.images.length) {
     Array.from(form.images).forEach((file) => fd.append("images", file));
