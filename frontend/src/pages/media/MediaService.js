@@ -19,7 +19,10 @@ export async function uploadMediaToProduct(productId, files) {
 }
 
 
-
+export async function updateMediaDetails(productId, relationId, payload) {
+  return (await api.put(`/products/${productId}/media/${relationId}`, payload))
+    ?.data?.data ?? null;
+}
 
 export async function deleteMediaFromProduct(productId, relationId) {
   return (await api.delete(`/products/${productId}/media/${relationId}`))
