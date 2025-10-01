@@ -2,10 +2,11 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { createProduct, getProductById, updateProduct } from "./ProductService";
-import { getProductMedia, uploadMediaToProduct } from "../media/MediaService.js";
+import { getProductMedia, uploadMediaToProduct, deleteMediaFromProduct } from "../media/MediaService.js";
 import MediaPickerModal from "../media/MediaPickerModal.jsx";
 import MediaUploadDialog from "../media/MediaUploadDialog.jsx";
 import ImageSlot from "../media/ImageSlot.jsx";
+import FlashMessage from "../../components/FlashMessage.jsx"; // ✅ add
 import api from "../../axiosConfig.jsx";
 
 const MAX_LOCAL = 3;
@@ -64,6 +65,9 @@ export default function ProductForm() {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
+
+  // ✅ local flash for edit/delete feedback on this page
+  const [flash, setFlash] = useState(null);
 
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -190,7 +194,6 @@ export default function ProductForm() {
           (m) => String(m.mediaId) === String(o.id)
         );
         return match ? { ...o, label: match.title || o.label } : o;
-        // keeps option text aligned with latest title displayed in modal
       })
     );
   }, [editImages, mode]);
@@ -265,17 +268,71 @@ export default function ProductForm() {
     (mode === "add" && (localImages?.length ?? 0) < 3) ||
     (mode === "edit" && editImages.length < 3);
 
+  const handleDeleteSlot = async (idx) => {
+    if (mode === "add") {
+      setLocalImages((prev) => {
+        const next = prev.filter((_, i) => i !== idx);
+        setForm((s) => ({ ...s, images: next }));
+        return next;
+      });
+      return;
+    }
+    const relId = editImages[idx]?.relId;
+    if (!relId) return;
+    if (!window.confirm("Remove this image from the product?")) return;
+
+    try {
+      await deleteMediaFromProduct(id, relId);
+      await Promise.all([loadMedia(), loadProduct()]);
+      // 🔴 red flash on delete
+      setFlash({ message: "Image deleted successfully", type: "error" });
+    } catch {
+      // if you prefer, show a red flash instead of alert:
+      setFlash({ message: "Delete failed. Please try again.", type: "error" });
+    }
+  };
+
+  const TrashBtn = ({ onClick, small = false }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`absolute top-2 left-2 ${small ? "h-7 w-7" : "h-8 w-8"} rounded-lg bg-red-500 hover:bg-red-600 text-white grid place-items-center shadow`}
+      title="Remove image"
+      aria-label="Remove image"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+        <polyline points="3 6 5 6 21 6" />
+        <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+        <line x1="10" y1="11" x2="10" y2="17" />
+        <line x1="14" y1="11" x2="14" y2="17" />
+      </svg>
+    </button>
+  );
+
+  const SlotWrapper = ({ idx, sizeClass, src }) => (
+    <div className={`${sizeClass} relative`}>
+      <ImageSlot
+        fileOrUrl={src}
+        label=""
+        onClick={() => handleSlotClick(idx)}
+        className="w-full h-full"
+      />
+      {src && <TrashBtn onClick={() => handleDeleteSlot(idx)} small={sizeClass !== HERO_H} />}
+    </div>
+  );
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
+
     setSaving(true);
     try {
       if (mode === "edit") {
-        // ProductService already sends `thumbnailMediaId` = form.thumbnail
-        await updateProduct(id, form);
+        await updateProduct(id, form); // sends thumbnailMediaId if set
       } else {
         await createProduct(form);
       }
+
       const flash = {
         message: mode === "edit" ? "Product updated" : "Product created",
         type: "success",
@@ -300,21 +357,31 @@ export default function ProductForm() {
         </p>
       </div>
 
+      {/* ✅ Flash UI for edits/deletes on this page */}
+      {flash && (
+        <FlashMessage
+          key={`${flash.type}-${flash.message}-${Date.now()}`}
+          message={flash.message}
+          type={flash.type}
+          ms={2500}
+          onClose={() => setFlash(null)}
+        />
+      )}
+
       <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 ${PANEL_MIN_H}`}>
         {/* IMAGES */}
         <section className={`${PANEL} ${PANEL_MIN_H} flex flex-col`}>
           <h2 className="font-semibold mb-4">Images</h2>
 
-          <ImageSlot
-            fileOrUrl={s0}
-            label=""
-            onClick={() => handleSlotClick(0)}
-            className={`${HERO_H} mb-4`}
-          />
+          {/* HERO slot with delete overlay */}
+          <div className="mb-4">
+            <SlotWrapper idx={0} sizeClass={HERO_H} src={s0} />
+          </div>
 
+          {/* Thumbs with delete overlays */}
           <div className="grid grid-cols-3 gap-4">
-            <ImageSlot fileOrUrl={s1} label="" onClick={() => handleSlotClick(1)} className={THUMB_H} />
-            <ImageSlot fileOrUrl={s2} label="" onClick={() => handleSlotClick(2)} className={THUMB_H} />
+            <SlotWrapper idx={1} sizeClass={THUMB_H} src={s1} />
+            <SlotWrapper idx={2} sizeClass={THUMB_H} src={s2} />
 
             {canShowPlus && (
               <button
@@ -453,7 +520,6 @@ export default function ProductForm() {
           open={editModalOpen}
           item={selectedItem}
           onClose={() => setEditModalOpen(false)}
-          //  patch so the slots reorder immediately
           onPatched={({ relId, title, order }) => {
             setEditImages((prev) => {
               const next = prev.map((x) =>
@@ -465,10 +531,11 @@ export default function ProductForm() {
               return next;
             });
           }}
-          // Refresh both lists so dropdown labels & order are correct after save
           onSaved={async () => {
             await Promise.all([loadMedia(), loadProduct()]);
             setEditModalOpen(false);
+            // 🟢 green flash on update
+            setFlash({ message: "Image updated successfully", type: "success" });
           }}
         />
       )}
