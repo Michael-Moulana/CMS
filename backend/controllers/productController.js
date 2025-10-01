@@ -126,6 +126,7 @@ const addMediaToProduct = async (req, res, next) => {
   }
 };
 
+//Connect button to backend API (DELETE /media/:id).
 const deleteMediaFromProduct = async (req, res, next) => {
   try {
     await productManager.deleteMediaFromProduct(req.params.id, req.params.mediaId);

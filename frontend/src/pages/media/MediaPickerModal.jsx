@@ -14,14 +14,12 @@ export default function MediaPickerModal({
   const [order, setOrder] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     if (!open || !item) return;
     setTitle(item.title ?? "");
     setOrder(Number(item.order ?? 0));
     setError("");
-    setSuccess("");
   }, [open, item]);
 
   if (!open || !item) return null;
@@ -41,9 +39,7 @@ export default function MediaPickerModal({
         order: payload.order,
       });
 
-      setSuccess("Saved!");
       await onSaved?.();
-      setTimeout(() => onClose?.(), 700);
     } catch (e) {
       setError("Failed to update media details.");
     } finally {
@@ -75,7 +71,6 @@ export default function MediaPickerModal({
 
         <div className="p-4 space-y-3">
           {error && <div className="text-sm text-red-600">{error}</div>}
-          {success && <div className="text-sm text-green-600">{success}</div>}
 
           <div className="rounded-xl border bg-gray-50 p-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
