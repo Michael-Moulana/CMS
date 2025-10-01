@@ -1,3 +1,14 @@
+@font-face {
+  font-family: "Rota";
+  src: url("../public/fonts/Rota-Regular.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+body {
+  font-family: "Rota", sans-serif;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

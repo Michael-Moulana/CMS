@@ -1,5 +1,5 @@
 // frontend/src/pages/products/ProductService.js
-import api from "../../axiosConfig.jsx";
+import api from "../../../axiosConfig.jsx";
 
 function toCategoriesArray(category) {
   if (!category) return [];
