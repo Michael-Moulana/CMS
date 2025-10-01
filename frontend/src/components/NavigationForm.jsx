@@ -1,15 +1,19 @@
+// frontend/src/components/NavigationForm.jsx
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import axiosInstance from "../axiosConfig";
 
-const NavigationForm = ({
+export default function NavigationForm({
   navigations,
   setNavigations,
   editingNav,
   setEditingNav,
   showFlash,
-}) => {
+}) {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
@@ -37,7 +41,6 @@ const NavigationForm = ({
       alert("Please fill all required fields");
       return;
     }
-
     if (!user?.token) {
       alert("User not authenticated");
       return;
@@ -45,11 +48,10 @@ const NavigationForm = ({
 
     try {
       let res;
-
       if (editingNav?._id) {
         // Update navigation
         res = await axiosInstance.put(
-          `/api/dashboard/navigations/${editingNav._id}`,
+          `/dashboard/navigations/${editingNav._id}`,
           {
             title: formData.title,
             slug: formData.slug,
@@ -59,14 +61,13 @@ const NavigationForm = ({
           { headers: { Authorization: `Bearer ${user.token}` } }
         );
 
-        // Replace updated nav in state
         setNavigations(
           navigations.map((n) =>
             n._id === res.data.navigation._id ? res.data.navigation : n
           )
         );
-        setEditingNav(null);
-        showFlash("Navigation updated successfully", "warning");
+        setEditingNav?.(null);
+        showFlash?.("Navigation updated successfully", "warning");
       } else {
         // Create new navigation
         res = await axiosInstance.post(
@@ -80,67 +81,119 @@ const NavigationForm = ({
           { headers: { Authorization: `Bearer ${user.token}` } }
         );
 
-        // Append new nav to state
-        setNavigations([...navigations, res.data.navigation]);
-        showFlash("Navigation created successfully", "success");
+        setNavigations?.([...navigations, res.data.navigation]);
+        showFlash?.("Navigation created successfully", "success");
       }
 
-      // Reset form
       setFormData({ title: "", slug: "", order: 0, parent: "" });
+      // optional: go back to the list
+      // navigate("/dashboard/navigations");
     } catch (err) {
       console.error("Save failed:", err.response?.data || err.message);
       alert("Failed to save navigation");
-      showFlash("Failed to save navigation", "error");
+      showFlash?.("Failed to save navigation", "error");
     }
   };
 
+  const label = editingNav ? "Edit Navigation" : "Create Navigation";
+
   return (
-    <form onSubmit={handleSubmit} className="bg-white p-4 shadow rounded mb-6">
-      <input
-        type="text"
-        placeholder="Navigation Title"
-        value={formData.title}
-        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-        className="w-full mb-4 p-2 border rounded"
-      />
-      <input
-        type="text"
-        placeholder="Slug"
-        value={formData.slug}
-        onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-        className="w-full mb-4 p-2 border rounded"
-      />
-      <input
-        type="number"
-        placeholder="Order"
-        value={formData.order}
-        onChange={(e) => setFormData({ ...formData, order: e.target.value })}
-        className="w-full mb-4 p-2 border rounded"
-      />
+    <div className="w-full">
+      {/* big rounded grey panel, a bit left-leaning by occupying full content width */}
+      <div className="rounded-3xl border border-gray-200 bg-gray-100 shadow-sm p-5 md:p-8 max-w-[1200px]">
+        <h3 className="text-lg font-semibold mb-5">{label}</h3>
 
-      <select
-        value={formData.parent}
-        onChange={(e) => setFormData({ ...formData, parent: e.target.value })}
-        className="w-full mb-4 p-2 border rounded"
-      >
-        <option value="">-- No Parent --</option>
-        {navigations
-          .filter((nav) => !editingNav || nav._id !== editingNav._id) // prevent selecting itself
-          .map((nav) => (
-            <option key={nav._id} value={nav._id}>
-              {nav.title}
-            </option>
-          ))}
-      </select>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Title */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-2">
+              Title
+            </label>
+            <input
+              type="text"
+              placeholder="sample"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData((s) => ({ ...s, title: e.target.value }))
+              }
+              className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 outline-none focus:border-blue-500"
+            />
+          </div>
 
-      <button
-        type="submit"
-        className="bg-blue-600 text-white px-4 py-2 rounded"
-      >
-        {editingNav ? "Update Navigation" : "Add Navigation"}
-      </button>
-    </form>
+          {/* Slug */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-2">
+              Slug
+            </label>
+            <input
+              type="text"
+              placeholder="sample"
+              value={formData.slug}
+              onChange={(e) =>
+                setFormData((s) => ({ ...s, slug: e.target.value }))
+              }
+              className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 outline-none focus:border-blue-500"
+            />
+          </div>
+
+          {/* Order */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-2">
+              Order
+            </label>
+            <input
+              type="number"
+              placeholder="0"
+              value={formData.order}
+              onChange={(e) =>
+                setFormData((s) => ({ ...s, order: e.target.value }))
+              }
+              className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 outline-none focus:border-blue-500"
+            />
+          </div>
+
+          {/* Parent */}
+          <div>
+            <label className="block text-sm font-medium text-gray-600 mb-2">
+              Parent
+            </label>
+            <select
+              value={formData.parent}
+              onChange={(e) =>
+                setFormData((s) => ({ ...s, parent: e.target.value }))
+              }
+              className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 outline-none focus:border-blue-500"
+            >
+              <option value="">select</option>
+              {Array.isArray(navigations) &&
+                navigations
+                  .filter((nav) => !editingNav || nav._id !== editingNav._id)
+                  .map((nav) => (
+                    <option key={nav._id} value={nav._id}>
+                      {nav.title}
+                    </option>
+                  ))}
+            </select>
+          </div>
+
+          {/* Actions */}
+          <div className="pt-1 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="h-10 px-4 rounded-xl border bg-white hover:bg-gray-100"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="h-10 px-5 rounded-xl bg-blue-600 text-white hover:bg-blue-700"
+            >
+              {editingNav ? "Update" : "Create"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
-};
-
-export default NavigationForm;
+}
