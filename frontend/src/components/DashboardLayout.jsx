@@ -83,21 +83,27 @@ export default function DashboardLayout() {
           <span className="font-semibold tracking-wide text-blue-600">BLOX CMS</span>
         </Link>
 
-        {/* Account */}
-        <div className="flex items-center gap-3">
-          <div className="bg-blue-600 rounded-lg h-8 w-8 flex items-center justify-center">
+        {/* Account (clickable -> /dashboard/profile) */}
+        <Link
+          to="/dashboard/profile"
+          className="flex items-center gap-3 group"
+          aria-label="Open profile"
+        >
+          <div className="bg-blue-600 rounded-lg h-8 w-8 flex items-center justify-center group-hover:bg-blue-700 transition-colors">
             <img
               src="/img/account.png"
-              alt="account"
+              alt=""
               onError={iconFallback}
               className="h-4 w-4 filter"
             />
           </div>
           <div className="hidden sm:flex flex-col">
-            <span className="text-sm font-medium text-blue-600">{displayName}</span>
+            <span className="text-sm font-medium text-blue-600 group-hover:text-blue-700">
+              {displayName}
+            </span>
             <span className="text-xs text-gray-400">Admin account</span>
           </div>
-        </div>
+        </Link>
       </header>
 
       <div className="flex">

@@ -1,113 +1,175 @@
-import { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext"; // adjust path if needed
 import axiosInstance from "../axiosConfig";
 
-const Profile = () => {
-  const { user } = useAuth(); // already contains token
-  const [formData, setFormData] = useState({
-    name: "",
+export default function Profile() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
     email: "",
     university: "",
     address: "",
   });
   const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    (async () => {
       try {
-        const { data } = await axiosInstance.get("/api/auth/profile", {
+        const { data } = await axiosInstance.get("/auth/profile", {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        setFormData({
-          name: data.name || "",
+        const [first = "", ...rest] = (data.name || "").split(" ");
+        const last = rest.join(" ");
+        setForm({
+          firstName: first,
+          lastName: last,
           email: data.email || "",
           university: data.university || "",
           address: data.address || "",
         });
-      } catch (error) {
-        console.error(
-          "Failed to fetch profile:",
-          error.response?.data || error.message
-        );
+      } catch {
         alert("Failed to fetch profile.");
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchProfile(); // always attempt, backend will reject if unauthorized
+    })();
   }, [user.token]);
 
-  const handleSubmit = async (e) => {
+  const onChange = (key) => (e) => setForm((s) => ({ ...s, [key]: e.target.value }));
+
+  const onSubmit = async (e) => {
     e.preventDefault();
-    setUpdating(true);
+    setSaving(true);
     try {
-      await axiosInstance.put("/api/auth/profile", formData, {
+      const payload = {
+        name: `${form.firstName || ""} ${form.lastName || ""}`.trim(),
+        email: form.email,
+        university: form.university,
+        address: form.address,
+      };
+      await axiosInstance.put("/auth/profile", payload, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       alert("Profile updated successfully!");
-    } catch (error) {
-      console.error(
-        "Failed to update profile:",
-        error.response?.data || error.message
-      );
+    } catch {
       alert("Failed to update profile.");
     } finally {
-      setUpdating(false);
+      setSaving(false);
     }
   };
 
-  if (loading) {
-    return <div className="text-center mt-20">Loading profile...</div>;
-  }
+  if (loading) return <div className="text-sm text-gray-500">Loading...</div>;
 
   return (
-    <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto mt-20 px-4">
-      <form onSubmit={handleSubmit} className="bg-white p-6 shadow-md rounded">
-        <h1 className="text-2xl font-bold mb-4 text-center">Your Profile</h1>
-        <input
-          type="text"
-          placeholder="Name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          className="w-full mb-4 p-2 border rounded"
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          className="w-full mb-4 p-2 border rounded"
-        />
-        <input
-          type="text"
-          placeholder="University"
-          value={formData.university}
-          onChange={(e) =>
-            setFormData({ ...formData, university: e.target.value })
-          }
-          className="w-full mb-4 p-2 border rounded"
-        />
-        <input
-          type="text"
-          placeholder="Address"
-          value={formData.address}
-          onChange={(e) =>
-            setFormData({ ...formData, address: e.target.value })
-          }
-          className="w-full mb-4 p-2 border rounded"
-        />
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white p-2 rounded"
-          disabled={updating}
-        >
-          {updating ? "Updating..." : "Update Profile"}
-        </button>
-      </form>
+    <div className="space-y-6">
+      {/* Breadcrumb */}
+      <div>
+        <h1 className="text-xl font-semibold text-gray-800">Profile</h1>
+        <p className="text-xs text-gray-400">Dashboard / Profile</p>
+      </div>
+
+      {/* Big grey card, slightly left-biased (no mx-auto) */}
+      <div className="rounded-3xl border border-gray-200 bg-gray-100 p-6 md:p-8 max-w-6xl">
+        {/* Title on left */}
+        <h3 className="text-base font-semibold text-gray-800">Profile Information</h3>
+
+        {/* Avatar + Change Picture on LEFT, under the title */}
+        <div className="mt-4 flex items-center gap-3">
+          <div className="h-9 w-9 rounded-full bg-blue-600 text-white grid place-items-center font-semibold">
+            {form.firstName?.[0]?.toUpperCase() || "U"}
+          </div>
+          <button
+            type="button"
+            className="h-9 px-4 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700"
+          >
+            Change Picture
+          </button>
+        </div>
+
+        {/* Form grid */}
+        <form onSubmit={onSubmit} className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left column */}
+          <div className="space-y-5">
+            <div>
+              <label className="block text-sm text-gray-600 mb-2">First Name</label>
+              <input
+                type="text"
+                value={form.firstName}
+                onChange={onChange("firstName")}
+                placeholder="sample"
+                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 outline-none focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-2">Last Name</label>
+              <input
+                type="text"
+                value={form.lastName}
+                onChange={onChange("lastName")}
+                placeholder="sample"
+                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 outline-none focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-2">Email</label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={onChange("email")}
+                placeholder="sample"
+                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 outline-none focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Right column */}
+          <div className="space-y-5">
+            <div>
+              <label className="block text-sm text-gray-600 mb-2">University</label>
+              <input
+                type="text"
+                value={form.university}
+                onChange={onChange("university")}
+                placeholder="sample"
+                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 outline-none focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-600 mb-2">Address</label>
+              <textarea
+                value={form.address}
+                onChange={onChange("address")}
+                placeholder="sample"
+                rows={6}
+                className="w-full rounded-xl border border-gray-200 bg-white p-4 outline-none focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="md:col-span-2 flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="h-10 px-4 rounded-xl border bg-white hover:bg-gray-100"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="h-10 px-5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+            >
+              {saving ? "Updating…" : "Update"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
-};
-
-export default Profile;
+}

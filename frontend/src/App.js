@@ -18,7 +18,7 @@ import NavigationDashboard from "./pages/dashboard/NavigationDashboard";
 // NEW imports
 import ProductsDashboard from "./pages/products/ProductsDashboard";
 import ProductForm from "./pages/products/ProductForm";
-import PageForm from "./components/PageForm.jsx";   
+import PageForm from "./components/PageForm.jsx";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import DashboardLayout from "./components/DashboardLayout";
@@ -43,11 +43,7 @@ function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Profile (requires auth, but outside dashboard layout) */}
-        <Route
-          path="/profile"
-          element={user ? <Profile /> : <Navigate to="/login" replace />}
-        />
+        <Route path="/profile" element={<Navigate to="/dashboard/profile" replace />} />
 
         {/* Protected dashboard area */}
         <Route
@@ -58,8 +54,8 @@ function AppRoutes() {
 
           {/* Pages */}
           <Route path="pages" element={<PagesDashboard />} />
-          <Route path="pages/new" element={<PageForm />} />        {/* Add Page */}
-          <Route path="pages/:id/edit" element={<PageForm />} />   {/* Edit Page */}
+          <Route path="pages/new" element={<PageForm />} />
+          <Route path="pages/:id/edit" element={<PageForm />} />
 
           {/* Navigation */}
           <Route path="navigations" element={<NavigationDashboard />} />
@@ -68,6 +64,13 @@ function AppRoutes() {
           <Route path="products" element={<ProductsDashboard />} />
           <Route path="products/new" element={<ProductForm />} />
           <Route path="products/:id/edit" element={<ProductForm />} />
+          
+          
+
+
+
+          {/*  Profile is now inside the dashboard layout */}
+          <Route path="profile" element={<Profile />} />
         </Route>
       </Routes>
     </>
