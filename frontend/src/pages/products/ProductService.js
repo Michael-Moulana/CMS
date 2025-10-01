@@ -1,10 +1,6 @@
 // frontend/src/pages/products/ProductService.js
 import api from "../../axiosConfig.jsx";
 
-/**
- * Normalize a category input (string like "a, b" or single "a")
- * into an array so the backend receives `categories: [...]`
- */
 function toCategoriesArray(category) {
   if (!category) return [];
   if (Array.isArray(category)) return category;
@@ -17,7 +13,7 @@ function toCategoriesArray(category) {
 // ---------- CREATE ----------
 export async function createProduct(form) {
   const fd = new FormData();
-  fd.append("title", form.name); // backend expects "title"
+  fd.append("title", form.name);
   fd.append("description", form.description || "");
   fd.append("price", String(form.price));
   fd.append("stock", String(form.stock));
@@ -25,7 +21,7 @@ export async function createProduct(form) {
   const cats = toCategoriesArray(form.category);
   fd.append("categories", JSON.stringify(cats));
 
-  // createProduct() in backend expects "thumbnail"
+  // create uses 'thumbnail' (manager reads data.thumbnail)
   if (form.thumbnail) fd.append("thumbnail", form.thumbnail);
 
   if (form.images && form.images.length) {
@@ -44,7 +40,7 @@ export async function fetchProducts() {
   return res?.data?.data ?? res?.data ?? [];
 }
 
-// ---------- GET ONE (for /:id/edit) ----------
+// ---------- GET ONE ----------
 export async function getProductById(id) {
   const res = await api.get(`/products/${id}`);
   return res?.data?.data ?? null;
@@ -61,7 +57,7 @@ export async function updateProduct(id, form) {
   const cats = toCategoriesArray(form.category);
   fd.append("categories", JSON.stringify(cats));
 
- 
+  // UPDATE must send 'thumbnailMediaId' (controller/manager expect this)
   if (form.thumbnail) fd.append("thumbnailMediaId", form.thumbnail);
 
   if (form.images && form.images.length) {

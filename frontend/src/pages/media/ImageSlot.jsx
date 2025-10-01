@@ -2,11 +2,7 @@
 import React, { useEffect, useMemo } from "react";
 
 /**
- * Clickable image slot:
- * - If fileOrUrl present, shows full-bleed preview (cover)
- * - Otherwise shows centered image icon
- * - Absolutely no scrollbars/strips (overflow-hidden)
- */
+ * Clickable image slot:*/
 export default function ImageSlot({
   fileOrUrl,
   onClick,

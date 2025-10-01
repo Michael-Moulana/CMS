@@ -1,24 +1,27 @@
-// Single-image edit modal (title + order) with blurred background
+// frontend/src/pages/media/MediaPickerModal.jsx
 import { useEffect, useState } from "react";
-import { updateMediaDetails /*, deleteMediaFromProduct */ } from "./MediaService";
+import { updateMediaDetails } from "./MediaService";
 
 export default function MediaPickerModal({
   productId,
   open,
-  item,         // { relationId, url, title, order }  
+  item,       // { relId, mediaId, url, title, order }
   onClose,
   onSaved,
+  onPatched,
 }) {
   const [title, setTitle] = useState("");
   const [order, setOrder] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
     if (!open || !item) return;
     setTitle(item.title ?? "");
     setOrder(Number(item.order ?? 0));
     setError("");
+    setSuccess("");
   }, [open, item]);
 
   if (!open || !item) return null;
@@ -27,13 +30,21 @@ export default function MediaPickerModal({
     try {
       setSaving(true);
       setError("");
-      // Pass the *relation* id 
-      await updateMediaDetails(productId, item.relId, {
-        title: title ?? "",
-        order: Number(order) || 0,
+
+      const payload = { title: title ?? "", order: Number(order) || 0 };
+      await updateMediaDetails(productId, item.relId, payload); // relation id in URL
+
+      onPatched?.({
+        relId: item.relId,
+        mediaId: item.mediaId,
+        title: payload.title,
+        order: payload.order,
       });
+
+      setSuccess("Saved!");
       await onSaved?.();
-    } catch {
+      setTimeout(() => onClose?.(), 700);
+    } catch (e) {
       setError("Failed to update media details.");
     } finally {
       setSaving(false);
@@ -43,10 +54,8 @@ export default function MediaPickerModal({
   return (
     <div className="fixed inset-0 z-[1000] bg-black/40 backdrop-blur-sm grid place-items-center">
       <div className="w-[92vw] max-w-xl bg-white rounded-2xl shadow-2xl overflow-hidden">
-        {/* Image preview */}
         <div className="p-4 pb-0">
           <div className="rounded-xl overflow-hidden border bg-gray-50">
-            {/* keep the image visible on mobile; contain instead of cover */}
             <div className="w-full h-56 sm:h-64">
               {item.url ? (
                 <img
@@ -64,14 +73,12 @@ export default function MediaPickerModal({
           </div>
         </div>
 
-        {/* Grey container with inputs */}
         <div className="p-4 space-y-3">
           {error && <div className="text-sm text-red-600">{error}</div>}
+          {success && <div className="text-sm text-green-600">{success}</div>}
 
-          {/* MOBILE-FIRST: stack fields; on md+ show two columns */}
           <div className="rounded-xl border bg-gray-50 p-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* Title first */}
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Title</label>
                 <input
@@ -80,7 +87,6 @@ export default function MediaPickerModal({
                   className="w-full rounded-lg bg-white border px-3 py-2"
                 />
               </div>
-              {/* Order second (will render under Title on mobile) */}
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Order</label>
                 <input
@@ -106,7 +112,7 @@ export default function MediaPickerModal({
               disabled={saving}
               className="ml-4 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md"
             >
-              {saving ? "Saving..." : "update"}
+              {saving ? "Saving..." : "Update"}
             </button>
           </div>
         </div>
