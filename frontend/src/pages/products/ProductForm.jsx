@@ -2,17 +2,14 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { createProduct, getProductById, updateProduct } from "./ProductService";
-
-// media
 import { getProductMedia, uploadMediaToProduct } from "../media/MediaService.js";
 import MediaPickerModal from "../media/MediaPickerModal.jsx";
 import MediaUploadDialog from "../media/MediaUploadDialog.jsx";
 import ImageSlot from "../media/ImageSlot.jsx";
-import api from "../../axiosConfig.jsx"; 
+import api from "../../axiosConfig.jsx";
 
 const MAX_LOCAL = 3;
 
-/* ---------- Build absolute URL for an image coming from backend ---------- */
 function getServerOrigin() {
   const base = (api?.defaults?.baseURL || "").replace(/\/+$/, "");
   if (/^https?:\/\//i.test(base)) return base.replace(/\/api$/i, "");
@@ -38,13 +35,9 @@ const mediaUrl = (m) => {
   const name = String(file).split(/[\\/]/).pop();
   return `${SERVER_ORIGIN}/uploads/${name}`;
 };
-/* ------------------------------------------------------------------------ */
-
 
 const PANEL = "rounded-2xl border border-gray-200 bg-gray-100 p-5 md:p-6";
-// Keep both columns tall and aligned
 const PANEL_MIN_H = "min-h-[560px]";
-// Image slot heights
 const HERO_H = "h-80 md:h-96";
 const THUMB_H = "h-36";
 
@@ -63,8 +56,8 @@ export default function ProductForm() {
     images: null,
   });
 
-  const [localImages, setLocalImages] = useState([]); // File[]
-  const [editImages, setEditImages] = useState([]);   // [{ relId, mediaId, order, title, url }]
+  const [localImages, setLocalImages] = useState([]);
+  const [editImages, setEditImages] = useState([]);
   const [selectedItem, setSelectedItem] = useState(null);
 
   const [thumbOptions, setThumbOptions] = useState([]);
@@ -75,7 +68,6 @@ export default function ProductForm() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
-  // load product (for fields + thumbnail select)
   const loadProduct = useCallback(async () => {
     if (mode !== "edit") return;
     const p = await getProductById(id);
@@ -86,6 +78,7 @@ export default function ProductForm() {
             const fileId = m?.mediaId?._id || m?.mediaId;
             if (!fileId) return null;
             const label =
+              m?.title ||
               m?.mediaId?.title ||
               m?.mediaId?.originalName ||
               m?.mediaId?.filename ||
@@ -96,9 +89,10 @@ export default function ProductForm() {
       : [];
 
     const currentThumb =
-      (Array.isArray(p.media) && p.media.find((x) => x.order === 0)?.mediaId?._id) || "";
+      (Array.isArray(p.media) &&
+        p.media.find((x) => x.order === 0)?.mediaId?._id) ||
+      "";
 
-    // Normalize category field to a clean comma-separated string
     let categoryStr = "";
     if (Array.isArray(p.categories)) {
       categoryStr = p.categories.join(", ");
@@ -125,7 +119,6 @@ export default function ProductForm() {
     });
   }, [mode, id]);
 
-  // load media list (relation ids + urls)
   const loadMedia = useCallback(async () => {
     if (mode !== "edit") return;
     const list = await getProductMedia(id);
@@ -136,6 +129,7 @@ export default function ProductForm() {
         mediaId: String(m?.mediaId?._id ?? m?.mediaId),
         url: mediaUrl(m),
         title:
+          m?.title ||
           m?.mediaId?.title ||
           m?.mediaId?.originalName ||
           m?.mediaId?.filename ||
@@ -148,9 +142,12 @@ export default function ProductForm() {
   }, [mode, id]);
 
   useEffect(() => {
-    if (mode !== "edit") return;
     let alive = true;
     (async () => {
+      if (mode !== "edit") {
+        if (alive) setLoading(false);
+        return;
+      }
       try {
         await loadProduct();
         await loadMedia();
@@ -158,8 +155,45 @@ export default function ProductForm() {
         if (alive) setLoading(false);
       }
     })();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [mode, loadProduct, loadMedia]);
+
+  // Reorder the preview instantly when user changes the thumbnail dropdown
+  useEffect(() => {
+    if (mode !== "edit") return;
+    if (!form.thumbnail) return;
+
+    setEditImages((prev) => {
+      const idx = prev.findIndex(
+        (m) => String(m.mediaId) === String(form.thumbnail)
+      );
+      if (idx === -1) return prev;
+      const picked = prev[idx];
+      const rest = prev.filter((_, i) => i !== idx);
+      const reordered = [
+        { ...picked, order: 0 },
+        ...rest.map((m, i) => ({ ...m, order: i + 1 })),
+      ];
+      return reordered;
+    });
+  }, [form.thumbnail, mode]);
+
+  // Keep dropdown option labels in sync when titles change in modal
+  useEffect(() => {
+    if (mode !== "edit") return;
+    if (!editImages?.length) return;
+    setThumbOptions((opts) =>
+      opts.map((o) => {
+        const match = editImages.find(
+          (m) => String(m.mediaId) === String(o.id)
+        );
+        return match ? { ...o, label: match.title || o.label } : o;
+        // keeps option text aligned with latest title displayed in modal
+      })
+    );
+  }, [editImages, mode]);
 
   const onChange = (e) => {
     const { name, value } = e.target;
@@ -176,7 +210,7 @@ export default function ProductForm() {
     const f = Array.from(files || [])[0];
     if (!f) return;
     await uploadMediaToProduct(id, [f]);
-    await loadMedia();
+    await Promise.all([loadMedia(), loadProduct()]);
   };
 
   const validate = () => {
@@ -204,34 +238,11 @@ export default function ProductForm() {
       errors[field] ? "focus:ring-red-200" : "focus:ring-blue-200",
     ].join(" ");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
-    setSaving(true);
-    try {
-      if (mode === "edit") {
-        await updateProduct(id, form);
-      } else {
-        await createProduct(form);
-      }
-      const flash = {
-        message: mode === "edit" ? "Product updated" : "Product created",
-        type: "success",
-        ts: Date.now(),
-      };
-      sessionStorage.setItem("products_flash", JSON.stringify(flash));
-      navigate("/dashboard/products", { state: { flash } });
-    } catch (err) {
-      console.error(err);
-      alert("Could not save the product. Please try again.");
-    } finally {
-      setSaving(false);
-    }
-  };
+  if (loading) {
+    return <div className="p-6 text-sm text-gray-500 bg-white">Loading…</div>;
+  }
 
-  if (loading) return <div className="p-6 text-sm text-gray-500 bg-white">Loading…</div>;
-
-  // slots
+  // image slot values
   const s0 = mode === "add" ? localImages[0] || null : editImages[0]?.url || null;
   const s1 = mode === "add" ? localImages[1] || null : editImages[1]?.url || null;
   const s2 = mode === "add" ? localImages[2] || null : editImages[2]?.url || null;
@@ -254,8 +265,33 @@ export default function ProductForm() {
     (mode === "add" && (localImages?.length ?? 0) < 3) ||
     (mode === "edit" && editImages.length < 3);
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+    setSaving(true);
+    try {
+      if (mode === "edit") {
+        // ProductService already sends `thumbnailMediaId` = form.thumbnail
+        await updateProduct(id, form);
+      } else {
+        await createProduct(form);
+      }
+      const flash = {
+        message: mode === "edit" ? "Product updated" : "Product created",
+        type: "success",
+        ts: Date.now(),
+      };
+      sessionStorage.setItem("products_flash", JSON.stringify(flash));
+      navigate("/dashboard/products", { state: { flash } });
+    } catch (err) {
+      console.error(err);
+      alert("Could not save the product. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    // whole header/page area explicitly white
     <form onSubmit={handleSubmit} className="p-4 md:p-6 bg-white">
       <div className="mb-6">
         <h1 className="text-xl font-semibold">Product</h1>
@@ -265,11 +301,10 @@ export default function ProductForm() {
       </div>
 
       <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 ${PANEL_MIN_H}`}>
-        {/* Images PANEL — single grey box, no inner white card */}
+        {/* IMAGES */}
         <section className={`${PANEL} ${PANEL_MIN_H} flex flex-col`}>
           <h2 className="font-semibold mb-4">Images</h2>
 
-          {/* Big hero */}
           <ImageSlot
             fileOrUrl={s0}
             label=""
@@ -277,20 +312,9 @@ export default function ProductForm() {
             className={`${HERO_H} mb-4`}
           />
 
-          {/* Thumbs + add */}
           <div className="grid grid-cols-3 gap-4">
-            <ImageSlot
-              fileOrUrl={s1}
-              label=""
-              onClick={() => handleSlotClick(1)}
-              className={THUMB_H}
-            />
-            <ImageSlot
-              fileOrUrl={s2}
-              label=""
-              onClick={() => handleSlotClick(2)}
-              className={THUMB_H}
-            />
+            <ImageSlot fileOrUrl={s1} label="" onClick={() => handleSlotClick(1)} className={THUMB_H} />
+            <ImageSlot fileOrUrl={s2} label="" onClick={() => handleSlotClick(2)} className={THUMB_H} />
 
             {canShowPlus && (
               <button
@@ -307,7 +331,7 @@ export default function ProductForm() {
           </div>
         </section>
 
-        {/* Product Details PANEL — single grey box, inputs inside */}
+        {/* DETAILS */}
         <section className={`${PANEL} ${PANEL_MIN_H} flex flex-col`}>
           <h2 className="font-semibold mb-4">Product Details</h2>
 
@@ -364,7 +388,9 @@ export default function ProductForm() {
                   >
                     <option value="">— No thumbnail —</option>
                     {thumbOptions.map((o) => (
-                      <option key={o.id} value={o.id}>{o.label}</option>
+                      <option key={o.id} value={o.id}>
+                        {o.label}
+                      </option>
                     ))}
                   </select>
                 )}
@@ -402,7 +428,6 @@ export default function ProductForm() {
             </div>
           </div>
 
-          {/* Buttons kept visible near bottom of the panel */}
           <div className="mt-6 flex justify-end items-center gap-4">
             <button
               type="button"
@@ -422,21 +447,32 @@ export default function ProductForm() {
         </section>
       </div>
 
-      {/* Single-image editor modal (EDIT) */}
       {mode === "edit" && (
         <MediaPickerModal
           productId={id}
           open={editModalOpen}
           item={selectedItem}
           onClose={() => setEditModalOpen(false)}
+          //  patch so the slots reorder immediately
+          onPatched={({ relId, title, order }) => {
+            setEditImages((prev) => {
+              const next = prev.map((x) =>
+                x.relId === String(relId)
+                  ? { ...x, title, order: Number(order) || 0 }
+                  : x
+              );
+              next.sort((a, b) => a.order - b.order);
+              return next;
+            });
+          }}
+          // Refresh both lists so dropdown labels & order are correct after save
           onSaved={async () => {
-            await loadMedia();
+            await Promise.all([loadMedia(), loadProduct()]);
             setEditModalOpen(false);
           }}
         />
       )}
 
-      {/* Upload dialog (ADD and "+") */}
       <MediaUploadDialog
         open={uploadOpen}
         onClose={() => setUploadOpen(false)}
