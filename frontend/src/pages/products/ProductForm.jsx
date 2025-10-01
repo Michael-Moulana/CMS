@@ -66,7 +66,7 @@ export default function ProductForm() {
   const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
 
-  // ✅ local flash for edit/delete feedback on this page
+
   const [flash, setFlash] = useState(null);
 
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -284,7 +284,7 @@ export default function ProductForm() {
     try {
       await deleteProductMedia(id, relId);
       await Promise.all([loadMedia(), loadProduct()]);
-      // 🔴 red flash on delete
+      //  red flash on delete
       setFlash({ message: "Image deleted successfully", type: "error" });
     } catch {
       // if you prefer, show a red flash instead of alert:
@@ -357,7 +357,7 @@ export default function ProductForm() {
         </p>
       </div>
 
-      {/* ✅ Flash UI for edits/deletes on this page */}
+      {/*  Flash UI for edits/deletes on this page */}
       {flash && (
         <FlashMessage
           key={`${flash.type}-${flash.message}-${Date.now()}`}
@@ -534,7 +534,7 @@ export default function ProductForm() {
           onSaved={async () => {
             await Promise.all([loadMedia(), loadProduct()]);
             setEditModalOpen(false);
-            // 🟢 green flash on update
+            //  green flash on update
             setFlash({ message: "Image updated successfully", type: "success" });
           }}
         />

@@ -29,6 +29,7 @@ export async function deleteMediaFromProduct(productId, relationId) {
     ?.data?.data ?? null;
 }
 
+
 // delete one media from a product by relation id (preferred)
 export async function deleteProductMedia(productId, mediaRelId) {
   const res = await api.delete(`/products/${productId}/media/${mediaRelId}`);
