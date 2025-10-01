@@ -1,9 +1,12 @@
+
 // frontend/src/pages/dashboard/Dashboard.jsx
 import React from "react";
+
 import { useAuth } from "../../context/AuthContext";
 
-export default function Dashboard() {
+export default function DashboardLayout() {
   const { user } = useAuth();
+
   const name = user?.email?.split("@")[0] || "User";
 
   return (
