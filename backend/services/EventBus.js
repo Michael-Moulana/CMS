@@ -1,3 +1,4 @@
+// (Observer Pattern)
 const EventEmitter = require("events");
 
 class EventBusClass extends EventEmitter {}
