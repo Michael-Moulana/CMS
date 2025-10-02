@@ -110,33 +110,37 @@ describe("getAllProducts Controller", () => {
 
 describe("getProduct Controller", () => {
   let req, res, next, productManagerStub, getProduct;
+  let decorateStub;
 
   beforeEach(() => {
-    req = { params: { id: "prod123" } };
+    req = { params: { id: new mongoose.Types.ObjectId().toHexString() } };
     res = {
       json: sinon.stub(),
       status: sinon.stub().returnsThis(),
     };
     next = sinon.spy();
 
-    // Stub ProductManager
-    productManagerStub = { getById: sinon.stub() };
+    // Stub ProductManager methods
+    productManagerStub = {
+      getById: sinon.stub(),
+    };
 
-    // Use proxyquire to replace ModelFactory before loading the controller
+    // Stub ResponseDecorator
+    decorateStub = sinon.stub().callsFake((data) => ({
+      success: true,
+      data,
+    }));
+
+    // Load controller with proxyquire, injecting stubs
     const productController = proxyquire("../controllers/productController", {
       "../services/ModelFactory": {
         createProductManager: () => productManagerStub,
       },
-      "../services/ResponseDecorator": ResponseDecorator,
+      "../services/ResponseDecorator": { decorate: decorateStub },
+      "../services/ProductManager": productManagerStub, // make productManager available
     });
 
     getProduct = productController.getProduct;
-
-    // Stub ResponseDecorator.decorate
-    sinon.stub(ResponseDecorator, "decorate").callsFake((data) => ({
-      success: true,
-      data,
-    }));
   });
 
   afterEach(() => {
@@ -144,15 +148,13 @@ describe("getProduct Controller", () => {
   });
 
   it("should fetch a product and return decorated response", async () => {
-    const fakeProduct = {
-      _id: new mongoose.Types.ObjectId(),
-      title: "Cool Sneakers",
-    };
+    const fakeProduct = { _id: req.params.id, title: "Cool Sneakers" };
     productManagerStub.getById.resolves(fakeProduct);
 
     await getProduct(req, res, next);
 
-    expect(productManagerStub.getById.calledOnceWith("prod123")).to.be.true;
+    expect(productManagerStub.getById.calledOnceWith(req.params.id)).to.be.true;
+    expect(decorateStub.calledOnceWith(fakeProduct)).to.be.true;
     expect(res.json.calledOnce).to.be.true;
 
     const responseArg = res.json.getCall(0).args[0];
@@ -788,6 +790,68 @@ describe("updateMediaDetails Controller", () => {
       message: "An unexpected error occurred",
       error: "Database error",
     });
+  });
+});
+
+describe("searchProducts Controller (with proxyquire)", () => {
+  let req, res, next;
+  let searchStub, decorateStub;
+  let searchProducts;
+
+  beforeEach(() => {
+    req = { query: { q: "phone" } };
+    res = { json: sinon.stub() };
+    next = sinon.spy();
+
+    // Stub the productManager.search method
+    searchStub = sinon.stub().resolves([{ _id: "123", title: "iPhone" }]);
+
+    // Stub ResponseDecorator.decorate
+    decorateStub = sinon.stub().callsFake((data, msg) => ({
+      success: true,
+      message: msg,
+      data,
+    }));
+
+    // Use proxyquire to replace productManager and ResponseDecorator in the controller
+    searchProducts = proxyquire("../controllers/productController", {
+      "../services/ModelFactory": {
+        createProductManager: () => ({ search: searchStub }),
+      },
+      "../services/ResponseDecorator": {
+        decorate: decorateStub,
+      },
+    }).searchProducts;
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should search products and return decorated response", async () => {
+    await searchProducts(req, res, next);
+
+    expect(searchStub.calledOnceWithExactly("phone", { limit: 50 })).to.be.true;
+    expect(decorateStub.calledOnce).to.be.true;
+    expect(res.json.calledOnce).to.be.true;
+
+    const responseArg = res.json.getCall(0).args[0];
+    expect(responseArg).to.deep.equal({
+      success: true,
+      message: "Search results",
+      data: [{ _id: "123", title: "iPhone" }],
+    });
+
+    expect(next.notCalled).to.be.true;
+  });
+
+  it("should call next with error if search fails", async () => {
+    searchStub.rejects(new Error("Search failed"));
+
+    await searchProducts(req, res, next);
+
+    expect(next.calledOnce).to.be.true;
+    expect(next.firstCall.args[0].message).to.equal("Search failed");
   });
 });
 
