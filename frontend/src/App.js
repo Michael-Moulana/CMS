@@ -15,15 +15,10 @@ import PagesDashboard from "./pages/dashboard/PagesDashboard";
 import NavigationDashboard from "./pages/dashboard/NavigationDashboard";
 
 // NEW imports
-<<<<<<< HEAD
 import ProductsDashboard from "./pages/products/ProductsDashboard";
 import ProductForm from "./pages/products/ProductForm";
 import PageForm from "./components/PageForm.jsx";
 import NavigationForm from "./components/NavigationForm"; // ← added
-=======
-import ProductsDashboard from "./pages/dashboard/products/ProductsDashboard";
-import ProductForm from "./pages/dashboard/products/ProductForm";
->>>>>>> c5c7a1f01cc8788c1b8b270ecab2ca904695613a
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import DashboardLayout from "./components/DashboardLayout";
