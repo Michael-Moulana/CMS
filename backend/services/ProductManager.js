@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const EventBus = require("./EventBus");
 
 class ProductManager {
@@ -59,6 +60,13 @@ class ProductManager {
   }
 
   async getById(id) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid product ID",
+      });
+    }
+
     return this.productRepository.model
       .findById(id)
       .populate("media.mediaId")
@@ -164,9 +172,14 @@ class ProductManager {
 
   // Delete a product (and its media files)
   async deleteProduct(id) {
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return { error: "invalid_id" }; // return a simple error object
+    }
+
     const product = await this.productRepository.model.findById(id);
     if (!product) {
-      return { _id: id, deleted: false };
+      return { deleted: false }; // product not found
     }
 
     if (Array.isArray(product.media)) {
@@ -180,8 +193,8 @@ class ProductManager {
     }
 
     await this.productRepository.model.findByIdAndDelete(product._id);
-
     EventBus.emit("product.deleted", { _id: product._id });
+
     return { _id: product._id, deleted: true };
   }
 
@@ -245,6 +258,14 @@ class ProductManager {
 
   // Update media details (single item)
   async updateMediaDetails(productId, mediaId, { title, order }) {
+    // Validate IDs using Mongoose
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      throw new Error("Invalid product ID");
+    }
+    if (!mongoose.Types.ObjectId.isValid(mediaId)) {
+      throw new Error("Invalid media ID");
+    }
+
     const product = await this.productRepository.model.findById(productId);
     if (!product) throw new Error("Product not found");
 
@@ -255,11 +276,12 @@ class ProductManager {
     );
     if (!item) throw new Error("Media not found");
 
-    // Update title on Media doc
+    // Update title
     if (title !== undefined && title !== null) {
       await this.mediaManager.updateTitle(item.mediaId, title);
     }
 
+    // Update order
     if (order !== undefined && order !== null) {
       const target = Math.max(
         0,
@@ -269,7 +291,6 @@ class ProductManager {
       const arr = [...product.media].sort(
         (a, b) => (a.order ?? 0) - (b.order ?? 0)
       );
-
       const fromIdx = arr.findIndex(
         (m) =>
           m.mediaId.toString() === String(item.mediaId) ||
@@ -279,20 +300,19 @@ class ProductManager {
       if (fromIdx !== -1) {
         const [picked] = arr.splice(fromIdx, 1);
         arr.splice(target, 0, picked);
-        // reindex 0..n-1
-        arr.forEach((m, i) => {
-          m.order = i;
-        });
-        // write back to product
+        arr.forEach((m, i) => (m.order = i));
         product.media = arr;
       }
     }
 
     await product.save();
+
     const updated = await this.getById(productId);
     EventBus.emit("product.updated", updated);
+
     return updated;
   }
+
   _reorderWithThumbnail(mediaArray, thumbId) {
     const arr = [...mediaArray];
     const i = arr.findIndex((m) => m.mediaId.toString() === String(thumbId));

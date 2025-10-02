@@ -85,14 +85,6 @@ const getAllProducts = async (req, res, next) => {
 // Get single product
 const getProduct = async (req, res, next) => {
   try {
-    // Prevent CastError
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid product ID",
-      });
-    }
-
     let product = await productManager.getById(req.params.id);
     if (!product)
       return res
@@ -137,24 +129,26 @@ const updateProduct = async (req, res, next) => {
 // Delete Product
 const deleteProduct = async (req, res, next) => {
   try {
-    // Validate ObjectId
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    const proxy = new AuthProxy(req.user, productManager);
+    const result = await proxy.deleteProduct(req.params.id);
+
+    // Handle invalid ID
+    if (result?.error === "invalid_id") {
       return res.status(400).json({
         success: false,
         message: "Invalid product ID",
       });
     }
 
-    const proxy = new AuthProxy(req.user, productManager);
-    const deleted = await proxy.deleteProduct(req.params.id);
-
-    if (!deleted) {
+    // Handle not found
+    if (!result?.deleted) {
       return res.status(404).json({
         success: false,
         message: "Product not found",
       });
     }
 
+    // Success
     res.json({ success: true, message: "Product deleted successfully" });
   } catch (err) {
     next(err);
@@ -237,61 +231,34 @@ const updateMediaDetails = async (req, res, next) => {
     const productId = req.params.id;
     const mediaId = req.params.mediaId;
 
-    // Validate productId and mediaId as ObjectId
-    if (!mongoose.Types.ObjectId.isValid(productId)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid product ID" });
-    }
-    if (!mongoose.Types.ObjectId.isValid(mediaId)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid media ID" });
-    }
-
-    // Validate order
-    const numericOrder = order === undefined ? undefined : Number(order);
-    if (
-      numericOrder !== undefined &&
-      (!Number.isInteger(numericOrder) || numericOrder < 0)
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Order must be a non-negative integer",
-      });
-    }
-
-    // Call service to update media
+    // Call service to update media; ID validation is done in ProductManager
     const result = await productManager.updateMediaDetails(productId, mediaId, {
       title,
-      order: numericOrder,
+      order,
     });
 
-    // Decorate and return response
     const decorated = ResponseDecorator.decorate(
       result,
       "Media updated successfully"
     );
     res.status(200).json(decorated);
   } catch (err) {
-    // Known errors
-    if (err.message === "Product not found") {
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found" });
+    // Handle known errors
+    if (
+      err.message === "Invalid product ID" ||
+      err.message === "Invalid media ID"
+    ) {
+      return res.status(400).json({ success: false, message: err.message });
     }
-    if (err.message === "Media not found") {
-      return res
-        .status(404)
-        .json({ success: false, message: "Media not found" });
+    if (
+      err.message === "Product not found" ||
+      err.message === "Media not found"
+    ) {
+      return res.status(404).json({ success: false, message: err.message });
     }
 
-    // Catch all other errors
-    res.status(500).json({
-      success: false,
-      message: "An unexpected error occurred",
-      error: err.message,
-    });
+    // Unexpected errors
+    next(err);
   }
 };
 
@@ -315,26 +282,28 @@ const getMediaById = async (req, res, next) => {
   try {
     const mediaId = req.params.id;
 
-    // Check if mediaId is a valid ObjectId
-    if (!mongoose.Types.ObjectId.isValid(mediaId)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid media ID" });
-    }
+    // Use mediaManager.getById (validation inside manager)
+    const media = await mediaManager.getById(mediaId);
 
-    const media = await mediaManager.model.findById(mediaId);
     if (!media) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Media not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Media not found",
+      });
     }
 
     const decorated = ResponseDecorator.decorate(
       media,
       "Media fetched successfully"
     );
-    res.status(200).json(decorated);
+    return res.status(200).json(decorated);
   } catch (err) {
+    if (err.message === "Invalid media ID") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid media ID",
+      });
+    }
     next(err);
   }
 };
@@ -342,16 +311,6 @@ const getMediaById = async (req, res, next) => {
 const deleteMediaById = async (req, res, next) => {
   try {
     const mediaId = req.params.id;
-
-    // Validate ObjectId before querying DB
-    if (!mongoose.Types.ObjectId.isValid(mediaId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid media ID",
-      });
-    }
-
-    // Attempt deletion
     const deletedMedia = await mediaManager.delete(mediaId);
 
     if (!deletedMedia) {
@@ -367,18 +326,18 @@ const deleteMediaById = async (req, res, next) => {
       data: deletedMedia,
     });
   } catch (err) {
-    console.error("Error deleting media:", err.message);
-
-    // Handle known errors from file system or Mongoose
-    if (err.name === "CastError") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid media ID" });
+    if (err.message === "Invalid media ID") {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid media ID",
+      });
     }
 
-    res
-      .status(500)
-      .json({ success: false, message: "Server error", error: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: err.message,
+    });
   }
 };
 
