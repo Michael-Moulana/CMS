@@ -1,15 +1,19 @@
 // frontend/src/components/Navbar.jsx
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useLocation } from "react-router-dom";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  
-  if (location.pathname === "/login" || location.pathname === "/register") {
+  // Hide navbar on all auth-only areas to avoid duplicate top bars
+  const hideOn = ["/login", "/register"];
+  const isProtectedArea =
+    location.pathname.startsWith("/dashboard") ||
+    location.pathname.startsWith("/profile");
+
+  if (hideOn.includes(location.pathname) || isProtectedArea) {
     return null;
   }
 
@@ -41,7 +45,6 @@ const Navbar = () => {
           </>
         ) : (
           <>
-            
             <Link to="/login" className="mr-4">
               Login
             </Link>
