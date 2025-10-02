@@ -1,3 +1,4 @@
+// src/components/NavigationList.jsx
 import { useAuth } from "../context/AuthContext";
 import axiosInstance from "../axiosConfig";
 
@@ -6,7 +7,6 @@ const NavigationList = ({
   setNavigations,
   setEditingNav,
   showFlash,
-  searchTerm = "",
 }) => {
   const { user } = useAuth();
 
@@ -19,74 +19,182 @@ const NavigationList = ({
     if (!window.confirm("Are you sure you want to delete this item?")) return;
 
     try {
-      await axiosInstance.delete(`/api/dashboard/navigations/${id}`, {
+      await axiosInstance.delete(`/dashboard/navigations/${id}`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
-
-      // Update parent state
-      setNavigations((prevNavs) => prevNavs.filter((n) => n._id !== id));
-
+      setNavigations((prev) => prev.filter((n) => n._id !== id));
       showFlash("Navigation deleted successfully", "success");
-    } catch (err) {
+    } catch {
       showFlash("Failed to delete navigation", "error");
     }
   };
 
-  // Apply search filter inside component
-  const displayedNavs = navigations.filter((nav) =>
-    nav.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  if (displayedNavs.length === 0) {
-    return <p className="text-gray-500">No navigation items yet.</p>;
+  if (!navigations?.length) {
+    return (
+      <div className="px-6 py-16 text-center text-gray-400">
+        No navigation items yet.
+      </div>
+    );
   }
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">Navigation Items</h2>
-      <ul>
-        {displayedNavs.map((nav) => (
-          <li
-            key={nav._id}
-            className="bg-gray-100 p-4 mb-2 rounded flex justify-between items-center"
+    <>
+      {/* DESKTOP TABLE */}
+      <div className="hidden md:block overflow-x-auto rounded-2xl border bg-white shadow-sm">
+        <table className="min-w-full text-sm">
+          <thead>
+            <tr className="text-gray-500 border-b">
+              <th className="text-left font-medium px-6 py-4 w-12">#</th>
+              <th className="text-left font-medium px-6 py-4">Title</th>
+              <th className="text-left font-medium px-6 py-4">Slug</th>
+              <th className="text-left font-medium px-6 py-4">Order</th>
+              <th className="text-left font-medium px-6 py-4">Parent</th>
+              <th className="text-right font-medium px-6 py-4">Edit</th>
+            </tr>
+          </thead>
+          <tbody>
+            {navigations.map((n, i) => (
+              <tr key={n._id} className="border-t hover:bg-gray-50">
+                <td className="px-6 py-4">{i + 1}</td>
+                <td className="px-6 py-4 font-medium">{n.title}</td>
+                <td className="px-6 py-4">{n.slug}</td>
+                <td className="px-6 py-4">{n.order ?? 0}</td>
+                <td className="px-6 py-4">{n.parent?.title || "—"}</td>
+                <td className="px-6 py-4">
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => handleEdit(n)}
+                      className="h-9 w-9 rounded-xl border bg-white hover:bg-gray-100 grid place-items-center"
+                      title="Edit"
+                      aria-label="Edit"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(n._id)}
+                      className="h-9 w-9 rounded-xl bg-red-500 hover:bg-red-600 grid place-items-center text-white"
+                      title="Delete"
+                      aria-label="Delete"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                        <line x1="10" y1="11" x2="10" y2="17" />
+                        <line x1="14" y1="11" x2="14" y2="17" />
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Figma-like footer (static style) */}
+        <div className="flex items-center justify-between p-4 border-t">
+          <div className="flex gap-2">
+            <button className="h-9 w-9 rounded-lg border bg-white">{'<'}</button>
+            <button className="h-9 w-9 rounded-lg border bg-blue-50 text-blue-700">1</button>
+            <button className="h-9 w-9 rounded-lg border bg-white">2</button>
+            <button className="h-9 w-9 rounded-lg border bg-white">3</button>
+            <button className="h-9 w-9 rounded-lg border bg-white">{'>'}</button>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <select className="h-9 rounded-lg border px-3 bg-white">
+              <option>10</option>
+              <option>20</option>
+              <option>50</option>
+            </select>
+            <span>/Page</span>
+          </div>
+        </div>
+      </div>
+
+      {/* MOBILE CARDS */}
+      <div className="md:hidden p-4 space-y-3">
+        {navigations.map((n, i) => (
+          <div
+            key={n._id}
+            className="rounded-2xl border border-gray-200 bg-white shadow-sm"
           >
-            <div>
-              <h3 className="font-bold">Title: {nav.title}</h3>
-              <p>ID: {nav._id}</p>
-              <p>Slug: {nav.slug}</p>
-              <p>Order: {nav.order}</p>
-              <p>Parent: {nav.parent?.title || "None"}</p>
-              <p>
-                Last modified:{" "}
-                {new Date(nav.updatedAt).toLocaleDateString("en-US", {
-                  weekday: "short",
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  hour12: false,
-                })}
-              </p>
+            <div className="flex items-stretch">
+              <div className="w-14 grid place-items-center text-gray-700 text-lg font-medium">
+                {i + 1}
+              </div>
+
+              <div className="flex-1 py-4 pr-2">
+                <div className="text-gray-900 font-semibold">{n.title}</div>
+                <div className="text-xs text-gray-500 mt-1">Slug: {n.slug}</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Order: {n.order ?? 0}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Parent: {n.parent?.title || "—"}
+                </div>
+              </div>
+
+              <div className="pr-4 flex items-center gap-2">
+                <button
+                  onClick={() => handleEdit(n)}
+                  className="h-10 w-10 rounded-xl border bg-white hover:bg-gray-100 grid place-items-center"
+                  title="Edit"
+                  aria-label="Edit"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => handleDelete(n._id)}
+                  className="h-10 w-10 rounded-xl bg-red-500 hover:bg-red-600 grid place-items-center text-white"
+                  title="Delete"
+                  aria-label="Delete"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                    <line x1="10" y1="11" x2="10" y2="17" />
+                    <line x1="14" y1="11" x2="14" y2="17" />
+                  </svg>
+                </button>
+              </div>
             </div>
-            <div>
-              <button
-                onClick={() => handleEdit(nav)}
-                className="bg-yellow-500 text-white px-3 py-1 rounded mr-2"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => handleDelete(nav._id)}
-                className="bg-red-500 text-white px-3 py-1 rounded"
-              >
-                Delete
-              </button>
-            </div>
-          </li>
+          </div>
         ))}
-      </ul>
-    </div>
+      </div>
+    </>
   );
 };
 
