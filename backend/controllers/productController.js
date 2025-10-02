@@ -150,7 +150,6 @@ const addMediaToProduct = async (req, res, next) => {
   }
 };
 
-//Connect button to backend API (DELETE /media/:id).
 const deleteMediaFromProduct = async (req, res, next) => {
   try {
     await productManager.deleteMediaFromProduct(
@@ -173,7 +172,6 @@ const deleteMediaFromProduct = async (req, res, next) => {
   }
 };
 
-// delegate to ProductManager; req.params.mediaId is the RELATION id; we map to the real mediaId inside the manager
 const updateMediaDetails = async (req, res, next) => {
   try {
     const { title, order } = req.body;
@@ -216,7 +214,7 @@ const updateMediaDetails = async (req, res, next) => {
   }
 };
 
-// Get all media files
+// ---- helpers for media management through postman ----
 const getAllMedia = async (req, res, next) => {
   try {
     const media = await mediaManager.listAll();
@@ -230,7 +228,6 @@ const getAllMedia = async (req, res, next) => {
   }
 };
 
-//get single media by ID
 const getMediaById = async (req, res, next) => {
   try {
     const mediaId = req.params.id;
