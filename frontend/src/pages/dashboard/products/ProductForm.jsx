@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-// frontend/src/pages/dashboard/products/ProductForm.jsx
-=======
->>>>>>> fac7d74b50c9dfc9c4545ecaf0cfd2cdb5582541
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { createProduct, getProductById, updateProduct } from "./ProductService";

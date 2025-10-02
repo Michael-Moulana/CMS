@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-// frontend/src/pages/dashboard/media/ImageSlot.jsx
-import React, { useEffect, useMemo, useState, memo } from "react";
-=======
 import { useEffect, useMemo, useState } from "react";
->>>>>>> fac7d74b50c9dfc9c4545ecaf0cfd2cdb5582541
 
 /**
  * ImageSlot handles:
@@ -11,12 +6,8 @@ import { useEffect, useMemo, useState } from "react";
  *  - String URLs (from server/external)
  * It is memoized so typing elsewhere doesn't re-render it.
  */
-<<<<<<< HEAD
-function ImageSlotBase({
-=======
 
 export default function ImageSlot({
->>>>>>> fac7d74b50c9dfc9c4545ecaf0cfd2cdb5582541
   fileOrUrl,
   label = "",
   className = "",
@@ -84,28 +75,3 @@ export default function ImageSlot({
     </button>
   );
 }
-<<<<<<< HEAD
-
-/**
- * Memoize with a custom compare:
- * - If both props are Files, re-render only if it's a different File object.
- * - If both are strings/URLs, re-render only if the string changed.
- * - Ignore function prop identity (onClick), className & label for flicker prevention.
- */
-export default memo(ImageSlotBase, (prev, next) => {
-  const fileCtor = typeof File !== "undefined" ? File : null;
-  const prevIsFile = fileCtor && prev.fileOrUrl instanceof fileCtor;
-  const nextIsFile = fileCtor && next.fileOrUrl instanceof fileCtor;
-
-  if (prevIsFile && nextIsFile) {
-    return prev.fileOrUrl === next.fileOrUrl;
-  }
-  if (!prevIsFile && !nextIsFile) {
-    return prev.fileOrUrl === next.fileOrUrl
-      && prev.className === next.className
-      && prev.label === next.label;
-  }
-  return false; // changed type (File <-> string), must re-render
-});
-=======
->>>>>>> fac7d74b50c9dfc9c4545ecaf0cfd2cdb5582541
