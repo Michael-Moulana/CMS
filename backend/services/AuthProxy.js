@@ -1,6 +1,4 @@
-// A small proxy wrapper around managers to enforce simple authorization checks.
 // (Proxy pattern)
-
 class AuthProxy {
   constructor(user, realManager) {
     this.user = user;

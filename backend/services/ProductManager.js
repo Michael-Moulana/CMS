@@ -1,4 +1,3 @@
-// backend/services/ProductManager.js
 const EventBus = require("./EventBus");
 
 class ProductManager {
@@ -66,8 +65,12 @@ class ProductManager {
       .exec();
   }
 
+  // (polymorphism)
   async search(q, opts = {}) {
-    if (this.searchStrategy && typeof this.searchStrategy.search === "function") {
+    if (
+      this.searchStrategy &&
+      typeof this.searchStrategy.search === "function"
+    ) {
       return this.searchStrategy.search(q, this.productRepository.model, opts);
     }
     return this.productRepository.findAll();
@@ -88,7 +91,9 @@ class ProductManager {
     if (files.length > 0) {
       const currentCount = product.media.length;
       if (currentCount >= 3) {
-        throw new Error("You must delete an image before uploading a new one (max 3 allowed).");
+        throw new Error(
+          "You must delete an image before uploading a new one (max 3 allowed)."
+        );
       }
       if (currentCount + files.length > 3) {
         throw new Error(`You can only add ${3 - currentCount} more image(s).`);
@@ -116,7 +121,6 @@ class ProductManager {
       );
     }
 
-   
     if (data.mediaEdits && Array.isArray(data.mediaEdits)) {
       for (const edit of data.mediaEdits) {
         const mediaItem = product.media.find(
@@ -162,24 +166,19 @@ class ProductManager {
   async deleteProduct(id) {
     const product = await this.productRepository.model.findById(id);
     if (!product) {
-      
       return { _id: id, deleted: false };
     }
 
-    
     if (Array.isArray(product.media)) {
       for (const m of product.media) {
         const mid = m?.mediaId?._id || m?.mediaId;
         if (!mid) continue;
         try {
           await this.mediaManager.delete(mid);
-        } catch (_) {
-          
-        }
+        } catch (_) {}
       }
     }
 
-    
     await this.productRepository.model.findByIdAndDelete(product._id);
 
     EventBus.emit("product.deleted", { _id: product._id });
@@ -244,58 +243,56 @@ class ProductManager {
     return product.populate("media.mediaId");
   }
 
-  
   // Update media details (single item)
-async updateMediaDetails(productId, mediaId, { title, order }) {
-  const product = await this.productRepository.model.findById(productId);
-  if (!product) throw new Error("Product not found");
+  async updateMediaDetails(productId, mediaId, { title, order }) {
+    const product = await this.productRepository.model.findById(productId);
+    if (!product) throw new Error("Product not found");
 
-  const item = product.media.find(
-    (m) =>
-      m.mediaId.toString() === String(mediaId) ||
-      String(m._id) === String(mediaId)
-  );
-  if (!item) throw new Error("Media not found");
-
-  // Update title on Media doc
-  if (title !== undefined && title !== null) {
-    await this.mediaManager.updateTitle(item.mediaId, title);
-    
-  }
-
-  
-  if (order !== undefined && order !== null) {
-    const target = Math.max(
-      0,
-      Math.min(parseInt(order, 10) || 0, product.media.length - 1)
-    );
-
-    
-    const arr = [...product.media].sort(
-      (a, b) => (a.order ?? 0) - (b.order ?? 0)
-    );
-
-    const fromIdx = arr.findIndex(
+    const item = product.media.find(
       (m) =>
-        m.mediaId.toString() === String(item.mediaId) ||
-        String(m._id) === String(item._id)
+        m.mediaId.toString() === String(mediaId) ||
+        String(m._id) === String(mediaId)
     );
+    if (!item) throw new Error("Media not found");
 
-    if (fromIdx !== -1) {
-      const [picked] = arr.splice(fromIdx, 1);
-      arr.splice(target, 0, picked);
-      // reindex 0..n-1
-      arr.forEach((m, i) => { m.order = i; });
-      // write back to product
-      product.media = arr;
+    // Update title on Media doc
+    if (title !== undefined && title !== null) {
+      await this.mediaManager.updateTitle(item.mediaId, title);
     }
-  }
 
-  await product.save();
-  const updated = await this.getById(productId);
-  EventBus.emit("product.updated", updated);
-  return updated;
-}
+    if (order !== undefined && order !== null) {
+      const target = Math.max(
+        0,
+        Math.min(parseInt(order, 10) || 0, product.media.length - 1)
+      );
+
+      const arr = [...product.media].sort(
+        (a, b) => (a.order ?? 0) - (b.order ?? 0)
+      );
+
+      const fromIdx = arr.findIndex(
+        (m) =>
+          m.mediaId.toString() === String(item.mediaId) ||
+          String(m._id) === String(item._id)
+      );
+
+      if (fromIdx !== -1) {
+        const [picked] = arr.splice(fromIdx, 1);
+        arr.splice(target, 0, picked);
+        // reindex 0..n-1
+        arr.forEach((m, i) => {
+          m.order = i;
+        });
+        // write back to product
+        product.media = arr;
+      }
+    }
+
+    await product.save();
+    const updated = await this.getById(productId);
+    EventBus.emit("product.updated", updated);
+    return updated;
+  }
   _reorderWithThumbnail(mediaArray, thumbId) {
     const arr = [...mediaArray];
     const i = arr.findIndex((m) => m.mediaId.toString() === String(thumbId));
