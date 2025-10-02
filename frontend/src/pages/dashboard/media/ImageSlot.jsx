@@ -1,12 +1,11 @@
-
-
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 /**
  * ImageSlot handles both:
  *  - File previews (using object URLs)
  *  - String URLs (from server or external)
  */
+
 export default function ImageSlot({
   fileOrUrl,
   label = "",
@@ -39,10 +38,9 @@ export default function ImageSlot({
     return () => {
       URL.revokeObjectURL(url);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFile, fileOrUrl]);
 
-  const src = isFile ? blobUrl : (fileOrUrl || "");
+  const src = isFile ? blobUrl : fileOrUrl || "";
 
   return (
     <button

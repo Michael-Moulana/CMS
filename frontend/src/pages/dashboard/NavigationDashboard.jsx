@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "../../axiosConfig.jsx";
 import FlashMessage from "../../components/FlashMessage.jsx";
@@ -7,7 +7,10 @@ import FlashMessage from "../../components/FlashMessage.jsx";
 const dequote = (v) => {
   if (v === null || v === undefined) return "";
   const s = String(v).trim();
-  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+  if (
+    (s.startsWith('"') && s.endsWith('"')) ||
+    (s.startsWith("'") && s.endsWith("'"))
+  ) {
     return s.slice(1, -1);
   }
   return s;
@@ -133,7 +136,9 @@ export default function NavigationDashboard() {
         className="inline-flex items-center gap-1 text-gray-600"
         onClick={() =>
           setSort((s) =>
-            s.key === k ? { key: k, dir: s.dir === "asc" ? "desc" : "asc" } : { key: k, dir: "asc" }
+            s.key === k
+              ? { key: k, dir: s.dir === "asc" ? "desc" : "asc" }
+              : { key: k, dir: "asc" }
           )
         }
         title="Sort"
@@ -154,7 +159,9 @@ export default function NavigationDashboard() {
       {/* Heading */}
       <div className="mb-4 md:mb-6">
         <h1 className="text-xl font-semibold">Navigation Management</h1>
-        <p className="text-sm text-gray-500">Dashboard / Navigation Management</p>
+        <p className="text-sm text-gray-500">
+          Dashboard / Navigation Management
+        </p>
       </div>
 
       {/* Actions row */}
@@ -169,7 +176,13 @@ export default function NavigationDashboard() {
 
         <div className="ml-auto flex-1 min-w-[140px] max-w-[520px]">
           <div className="h-10 rounded-2xl border border-gray-200 bg-white px-3 flex items-center gap-2 text-sm text-gray-500">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <circle cx="11" cy="11" r="7" />
               <path d="M21 21l-4.3-4.3" />
             </svg>
@@ -251,21 +264,37 @@ export default function NavigationDashboard() {
                     <td className={leftCell}>{startIdx + i + 1}</td>
                     {/* Title (mobile shows title + slug) */}
                     <td className={cell}>
-                      <div className="truncate font-medium">{dequote(n.title) || "—"}</div>
-                      <div className="truncate text-gray-500 text-xs md:hidden">{dequote(n.slug) || "—"}</div>
+                      <div className="truncate font-medium">
+                        {dequote(n.title) || "—"}
+                      </div>
+                      <div className="truncate text-gray-500 text-xs md:hidden">
+                        {dequote(n.slug) || "—"}
+                      </div>
                     </td>
                     {/* slug (desktop only) */}
-                    <td className={`${cell} hidden md:table-cell text-gray-600 truncate`}>
+                    <td
+                      className={`${cell} hidden md:table-cell text-gray-600 truncate`}
+                    >
                       {dequote(n.slug) || "—"}
                     </td>
-                    <td className={`${cell} hidden md:table-cell whitespace-nowrap`}>{fmt(n.order)}</td>
+                    <td
+                      className={`${cell} hidden md:table-cell whitespace-nowrap`}
+                    >
+                      {fmt(n.order)}
+                    </td>
                     <td className={`${cell} hidden md:table-cell truncate`}>
-                      <div className="max-w-[240px] truncate">{dequote(n.parent?.title) || "—"}</div>
+                      <div className="max-w-[240px] truncate">
+                        {dequote(n.parent?.title) || "—"}
+                      </div>
                     </td>
                     <td className={rightCell}>
                       <div className="flex justify-end gap-2">
                         <button
-                          onClick={() => navigate(`/dashboard/navigations/${n._id || n.id}/edit`)}
+                          onClick={() =>
+                            navigate(
+                              `/dashboard/navigations/${n._id || n.id}/edit`
+                            )
+                          }
                           className="h-9 w-9 rounded-xl border bg-white hover:bg-gray-100 grid place-items-center"
                           title="Edit"
                           aria-label="Edit"
@@ -328,20 +357,22 @@ export default function NavigationDashboard() {
             {"<"}
           </button>
 
-          {Array.from({ length: totalPages }).slice(0, 5).map((_, idx) => {
-            const n = idx + 1;
-            return (
-              <button
-                key={n}
-                onClick={() => setPage(n)}
-                className={`h-9 w-9 rounded-lg border ${
-                  n === safePage ? "bg-blue-50 text-blue-700" : "bg-white"
-                }`}
-              >
-                {n}
-              </button>
-            );
-          })}
+          {Array.from({ length: totalPages })
+            .slice(0, 5)
+            .map((_, idx) => {
+              const n = idx + 1;
+              return (
+                <button
+                  key={n}
+                  onClick={() => setPage(n)}
+                  className={`h-9 w-9 rounded-lg border ${
+                    n === safePage ? "bg-blue-50 text-blue-700" : "bg-white"
+                  }`}
+                >
+                  {n}
+                </button>
+              );
+            })}
 
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}

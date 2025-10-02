@@ -1,5 +1,4 @@
-// frontend/src/pages/media/MediaUploadForm.jsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 /**
  * Props
@@ -7,6 +6,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
  * - onChange: (FileList) => void
  * - max: number (default 3)
  */
+
 export default function MediaUploadForm({ value, onChange, max = 3 }) {
   const inputRef = useRef(null);
 
@@ -59,7 +59,11 @@ export default function MediaUploadForm({ value, onChange, max = 3 }) {
             key={`prev-${i}`}
             className="h-14 w-24 rounded-xl border border-gray-200 overflow-hidden bg-white/70 grid place-items-center"
           >
-            <img src={src} alt={`preview-${i}`} className="h-full w-full object-cover" />
+            <img
+              src={src}
+              alt={`preview-${i}`}
+              className="h-full w-full object-cover"
+            />
           </div>
         ))}
 
@@ -97,7 +101,6 @@ export default function MediaUploadForm({ value, onChange, max = 3 }) {
             <span className="text-lg leading-none">+</span>
           </button>
         )}
-
       </div>
 
       {/* hidden file input */}

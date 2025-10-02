@@ -1,4 +1,3 @@
-// frontend/src/pages/products/ProductForm.jsx
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { createProduct, getProductById, updateProduct } from "./ProductService";
