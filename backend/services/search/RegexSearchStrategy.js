@@ -1,3 +1,6 @@
+// Uses regular expressions on title and description - (Strategy Pattern and polymorphism)
+// Can be used interchangeably (either RegexSearchStrategy or ExactSearchStrategy) wherever a searchStrategy is expected.
+
 const Product = require("../../models/Product");
 
 class RegexSearchStrategy {
