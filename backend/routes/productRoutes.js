@@ -4,6 +4,13 @@ const { protect } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 const productController = require("../controllers/productController");
 
+// ------------------- Media (nested under product) -------------------
+// Get all media files
+router.get("/media", protect, productController.getAllMedia);
+
+// Get single media file (by media ID)
+router.get("/media/:id", protect, productController.getMediaById);
+
 // ------------------- Product CRUD -------------------
 
 // Create product (multipart: product fields + optional image)
@@ -25,7 +32,6 @@ router.put("/:id", protect, upload, productController.updateProduct);
 router.delete("/:id", protect, productController.deleteProduct);
 
 // ------------------- Media (nested under product) -------------------
-
 // Add media to product
 router.post("/:id/media", protect, upload, productController.addMediaToProduct);
 
