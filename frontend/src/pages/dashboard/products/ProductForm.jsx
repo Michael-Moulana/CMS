@@ -1,4 +1,4 @@
-// frontend/src/pages/products/ProductForm.jsx
+// frontend/src/pages/dashboard/products/ProductForm.jsx
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { createProduct, getProductById, updateProduct } from "./ProductService";
@@ -10,10 +10,24 @@ import {
 import MediaPickerModal from "../media/MediaPickerModal.jsx";
 import MediaUploadDialog from "../media/MediaUploadDialog.jsx";
 import ImageSlot from "../media/ImageSlot.jsx";
-import FlashMessage from "../../../components/FlashMessage.jsx"; // ✅ add
+import FlashMessage from "../../../components/FlashMessage.jsx";
 import api from "../../../axiosConfig.jsx";
 
+// Tag input
+import TagInput from "../../../components/TagInput.jsx";
+
 const MAX_LOCAL = 3;
+
+const CATEGORY_SUGGESTIONS = [
+  "Health",
+  "Marketing",
+  "Sales",
+  "Sustainability",
+  "Tech",
+  "Fashion",
+  "Home",
+  "Outdoor",
+];
 
 function getServerOrigin() {
   const base = (api?.defaults?.baseURL || "").replace(/\/+$/, "");
@@ -54,12 +68,15 @@ export default function ProductForm() {
   const [form, setForm] = useState({
     name: "",
     description: "",
-    category: "",
+    category: "", // keep string for backend compatibility
     price: "",
     stock: "",
     thumbnail: "",
     images: null,
   });
+
+  // categories as an array for TagInput
+  const [categories, setCategories] = useState([]);
 
   const [localImages, setLocalImages] = useState([]);
   const [editImages, setEditImages] = useState([]);
@@ -97,35 +114,45 @@ export default function ProductForm() {
 
     const currentThumb =
       (Array.isArray(p.media) &&
-        p.media.find((x) => x.order === 0)?.mediaId?._id) ||
-      "";
+        p.media.find((x) => x.order === 0)?.mediaId?._id) || "";
 
+    // normalize categories into array + string
     let categoryStr = "";
+    let catArray = [];
+
     if (Array.isArray(p.categories)) {
-      categoryStr = p.categories.join(", ");
+      catArray = p.categories.map(String);
+      categoryStr = catArray.join(", ");
     } else if (typeof p.category === "string") {
       categoryStr = p.category;
+      catArray = p.category
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
     } else if (typeof p.categories === "string") {
       try {
         const parsed = JSON.parse(p.categories);
-        categoryStr = Array.isArray(parsed)
-          ? parsed.join(", ")
-          : String(p.categories);
+        catArray = Array.isArray(parsed) ? parsed.map(String) : [];
       } catch {
-        categoryStr = String(p.categories || "");
+        catArray = String(p.categories || "")
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
       }
+      categoryStr = catArray.join(", ");
     }
 
     setThumbOptions(opts);
     setForm({
       name: p.name || p.title || "",
       description: p.description || "",
-      category: categoryStr,
+      category: categoryStr, // keep string for backend
       price: p.price ?? "",
       stock: p.stock ?? "",
       thumbnail: currentThumb ? String(currentThumb) : "",
       images: null,
     });
+    setCategories(catArray); // for TagInput
   }, [mode, id]);
 
   const loadMedia = useCallback(async () => {
@@ -169,7 +196,7 @@ export default function ProductForm() {
     };
   }, [mode, loadProduct, loadMedia]);
 
-  // Reorder the preview instantly when user changes the thumbnail dropdown
+  // Reorder preview when thumbnail changes
   useEffect(() => {
     if (mode !== "edit") return;
     if (!form.thumbnail) return;
@@ -206,6 +233,12 @@ export default function ProductForm() {
   const onChange = (e) => {
     const { name, value } = e.target;
     setForm((s) => ({ ...s, [name]: value }));
+  };
+
+  // Keep form.category (string) in sync when tag array changes
+  const onCategoriesChange = (vals) => {
+    setCategories(vals);
+    setForm((s) => ({ ...s, category: vals.join(", ") }));
   };
 
   const handleAddLocal = async (files) => {
@@ -246,17 +279,22 @@ export default function ProductForm() {
       errors[field] ? "focus:ring-red-200" : "focus:ring-blue-200",
     ].join(" ");
 
-  if (loading) {
-    return <div className="p-6 text-sm text-gray-500 bg-white">Loading…</div>;
-  }
 
-  // image slot values
-  const s0 =
-    mode === "add" ? localImages[0] || null : editImages[0]?.url || null;
-  const s1 =
-    mode === "add" ? localImages[1] || null : editImages[1]?.url || null;
-  const s2 =
-    mode === "add" ? localImages[2] || null : editImages[2]?.url || null;
+  
+  const [s0, s1, s2] = useMemo(() => {
+    if (mode === "add") {
+      return [
+        localImages[0] || null,
+        localImages[1] || null,
+        localImages[2] || null,
+      ];
+    }
+    return [
+      editImages[0]?.url || null,
+      editImages[1]?.url || null,
+      editImages[2]?.url || null,
+    ];
+  }, [mode, localImages, editImages]);
 
   const handleSlotClick = (idx) => {
     if (mode === "add") {
@@ -292,10 +330,8 @@ export default function ProductForm() {
     try {
       await deleteProductMedia(id, relId);
       await Promise.all([loadMedia(), loadProduct()]);
-      //  red flash on delete
       setFlash({ message: "Image deleted successfully", type: "error" });
     } catch {
-      // if you prefer, show a red flash instead of alert:
       setFlash({ message: "Delete failed. Please try again.", type: "error" });
     }
   };
@@ -349,19 +385,27 @@ export default function ProductForm() {
 
     setSaving(true);
     try {
-      if (mode === "edit") {
-        await updateProduct(id, form); // sends thumbnailMediaId if set
-      } else {
-        await createProduct(form);
-      }
-
-      const flash = {
-        message: mode === "edit" ? "Product updated" : "Product created",
-        type: "success",
-        ts: Date.now(),
+      const payload = {
+        ...form,
+        category: categories.join(", "),
+        categories: categories,
       };
-      sessionStorage.setItem("products_flash", JSON.stringify(flash));
-      navigate("/dashboard/products", { state: { flash } });
+
+      if (mode === "edit") {
+        
+        await updateProduct(id, payload);
+        setFlash({ message: "Product updated", type: "success" });
+      } else {
+        // create → set flash for dashboard + redirect there
+        await createProduct(payload);
+        const flash = {
+          message: "Product created",
+          type: "success",
+          ts: Date.now(),
+        };
+        sessionStorage.setItem("products_flash", JSON.stringify(flash));
+        navigate("/dashboard/products", { state: { flash } });
+      }
     } catch (err) {
       console.error(err);
       alert("Could not save the product. Please try again.");
@@ -370,6 +414,7 @@ export default function ProductForm() {
     }
   };
 
+  // -------------------- RENDER --------------------
   return (
     <form onSubmit={handleSubmit} className="p-4 md:p-6 bg-white">
       <div className="mb-6">
@@ -379,7 +424,7 @@ export default function ProductForm() {
         </p>
       </div>
 
-      {/*  Flash UI for edits/deletes on this page */}
+      {/* Flash on this page */}
       {flash && (
         <FlashMessage
           key={`${flash.type}-${flash.message}-${Date.now()}`}
@@ -395,34 +440,48 @@ export default function ProductForm() {
         <section className={`${PANEL} ${PANEL_MIN_H} flex flex-col`}>
           <h2 className="font-semibold mb-4">Images</h2>
 
-          {/* HERO slot with delete overlay */}
+          {/* HERO slot */}
           <div className="mb-4">
-            <SlotWrapper idx={0} sizeClass={HERO_H} src={s0} />
+            {loading ? (
+              <div className={`${HERO_H} w-full rounded-xl bg-gray-200 animate-pulse`} />
+            ) : (
+              <SlotWrapper idx={0} sizeClass={HERO_H} src={s0} />
+            )}
           </div>
 
-          {/* Thumbs with delete overlays */}
+          {/* Thumbs */}
           <div className="grid grid-cols-3 gap-4">
-            <SlotWrapper idx={1} sizeClass={THUMB_H} src={s1} />
-            <SlotWrapper idx={2} sizeClass={THUMB_H} src={s2} />
+            {loading ? (
+              <>
+                <div className={`${THUMB_H} rounded-xl bg-gray-200 animate-pulse`} />
+                <div className={`${THUMB_H} rounded-xl bg-gray-200 animate-pulse`} />
+                <div className={`${THUMB_H} rounded-xl bg-gray-200 animate-pulse`} />
+              </>
+            ) : (
+              <>
+                <SlotWrapper idx={1} sizeClass={THUMB_H} src={s1} />
+                <SlotWrapper idx={2} sizeClass={THUMB_H} src={s2} />
 
-            {canShowPlus && (
-              <button
-                type="button"
-                onClick={() => setUploadOpen(true)}
-                className="h-36 rounded-xl border border-gray-300 bg-white/80 grid place-items-center hover:border-gray-600"
-                title="Add image"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M12 5v14M5 12h14" />
-                </svg>
-              </button>
+                {canShowPlus && (
+                  <button
+                    type="button"
+                    onClick={() => setUploadOpen(true)}
+                    className="h-36 rounded-xl border border-gray-300 bg-white/80 grid place-items-center hover:border-gray-600"
+                    title="Add image"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                  </button>
+                )}
+              </>
             )}
           </div>
         </section>
@@ -436,15 +495,20 @@ export default function ProductForm() {
               <label className="block text-sm font-medium mb-1">
                 Product Name
               </label>
-              <input
-                name="name"
-                value={form.name}
-                onChange={onChange}
-                placeholder="e.g. Cotton Shirt"
-                className={inputClass("name")}
-                aria-invalid={!!errors.name}
-              />
-              {errors.name && (
+              {loading ? (
+                <div className="h-10 rounded-md bg-gray-200 animate-pulse" />
+              ) : (
+                <input
+                  name="name"
+                  value={form.name}
+                  onChange={onChange}
+                  placeholder="e.g. Cotton Shirt"
+                  className={inputClass("name")}
+                  aria-invalid={!!errors.name}
+                  disabled={loading}
+                />
+              )}
+              {!loading && errors.name && (
                 <p className="text-sm text-red-600 mt-1">{errors.name}</p>
               )}
             </div>
@@ -453,14 +517,19 @@ export default function ProductForm() {
               <label className="block text-sm font-medium mb-1">
                 Product Description
               </label>
-              <textarea
-                name="description"
-                value={form.description}
-                onChange={onChange}
-                placeholder="Brief description..."
-                className={inputClass("description")}
-                rows={4}
-              />
+              {loading ? (
+                <div className="h-24 rounded-md bg-gray-200 animate-pulse" />
+              ) : (
+                <textarea
+                  name="description"
+                  value={form.description}
+                  onChange={onChange}
+                  placeholder="Brief description..."
+                  className={inputClass("description")}
+                  rows={4}
+                  disabled={loading}
+                />
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -468,13 +537,19 @@ export default function ProductForm() {
                 <label className="block text-sm font-medium mb-1">
                   Category
                 </label>
-                <input
-                  name="category"
-                  value={form.category}
-                  onChange={onChange}
-                  placeholder="e.g. Apparel"
-                  className={inputClass("category")}
-                />
+                {loading ? (
+                  <div className="h-10 rounded-md bg-gray-200 animate-pulse" />
+                ) : (
+                  <>
+                    <TagInput
+                      value={categories}
+                      onChange={onCategoriesChange}
+                      suggestions={CATEGORY_SUGGESTIONS}
+                      placeholder="Add a category and press Enter"
+                    />
+                    <input type="hidden" name="category" value={form.category} readOnly />
+                  </>
+                )}
               </div>
 
               <div>
@@ -488,12 +563,15 @@ export default function ProductForm() {
                   >
                     <option>No images yet — add via Media</option>
                   </select>
+                ) : loading ? (
+                  <div className="h-10 rounded-md bg-gray-200 animate-pulse" />
                 ) : (
                   <select
                     name="thumbnail"
                     value={form.thumbnail}
                     onChange={onChange}
                     className={inputClass("thumbnail")}
+                    disabled={loading}
                   >
                     <option value="">— No thumbnail —</option>
                     {thumbOptions.map((o) => (
@@ -509,32 +587,42 @@ export default function ProductForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Price</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="price"
-                  value={form.price}
-                  onChange={onChange}
-                  placeholder="e.g. 49.99"
-                  className={inputClass("price")}
-                  aria-invalid={!!errors.price}
-                />
-                {errors.price && (
+                {loading ? (
+                  <div className="h-10 rounded-md bg-gray-200 animate-pulse" />
+                ) : (
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="price"
+                    value={form.price}
+                    onChange={onChange}
+                    placeholder="e.g. 49.99"
+                    className={inputClass("price")}
+                    aria-invalid={!!errors.price}
+                    disabled={loading}
+                  />
+                )}
+                {!loading && errors.price && (
                   <p className="text-sm text-red-600 mt-1">{errors.price}</p>
                 )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Stock</label>
-                <input
-                  type="number"
-                  name="stock"
-                  value={form.stock}
-                  onChange={onChange}
-                  placeholder="e.g. 10"
-                  className={inputClass("stock")}
-                  aria-invalid={!!errors.stock}
-                />
-                {errors.stock && (
+                {loading ? (
+                  <div className="h-10 rounded-md bg-gray-200 animate-pulse" />
+                ) : (
+                  <input
+                    type="number"
+                    name="stock"
+                    value={form.stock}
+                    onChange={onChange}
+                    placeholder="e.g. 10"
+                    className={inputClass("stock")}
+                    aria-invalid={!!errors.stock}
+                    disabled={loading}
+                  />
+                )}
+                {!loading && errors.stock && (
                   <p className="text-sm text-red-600 mt-1">{errors.stock}</p>
                 )}
               </div>
@@ -546,13 +634,14 @@ export default function ProductForm() {
               type="button"
               onClick={() => navigate("/dashboard/products")}
               className="text-blue-600 underline"
+              disabled={saving || loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={saving}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md"
+              disabled={saving || loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md disabled:opacity-60"
             >
               {saving
                 ? "Saving..."
@@ -584,11 +673,7 @@ export default function ProductForm() {
           onSaved={async () => {
             await Promise.all([loadMedia(), loadProduct()]);
             setEditModalOpen(false);
-            //  green flash on update
-            setFlash({
-              message: "Image updated successfully",
-              type: "success",
-            });
+            setFlash({ message: "Image updated successfully", type: "success" });
           }}
         />
       )}
