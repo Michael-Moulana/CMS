@@ -157,7 +157,6 @@ const deleteProduct = async (req, res, next) => {
 
     res.json({ success: true, message: "Product deleted successfully" });
   } catch (err) {
-    console.error("Error deleting product:", err);
     next(err);
   }
 };
@@ -288,7 +287,6 @@ const updateMediaDetails = async (req, res, next) => {
     }
 
     // Catch all other errors
-    console.error("Error updating media details:", err);
     res.status(500).json({
       success: false,
       message: "An unexpected error occurred",
@@ -337,7 +335,6 @@ const getMediaById = async (req, res, next) => {
     );
     res.status(200).json(decorated);
   } catch (err) {
-    console.error("Error fetching media by ID:", err);
     next(err);
   }
 };
