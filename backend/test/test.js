@@ -296,48 +296,63 @@ describe("deleteProduct Controller", () => {
   beforeEach(() => {
     req = {
       user: { _id: new mongoose.Types.ObjectId() },
-      params: { id: "prod123" },
+      params: { id: new mongoose.Types.ObjectId().toString() }, // valid by default
     };
 
     res = {
+      status: sinon.stub().returnsThis(),
       json: sinon.stub(),
     };
     next = sinon.spy();
 
-    // Stub productManager
-    const productManagerStub = {};
-    sinon
-      .stub(ModelFactory, "createProductManager")
-      .returns(productManagerStub);
-
-    // Stub AuthProxy.deleteProduct
-    proxyStub = sinon
-      .stub(AuthProxy.prototype, "deleteProduct")
-      .resolves({ _id: req.params.id });
-
-    // Stub ResponseDecorator
-    sinon.stub(ResponseDecorator, "decorate").callsFake((data, msg) => ({
-      success: true,
-      message: msg,
-      data,
-    }));
+    // Stub proxy deleteProduct
+    proxyStub = sinon.stub(AuthProxy.prototype, "deleteProduct");
   });
 
   afterEach(() => {
     sinon.restore();
   });
 
-  it("should delete a product and return decorated response", async () => {
+  it("should return 400 if product ID is invalid", async () => {
+    req.params.id = "invalid_id";
+
     await deleteProduct(req, res, next);
 
-    expect(proxyStub.calledOnceWithExactly("prod123")).to.be.true;
-    expect(res.json.calledOnce).to.be.true;
+    expect(res.status.calledOnceWith(400)).to.be.true;
+    expect(
+      res.json.calledOnceWith({
+        success: false,
+        message: "Invalid product ID",
+      })
+    ).to.be.true;
+  });
 
-    const responseArg = res.json.getCall(0).args[0];
-    expect(responseArg).to.deep.equal({
-      success: true,
-      message: "Product deleted successfully",
-    });
+  it("should return 404 if product not found", async () => {
+    proxyStub.resolves(null);
+
+    await deleteProduct(req, res, next);
+
+    expect(res.status.calledOnceWith(404)).to.be.true;
+    expect(
+      res.json.calledOnceWith({
+        success: false,
+        message: "Product not found",
+      })
+    ).to.be.true;
+  });
+
+  it("should delete a product and return success response", async () => {
+    proxyStub.resolves({ _id: req.params.id });
+
+    await deleteProduct(req, res, next);
+
+    expect(proxyStub.calledOnceWith(req.params.id)).to.be.true;
+    expect(
+      res.json.calledOnceWith({
+        success: true,
+        message: "Product deleted successfully",
+      })
+    ).to.be.true;
   });
 
   it("should call next(err) if deletion fails", async () => {
@@ -643,7 +658,10 @@ describe("updateMediaDetails Controller", () => {
     ).updateMediaDetails;
 
     req = {
-      params: { id: "prod123", mediaId: "media456" },
+      params: {
+        id: new mongoose.Types.ObjectId().toString(),
+        mediaId: new mongoose.Types.ObjectId().toString(),
+      },
       body: { title: "New Title", order: 2 },
     };
     res = { status: sinon.stub().returnsThis(), json: sinon.stub() };
@@ -655,23 +673,57 @@ describe("updateMediaDetails Controller", () => {
   });
 
   it("should update media and return decorated response", async () => {
-    const fakeResult = { mediaId: "media456", title: "New Title", order: 2 };
+    const fakeResult = {
+      mediaId: req.params.mediaId,
+      title: "New Title",
+      order: 2,
+    };
     productManagerStub.updateMediaDetails.resolves(fakeResult);
 
     await updateMediaDetails(req, res, next);
 
     expect(
       productManagerStub.updateMediaDetails.calledOnceWith(
-        "prod123",
-        "media456",
+        req.params.id,
+        req.params.mediaId,
         { title: "New Title", order: 2 }
       )
     ).to.be.true;
+
+    expect(res.status.calledWith(200)).to.be.true;
     expect(
       res.json.calledOnceWith({
         success: true,
         message: "Media updated successfully",
         data: fakeResult,
+      })
+    ).to.be.true;
+  });
+
+  it("should return 400 if productId is invalid", async () => {
+    req.params.id = "invalidId";
+
+    await updateMediaDetails(req, res, next);
+
+    expect(res.status.calledOnceWith(400)).to.be.true;
+    expect(
+      res.json.calledOnceWith({
+        success: false,
+        message: "Invalid product ID",
+      })
+    ).to.be.true;
+  });
+
+  it("should return 400 if mediaId is invalid", async () => {
+    req.params.mediaId = "invalidId";
+
+    await updateMediaDetails(req, res, next);
+
+    expect(res.status.calledOnceWith(400)).to.be.true;
+    expect(
+      res.json.calledOnceWith({
+        success: false,
+        message: "Invalid media ID",
       })
     ).to.be.true;
   });
@@ -700,7 +752,10 @@ describe("updateMediaDetails Controller", () => {
 
     expect(res.status.calledOnceWith(404)).to.be.true;
     expect(
-      res.json.calledOnceWith({ success: false, message: "Product not found" })
+      res.json.calledOnceWith({
+        success: false,
+        message: "Product not found",
+      })
     ).to.be.true;
   });
 
@@ -711,17 +766,28 @@ describe("updateMediaDetails Controller", () => {
 
     expect(res.status.calledOnceWith(404)).to.be.true;
     expect(
-      res.json.calledOnceWith({ success: false, message: "Media not found" })
+      res.json.calledOnceWith({
+        success: false,
+        message: "Media not found",
+      })
     ).to.be.true;
   });
 
-  it("should call next(err) for unexpected errors", async () => {
+  it("should return 500 for unexpected errors", async () => {
     const error = new Error("Database error");
     productManagerStub.updateMediaDetails.rejects(error);
 
     await updateMediaDetails(req, res, next);
 
-    expect(next.calledOnceWith(error)).to.be.true;
+    expect(res.status.calledOnceWith(500)).to.be.true;
+    expect(res.json.calledOnce).to.be.true;
+
+    const responseArg = res.json.getCall(0).args[0];
+    expect(responseArg).to.deep.equal({
+      success: false,
+      message: "An unexpected error occurred",
+      error: "Database error",
+    });
   });
 });
 
@@ -807,21 +873,17 @@ describe("getMediaById Controller", () => {
   let getMediaById;
 
   beforeEach(() => {
-    req = { params: { id: "123" } };
+    req = { params: { id: new mongoose.Types.ObjectId().toString() } };
     res = {
       status: sinon.stub().returnsThis(),
       json: sinon.stub(),
     };
     next = sinon.spy();
 
-    // Stub the mediaManager.model.findById
     mediaManagerStub = {
-      model: {
-        findById: sinon.stub(),
-      },
+      model: { findById: sinon.stub() },
     };
 
-    // Stub ResponseDecorator
     const ResponseDecoratorStub = {
       decorate: sinon.stub().callsFake((data, msg) => ({
         success: true,
@@ -830,7 +892,6 @@ describe("getMediaById Controller", () => {
       })),
     };
 
-    // Proxyquire the controller and replace MediaManager with our stub
     const productController = proxyquire("../controllers/productController", {
       "../services/MediaManager": function () {
         return mediaManagerStub;
@@ -846,12 +907,15 @@ describe("getMediaById Controller", () => {
   });
 
   it("should fetch a media by ID and return decorated response", async () => {
-    const fakeMedia = { _id: "123", filename: "image1.jpg" };
+    const validId = new mongoose.Types.ObjectId().toString();
+    req.params.id = validId;
+
+    const fakeMedia = { _id: validId, filename: "image1.jpg" };
     mediaManagerStub.model.findById.resolves(fakeMedia);
 
     await getMediaById(req, res, next);
 
-    expect(mediaManagerStub.model.findById.calledOnceWith("123")).to.be.true;
+    expect(mediaManagerStub.model.findById.calledOnceWith(validId)).to.be.true;
     expect(res.status.calledWith(200)).to.be.true;
     expect(res.json.calledOnce).to.be.true;
 
@@ -889,52 +953,6 @@ describe("getMediaById Controller", () => {
 });
 
 // ---------- navigationsController Tests ----------
-// describe("Get Navigations Function Test", () => {
-//   let req, res;
-
-//   beforeEach(() => {
-//     req = { user: { _id: new mongoose.Types.ObjectId() } };
-//     res = {
-//       status: sinon.stub().returnsThis(),
-//       json: sinon.spy(),
-//     };
-//   });
-
-//   afterEach(() => {
-//     sinon.restore();
-//   });
-
-//   it("should return all Navigations for the User", async () => {
-//     const navigations = [
-//       { _id: new mongoose.Types.ObjectId(), title: "Nav 1" },
-//       { _id: new mongoose.Types.ObjectId(), title: "Nav 2" },
-//     ];
-
-//     const findStub = sinon.stub(Navigation, "find").returns({
-//       sort: sinon.stub().returnsThis(),
-//       populate: sinon.stub().resolves(navigations),
-//     });
-
-//     await getNavigations(req, res);
-
-//     expect(findStub.calledOnceWith({ createdBy: req.user._id })).to.be.true;
-//     expect(res.status.calledWith(200)).to.be.true;
-//     expect(res.json.calledWith({ navigation: navigations })).to.be.true;
-//   });
-
-//   it("should return 500 on error", async () => {
-//     const error = new Error("DB Error");
-//     const findStub = sinon.stub(Navigation, "find").returns({
-//       sort: sinon.stub().returnsThis(),
-//       populate: sinon.stub().throws(error),
-//     });
-
-//     await getNavigations(req, res);
-
-//     expect(res.status.calledWith(500)).to.be.true;
-//     expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
-//   });
-// });
 
 describe("Create Navigation Function Test", function () {
   // Increase timeout for async operations
