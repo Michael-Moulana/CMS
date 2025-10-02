@@ -20,18 +20,22 @@ const {
   getPages,
   updatePage,
   deletePage,
+  getPage,
 } = require("../controllers/pageController");
 
 const {
   createNavigation,
   updateNavigation,
   deleteNavigation,
+  getNavigations,
+  getNavigation,
 } = require("../controllers/navigationController");
 
 const { expect } = chai;
 
 chai.use(chaiHttp);
 
+// ---------- productsController Tests ----------
 describe("getAllProducts Controller", () => {
   let req, res, next, productManagerStub, getAllProducts;
 
@@ -361,7 +365,7 @@ describe("createProduct Controller", () => {
     };
     next = sinon.stub();
 
-    // Stub prototype method (instance method)
+    // Stub prototype method
     stubCreate = sinon
       .stub(AuthProxy.prototype, "createProduct")
       .resolves({ _id: "p1", name: "Test Product" });
@@ -721,6 +725,170 @@ describe("updateMediaDetails Controller", () => {
   });
 });
 
+// get all media - for testing purposes only
+describe("getAllMedia Controller", () => {
+  let req, res, next;
+  let mediaManagerStub;
+  let getAllMedia;
+
+  beforeEach(() => {
+    req = {};
+    res = {
+      status: sinon.stub().returnsThis(),
+      json: sinon.stub(),
+    };
+    next = sinon.spy();
+
+    // Stub instance methods
+    mediaManagerStub = {
+      listAll: sinon.stub(),
+    };
+
+    // Stub ResponseDecorator
+    const ResponseDecoratorStub = {
+      decorate: sinon.stub().callsFake((data, msg) => ({
+        success: true,
+        message: msg,
+        data,
+      })),
+    };
+
+    // Proxyquire: replace the MediaManager constructor with a function returning stub
+    const productController = proxyquire("../controllers/productController", {
+      "../services/MediaManager": function () {
+        return mediaManagerStub;
+      },
+      "../services/ResponseDecorator": ResponseDecoratorStub,
+    });
+
+    getAllMedia = productController.getAllMedia;
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should fetch all media and return decorated response", async () => {
+    const fakeMedia = [
+      { _id: "1", filename: "image1.jpg" },
+      { _id: "2", filename: "image2.png" },
+    ];
+
+    mediaManagerStub.listAll.resolves(fakeMedia);
+
+    await getAllMedia(req, res, next);
+
+    expect(mediaManagerStub.listAll.calledOnce).to.be.true;
+    expect(res.status.calledWith(200)).to.be.true;
+    expect(res.json.calledOnce).to.be.true;
+
+    const responseArg = res.json.getCall(0).args[0];
+    expect(responseArg).to.deep.equal({
+      success: true,
+      message: "All media fetched successfully",
+      data: fakeMedia,
+    });
+  });
+
+  it("should call next(err) if listAll fails", async () => {
+    const error = new Error("DB error");
+    mediaManagerStub.listAll.rejects(error);
+
+    await getAllMedia(req, res, next);
+
+    expect(next.calledOnceWith(error)).to.be.true;
+  });
+});
+
+// get one media by id - for testing purposes only
+describe("getMediaById Controller", () => {
+  let req, res, next;
+  let mediaManagerStub;
+  let getMediaById;
+
+  beforeEach(() => {
+    req = { params: { id: "123" } };
+    res = {
+      status: sinon.stub().returnsThis(),
+      json: sinon.stub(),
+    };
+    next = sinon.spy();
+
+    // Stub the mediaManager.model.findById
+    mediaManagerStub = {
+      model: {
+        findById: sinon.stub(),
+      },
+    };
+
+    // Stub ResponseDecorator
+    const ResponseDecoratorStub = {
+      decorate: sinon.stub().callsFake((data, msg) => ({
+        success: true,
+        message: msg,
+        data,
+      })),
+    };
+
+    // Proxyquire the controller and replace MediaManager with our stub
+    const productController = proxyquire("../controllers/productController", {
+      "../services/MediaManager": function () {
+        return mediaManagerStub;
+      },
+      "../services/ResponseDecorator": ResponseDecoratorStub,
+    });
+
+    getMediaById = productController.getMediaById;
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should fetch a media by ID and return decorated response", async () => {
+    const fakeMedia = { _id: "123", filename: "image1.jpg" };
+    mediaManagerStub.model.findById.resolves(fakeMedia);
+
+    await getMediaById(req, res, next);
+
+    expect(mediaManagerStub.model.findById.calledOnceWith("123")).to.be.true;
+    expect(res.status.calledWith(200)).to.be.true;
+    expect(res.json.calledOnce).to.be.true;
+
+    const responseArg = res.json.getCall(0).args[0];
+    expect(responseArg).to.deep.equal({
+      success: true,
+      message: "Media fetched successfully",
+      data: fakeMedia,
+    });
+  });
+
+  it("should return 404 if media not found", async () => {
+    mediaManagerStub.model.findById.resolves(null);
+
+    await getMediaById(req, res, next);
+
+    expect(res.status.calledWith(404)).to.be.true;
+    expect(res.json.calledOnce).to.be.true;
+
+    const responseArg = res.json.getCall(0).args[0];
+    expect(responseArg).to.deep.equal({
+      success: false,
+      message: "Media not found",
+    });
+  });
+
+  it("should call next(err) if findById throws an error", async () => {
+    const error = new Error("DB error");
+    mediaManagerStub.model.findById.rejects(error);
+
+    await getMediaById(req, res, next);
+
+    expect(next.calledOnceWith(error)).to.be.true;
+  });
+});
+
+// ---------- navigationsController Tests ----------
 // describe("Get Navigations Function Test", () => {
 //   let req, res;
 
@@ -769,7 +937,8 @@ describe("updateMediaDetails Controller", () => {
 // });
 
 describe("Create Navigation Function Test", function () {
-  this.timeout(5000); // Increase timeout for async operations
+  // Increase timeout for async operations
+  this.timeout(5000);
 
   afterEach(() => {
     sinon.restore();
@@ -982,6 +1151,128 @@ describe("Delete Navigation Controller Test", () => {
   });
 });
 
+describe("getNavigations Controller", () => {
+  let res;
+
+  beforeEach(() => {
+    res = {
+      status: sinon.stub().returnsThis(),
+      json: sinon.spy(),
+    };
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should fetch all navigations sorted and populated", async () => {
+    const fakeNavigations = [
+      { _id: new mongoose.Types.ObjectId(), title: "Home" },
+      { _id: new mongoose.Types.ObjectId(), title: "About" },
+    ];
+
+    const sortStub = sinon.stub().returnsThis();
+    const populateStub = sinon.stub().resolves(fakeNavigations);
+
+    sinon
+      .stub(Navigation, "find")
+      .returns({ sort: sortStub, populate: populateStub });
+
+    await getNavigations({}, res);
+
+    expect(sortStub.calledWith("order")).to.be.true;
+    expect(populateStub.calledWith("parent", "title")).to.be.true;
+    expect(res.status.calledWith(200)).to.be.true;
+    expect(res.json.calledWith({ navigation: fakeNavigations })).to.be.true;
+  });
+
+  it("should return 500 if an error occurs", async () => {
+    const error = new Error("DB Error");
+    const sortStub = sinon.stub().returnsThis();
+    const populateStub = sinon.stub().throws(error);
+
+    sinon
+      .stub(Navigation, "find")
+      .returns({ sort: sortStub, populate: populateStub });
+
+    await getNavigations({}, res);
+
+    expect(res.status.calledWith(500)).to.be.true;
+    expect(res.json.calledWith({ error: error.message })).to.be.true;
+  });
+});
+
+describe("getNavigation Controller", () => {
+  let res;
+
+  beforeEach(() => {
+    res = {
+      status: sinon.stub().returnsThis(),
+      json: sinon.spy(),
+    };
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should fetch a single navigation by ID and populate parent", async () => {
+    const navId = new mongoose.Types.ObjectId().toString();
+    const fakeNav = { _id: navId, title: "Home" };
+
+    const populateStub = sinon.stub().resolves(fakeNav);
+    sinon
+      .stub(Navigation, "findById")
+      .withArgs(navId)
+      .returns({ populate: populateStub });
+
+    const req = { params: { id: navId } };
+
+    await getNavigation(req, res);
+
+    expect(populateStub.calledWith("parent", "title")).to.be.true;
+    expect(res.status.calledWith(200)).to.be.true;
+    expect(res.json.calledWith({ navigation: fakeNav })).to.be.true;
+  });
+
+  it("should return 404 if navigation not found", async () => {
+    const navId = new mongoose.Types.ObjectId().toString();
+
+    const populateStub = sinon.stub().resolves(null);
+    sinon
+      .stub(Navigation, "findById")
+      .withArgs(navId)
+      .returns({ populate: populateStub });
+
+    const req = { params: { id: navId } };
+
+    await getNavigation(req, res);
+
+    expect(res.status.calledWith(404)).to.be.true;
+    expect(res.json.calledWith({ message: "Navigation item not found" })).to.be
+      .true;
+  });
+
+  it("should return 500 if an error occurs", async () => {
+    const navId = new mongoose.Types.ObjectId().toString();
+    const error = new Error("DB Error");
+
+    const populateStub = sinon.stub().throws(error);
+    sinon
+      .stub(Navigation, "findById")
+      .withArgs(navId)
+      .returns({ populate: populateStub });
+
+    const req = { params: { id: navId } };
+
+    await getNavigation(req, res);
+
+    expect(res.status.calledWith(500)).to.be.true;
+    expect(res.json.calledWith({ error: error.message })).to.be.true;
+  });
+});
+
+// ---------- pagesController Tests ----------
 describe("Create Page Function Test", () => {
   it("should create a new page successfully", async () => {
     const req = {
@@ -1030,7 +1321,7 @@ describe("Create Page Function Test", () => {
 });
 
 describe("Update Page Function Test", function () {
-  this.timeout(5000); // avoid timeout issues
+  this.timeout(5000);
 
   afterEach(() => {
     sinon.restore();
@@ -1065,7 +1356,7 @@ describe("Update Page Function Test", function () {
           title: "New Page",
           content: "Updated Content",
           slug: "new-page",
-          updatedAt: sinon.match.number, // allow number timestamp
+          updatedAt: sinon.match.number,
         },
         { new: true }
       )
@@ -1098,6 +1389,70 @@ describe("Update Page Function Test", function () {
 
     expect(res.status.calledWith(500)).to.be.true;
     expect(res.json.calledWithMatch({ error: "DB Error" })).to.be.true;
+  });
+});
+
+describe("getPage Controller", () => {
+  let res;
+
+  beforeEach(() => {
+    res = {
+      status: sinon.stub().returnsThis(),
+      json: sinon.spy(),
+    };
+  });
+
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it("should fetch a single page by ID and return 200", async () => {
+    const pageId = new mongoose.Types.ObjectId().toString();
+    const fakePage = {
+      _id: pageId,
+      title: "About Us",
+      content: "Page content",
+    };
+
+    // Stub Page.findById to return the fake page
+    sinon.stub(Page, "findById").withArgs(pageId).resolves(fakePage);
+
+    const req = { params: { id: pageId } };
+
+    await getPage(req, res);
+
+    expect(Page.findById.calledOnceWith(pageId)).to.be.true;
+    expect(res.status.calledWith(200)).to.be.true;
+    expect(res.json.calledWith(fakePage)).to.be.true;
+  });
+
+  it("should return 404 if page not found", async () => {
+    const pageId = new mongoose.Types.ObjectId().toString();
+
+    // Stub Page.findById to return null
+    sinon.stub(Page, "findById").withArgs(pageId).resolves(null);
+
+    const req = { params: { id: pageId } };
+
+    await getPage(req, res);
+
+    expect(res.status.calledWith(404)).to.be.true;
+    expect(res.json.calledWith({ message: "Page not found" })).to.be.true;
+  });
+
+  it("should return 500 if an error occurs", async () => {
+    const pageId = new mongoose.Types.ObjectId().toString();
+    const error = new Error("DB Error");
+
+    // Stub Page.findById to throw an error
+    sinon.stub(Page, "findById").withArgs(pageId).rejects(error);
+
+    const req = { params: { id: pageId } };
+
+    await getPage(req, res);
+
+    expect(res.status.calledWith(500)).to.be.true;
+    expect(res.json.calledWith({ error: error.message })).to.be.true;
   });
 });
 
