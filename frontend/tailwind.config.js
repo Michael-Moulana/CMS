@@ -1,15 +1,15 @@
 module.exports = {
-  content: ['./src/**/*.{js,jsx,ts,tsx}'],
+  content: ["./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
     extend: {},
   },
   plugins: [],
 
   theme: {
-  extend: {
-    fontFamily: {
-      rota: ["Rota", "sans-serif"],
+    extend: {
+      fontFamily: {
+        rota: ["Rota", "sans-serif"],
+      },
     },
   },
-},
 };

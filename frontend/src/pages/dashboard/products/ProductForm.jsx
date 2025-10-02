@@ -2,12 +2,16 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { createProduct, getProductById, updateProduct } from "./ProductService";
-import { getProductMedia, uploadMediaToProduct, deleteProductMedia } from "../media/MediaService.js";
+import {
+  getProductMedia,
+  uploadMediaToProduct,
+  deleteProductMedia,
+} from "../media/MediaService.js";
 import MediaPickerModal from "../media/MediaPickerModal.jsx";
 import MediaUploadDialog from "../media/MediaUploadDialog.jsx";
 import ImageSlot from "../media/ImageSlot.jsx";
-import FlashMessage from "../../components/FlashMessage.jsx"; // ✅ add
-import api from "../../axiosConfig.jsx";
+import FlashMessage from "../../../components/FlashMessage.jsx"; // ✅ add
+import api from "../../../axiosConfig.jsx";
 
 const MAX_LOCAL = 3;
 
@@ -66,7 +70,6 @@ export default function ProductForm() {
   const [loading, setLoading] = useState(mode === "edit");
   const [saving, setSaving] = useState(false);
 
-
   const [flash, setFlash] = useState(null);
 
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -105,7 +108,9 @@ export default function ProductForm() {
     } else if (typeof p.categories === "string") {
       try {
         const parsed = JSON.parse(p.categories);
-        categoryStr = Array.isArray(parsed) ? parsed.join(", ") : String(p.categories);
+        categoryStr = Array.isArray(parsed)
+          ? parsed.join(", ")
+          : String(p.categories);
       } catch {
         categoryStr = String(p.categories || "");
       }
@@ -246,9 +251,12 @@ export default function ProductForm() {
   }
 
   // image slot values
-  const s0 = mode === "add" ? localImages[0] || null : editImages[0]?.url || null;
-  const s1 = mode === "add" ? localImages[1] || null : editImages[1]?.url || null;
-  const s2 = mode === "add" ? localImages[2] || null : editImages[2]?.url || null;
+  const s0 =
+    mode === "add" ? localImages[0] || null : editImages[0]?.url || null;
+  const s1 =
+    mode === "add" ? localImages[1] || null : editImages[1]?.url || null;
+  const s2 =
+    mode === "add" ? localImages[2] || null : editImages[2]?.url || null;
 
   const handleSlotClick = (idx) => {
     if (mode === "add") {
@@ -296,11 +304,20 @@ export default function ProductForm() {
     <button
       type="button"
       onClick={onClick}
-      className={`absolute top-2 left-2 ${small ? "h-7 w-7" : "h-8 w-8"} rounded-lg bg-red-500 hover:bg-red-600 text-white grid place-items-center shadow`}
+      className={`absolute top-2 left-2 ${
+        small ? "h-7 w-7" : "h-8 w-8"
+      } rounded-lg bg-red-500 hover:bg-red-600 text-white grid place-items-center shadow`}
       title="Remove image"
       aria-label="Remove image"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        className="h-4 w-4"
+      >
         <polyline points="3 6 5 6 21 6" />
         <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
         <line x1="10" y1="11" x2="10" y2="17" />
@@ -317,7 +334,12 @@ export default function ProductForm() {
         onClick={() => handleSlotClick(idx)}
         className="w-full h-full"
       />
-      {src && <TrashBtn onClick={() => handleDeleteSlot(idx)} small={sizeClass !== HERO_H} />}
+      {src && (
+        <TrashBtn
+          onClick={() => handleDeleteSlot(idx)}
+          small={sizeClass !== HERO_H}
+        />
+      )}
     </div>
   );
 
@@ -390,7 +412,14 @@ export default function ProductForm() {
                 className="h-36 rounded-xl border border-gray-300 bg-white/80 grid place-items-center hover:border-gray-600"
                 title="Add image"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path d="M12 5v14M5 12h14" />
                 </svg>
               </button>
@@ -404,7 +433,9 @@ export default function ProductForm() {
 
           <div className="grow">
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Product Name</label>
+              <label className="block text-sm font-medium mb-1">
+                Product Name
+              </label>
               <input
                 name="name"
                 value={form.name}
@@ -413,11 +444,15 @@ export default function ProductForm() {
                 className={inputClass("name")}
                 aria-invalid={!!errors.name}
               />
-              {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
+              {errors.name && (
+                <p className="text-sm text-red-600 mt-1">{errors.name}</p>
+              )}
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Product Description</label>
+              <label className="block text-sm font-medium mb-1">
+                Product Description
+              </label>
               <textarea
                 name="description"
                 value={form.description}
@@ -430,7 +465,9 @@ export default function ProductForm() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Category</label>
+                <label className="block text-sm font-medium mb-1">
+                  Category
+                </label>
                 <input
                   name="category"
                   value={form.category}
@@ -441,9 +478,14 @@ export default function ProductForm() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Select Thumbnail</label>
+                <label className="block text-sm font-medium mb-1">
+                  Select Thumbnail
+                </label>
                 {mode === "add" ? (
-                  <select className={`${inputClass("thumbnail")} bg-gray-100`} disabled>
+                  <select
+                    className={`${inputClass("thumbnail")} bg-gray-100`}
+                    disabled
+                  >
                     <option>No images yet — add via Media</option>
                   </select>
                 ) : (
@@ -477,7 +519,9 @@ export default function ProductForm() {
                   className={inputClass("price")}
                   aria-invalid={!!errors.price}
                 />
-                {errors.price && <p className="text-sm text-red-600 mt-1">{errors.price}</p>}
+                {errors.price && (
+                  <p className="text-sm text-red-600 mt-1">{errors.price}</p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Stock</label>
@@ -490,7 +534,9 @@ export default function ProductForm() {
                   className={inputClass("stock")}
                   aria-invalid={!!errors.stock}
                 />
-                {errors.stock && <p className="text-sm text-red-600 mt-1">{errors.stock}</p>}
+                {errors.stock && (
+                  <p className="text-sm text-red-600 mt-1">{errors.stock}</p>
+                )}
               </div>
             </div>
           </div>
@@ -508,7 +554,11 @@ export default function ProductForm() {
               disabled={saving}
               className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md"
             >
-              {saving ? "Saving..." : mode === "edit" ? "Save Changes" : "Add Product"}
+              {saving
+                ? "Saving..."
+                : mode === "edit"
+                ? "Save Changes"
+                : "Add Product"}
             </button>
           </div>
         </section>
@@ -535,7 +585,10 @@ export default function ProductForm() {
             await Promise.all([loadMedia(), loadProduct()]);
             setEditModalOpen(false);
             //  green flash on update
-            setFlash({ message: "Image updated successfully", type: "success" });
+            setFlash({
+              message: "Image updated successfully",
+              type: "success",
+            });
           }}
         />
       )}

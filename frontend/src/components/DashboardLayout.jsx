@@ -29,7 +29,9 @@ const Item = ({ to, icon, label, end, onNavigate }) => (
             src={icon}
             alt=""
             onError={iconFallback}
-            className={"h-4 w-4 " + (isActive ? "filter invert brightness-0" : "")}
+            className={
+              "h-4 w-4 " + (isActive ? "filter invert brightness-0" : "")
+            }
           />
         </div>
         <span className="text-sm">{label}</span>
@@ -73,14 +75,21 @@ export default function DashboardLayout() {
           onClick={() => setOpen(true)}
         >
           <svg viewBox="0 0 24 24" className="h-5 w-5 text-gray-700">
-            <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            <path
+              d="M4 7h16M4 12h16M4 17h16"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
           </svg>
         </button>
 
         {/* Brand */}
         <Link to="/dashboard" className="flex items-center gap-3">
           <img src="/img/logo.png" alt="BLOX CMS" className="h-9 w-9" />
-          <span className="font-semibold tracking-wide text-blue-600">BLOX CMS</span>
+          <span className="font-semibold tracking-wide text-blue-600">
+            BLOX CMS
+          </span>
         </Link>
 
         {/* Account */}
@@ -94,7 +103,9 @@ export default function DashboardLayout() {
             />
           </div>
           <div className="hidden sm:flex flex-col">
-            <span className="text-sm font-medium text-blue-600">{displayName}</span>
+            <span className="text-sm font-medium text-blue-600">
+              {displayName}
+            </span>
             <span className="text-xs text-gray-400">Admin account</span>
           </div>
         </div>
@@ -104,15 +115,23 @@ export default function DashboardLayout() {
         {/* ===== Sidebar (desktop) ===== */}
         <aside className="w-64 shrink-0 hidden md:flex flex-col border-r bg-white min-h-[calc(100vh-4rem)] p-4 justify-between">
           <nav className="space-y-2">
-            <Item to="/dashboard" end icon="/img/Dashboard.png" label="Dashboard" />
+            <Item
+              to="/dashboard"
+              end
+              icon="/img/Dashboard.png"
+              label="Dashboard"
+            />
             <Item to="/dashboard/pages" icon="/img/pages.png" label="Pages" />
             <Item
               to="/dashboard/navigations"
               icon="/img/site%20navigation.png"
-              label="Manage Site Navigation"
+              label="Navigations"
             />
-            <Item to="/dashboard/products" icon="/img/products.png" label="Products" />
-            <Item to="/dashboard/media" icon="/img/media.png" label="Media" />
+            <Item
+              to="/dashboard/products"
+              icon="/img/products.png"
+              label="Products"
+            />
           </nav>
 
           {/* Log Out row (text + blue icon, not a filled button) */}
@@ -120,7 +139,12 @@ export default function DashboardLayout() {
             onClick={handleLogout}
             className="flex items-center gap-2 px-4 py-3 rounded-xl text-blue-600 hover:text-blue-700 hover:bg-gray-100 transition"
           >
-            <img src="/img/Logout.png" alt="" onError={iconFallback} className="h-5 w-5" />
+            <img
+              src="/img/Logout.png"
+              alt=""
+              onError={iconFallback}
+              className="h-5 w-5"
+            />
             <span className="text-sm">Log Out</span>
           </button>
         </aside>
@@ -143,9 +167,15 @@ export default function DashboardLayout() {
         >
           <div>
             <div className="flex items-center justify-between mb-4">
-              <Link to="/dashboard" className="flex items-center gap-2" onClick={closeDrawerOnNavigate}>
+              <Link
+                to="/dashboard"
+                className="flex items-center gap-2"
+                onClick={closeDrawerOnNavigate}
+              >
                 <img src="/img/logo.png" alt="BLOX CMS" className="h-8 w-8" />
-                <span className="font-semibold tracking-wide text-blue-600">BLOX CMS</span>
+                <span className="font-semibold tracking-wide text-blue-600">
+                  BLOX CMS
+                </span>
               </Link>
               <button
                 className="h-9 w-9 rounded-lg hover:bg-gray-100"
@@ -153,17 +183,43 @@ export default function DashboardLayout() {
                 onClick={() => setOpen(false)}
               >
                 <svg viewBox="0 0 24 24" className="h-5 w-5 text-gray-700">
-                  <path d="M6 6l12 12M18 6l-12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path
+                    d="M6 6l12 12M18 6l-12 12"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </button>
             </div>
 
             <nav className="space-y-2">
-              <Item to="/dashboard" end icon="/img/Dashboard.png" label="Dashboard" onNavigate={closeDrawerOnNavigate} />
-              <Item to="/dashboard/pages" icon="/img/pages.png" label="Pages" onNavigate={closeDrawerOnNavigate} />
-              <Item to="/dashboard/navigations" icon="/img/site%20navigation.png" label="Manage Site Navigation" onNavigate={closeDrawerOnNavigate} />
-              <Item to="/dashboard/products" icon="/img/products.png" label="Products" onNavigate={closeDrawerOnNavigate} />
-              <Item to="/dashboard/media" icon="/img/media.png" label="Media" onNavigate={closeDrawerOnNavigate} />
+              <Item
+                to="/dashboard"
+                end
+                icon="/img/Dashboard.png"
+                label="Dashboard"
+                onNavigate={closeDrawerOnNavigate}
+                className="font-\"
+              />
+              <Item
+                to="/dashboard/pages"
+                icon="/img/pages.png"
+                label="Pages"
+                onNavigate={closeDrawerOnNavigate}
+              />
+              <Item
+                to="/dashboard/navigations"
+                icon="/img/site%20navigation.png"
+                label="Navigations"
+                onNavigate={closeDrawerOnNavigate}
+              />
+              <Item
+                to="/dashboard/products"
+                icon="/img/products.png"
+                label="Products"
+                onNavigate={closeDrawerOnNavigate}
+              />
             </nav>
           </div>
 
@@ -174,7 +230,12 @@ export default function DashboardLayout() {
             }}
             className="flex items-center gap-2 px-4 py-3 rounded-xl text-blue-600 hover:text-blue-700 hover:bg-gray-100 transition"
           >
-            <img src="/img/Logout.png" alt="" onError={iconFallback} className="h-5 w-5" />
+            <img
+              src="/img/Logout.png"
+              alt=""
+              onError={iconFallback}
+              className="h-5 w-5"
+            />
             <span className="text-sm">Log Out</span>
           </button>
         </aside>
