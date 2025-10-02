@@ -56,6 +56,7 @@ const getProfile = async (req, res) => {
       email: user.email,
       university: user.university,
       address: user.address,
+      avatar: user.avatar || "", 
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -72,6 +73,12 @@ const updateUserProfile = async (req, res) => {
     user.email = email || user.email;
     user.university = university || user.university;
     user.address = address || user.address;
+
+    if (req.file) {
+      // will be served by app.use('/uploads', express.static(...))
+      user.avatar = `/uploads/avatars/${path.basename(req.file.path)}`;
+
+    }
 
     const updatedUser = await user.save();
     res.json({
