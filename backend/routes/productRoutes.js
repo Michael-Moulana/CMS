@@ -22,7 +22,7 @@ router.post("/", protect, upload, productController.createProduct);
 // Get all products
 router.get("/", protect, productController.getAllProducts);
 
-// ------------------- Product search (must be BEFORE :id) -------------------
+// ------------------- Product search -------------------
 router.get("/search/query", productController.searchProducts);
 
 // Get single product

@@ -1,4 +1,3 @@
-// frontend/src/pages/products/ProductEditPage.jsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getProductById, updateProduct } from "./ProductService";
@@ -85,7 +84,9 @@ export default function ProductEditPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Thumbnail (media id)</label>
+            <label className="block text-sm font-medium mb-1">
+              Thumbnail (media id)
+            </label>
             <input
               name="thumbnail"
               value={form.thumbnail}

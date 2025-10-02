@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        rota: ["Rota", "sans-serif"],
+        roboto: ["Roboto", "sans-serif"],
       },
     },
   },

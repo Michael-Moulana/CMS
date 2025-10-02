@@ -1,5 +1,4 @@
-// frontend/src/pages/Login.jsx
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axiosInstance from "../axiosConfig";
 import { useAuth } from ".././context/AuthContext";
@@ -22,8 +21,8 @@ const Login = () => {
     try {
       setLoading(true);
       const response = await axiosInstance.post("/auth/login", formData);
-      login(response.data);             
-      navigate("/dashboard");           
+      login(response.data);
+      navigate("/dashboard");
     } catch (err) {
       alert("Login failed. Please try again.");
     } finally {
@@ -33,7 +32,6 @@ const Login = () => {
 
   return (
     <>
-      
       <div className="min-h-screen w-full bg-blue-600 p-4 sm:p-6 md:p-10 flex items-center justify-center">
         {/* Desktop white card with large rounded corners */}
         <div
@@ -44,9 +42,7 @@ const Login = () => {
             p-6 sm:p-8 md:p-10
           "
         >
-        
           <div className="flex items-center gap-3 mb-8 justify-center sm:justify-start">
-           
             <img src="/img/logo.png" alt="Blox CMS" className="h-10 w-10" />
             <span className="font-semibold tracking-wide">BLOX CMS</span>
           </div>
@@ -87,7 +83,9 @@ const Login = () => {
 
             {/* Password */}
             <div>
-              <label className="block text-sm text-gray-600 mb-2">Password</label>
+              <label className="block text-sm text-gray-600 mb-2">
+                Password
+              </label>
               <input
                 name="password"
                 type="password"

@@ -1,4 +1,3 @@
-// frontend/src/pages/Profile.jsx
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
