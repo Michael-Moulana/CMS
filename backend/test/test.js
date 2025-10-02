@@ -793,7 +793,7 @@ describe("updateMediaDetails Controller", () => {
   });
 });
 
-describe("searchProducts Controller (with proxyquire)", () => {
+describe("searchProducts Controller]", () => {
   let req, res, next;
   let searchStub, decorateStub;
   let searchProducts;
@@ -813,7 +813,6 @@ describe("searchProducts Controller (with proxyquire)", () => {
       data,
     }));
 
-    // Use proxyquire to replace productManager and ResponseDecorator in the controller
     searchProducts = proxyquire("../controllers/productController", {
       "../services/ModelFactory": {
         createProductManager: () => ({ search: searchStub }),
