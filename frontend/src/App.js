@@ -15,8 +15,10 @@ import PagesDashboard from "./pages/dashboard/PagesDashboard";
 import NavigationDashboard from "./pages/dashboard/NavigationDashboard";
 
 // NEW imports
-import ProductsDashboard from "./pages/dashboard/products/ProductsDashboard";
-import ProductForm from "./pages/dashboard/products/ProductForm";
+import ProductsDashboard from "./pages/products/ProductsDashboard";
+import ProductForm from "./pages/products/ProductForm";
+import PageForm from "./components/PageForm.jsx";
+import NavigationForm from "./components/NavigationForm"; // ← added
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import DashboardLayout from "./components/DashboardLayout";
@@ -61,6 +63,8 @@ function AppRoutes() {
           <Route index element={<Dashboard />} />
           <Route path="pages" element={<PagesDashboard />} />
           <Route path="navigations" element={<NavigationDashboard />} />
+          <Route path="navigations/new" element={<NavigationForm />} />            {/* Add Navigation */}
+          <Route path="navigations/:id/edit" element={<NavigationForm />} />       {/* Edit Navigation */}
 
           {/* NEW: Products routes */}
           <Route path="products" element={<ProductsDashboard />} />
