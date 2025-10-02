@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-
-=======
->>>>>>> e372832 (CMS-221 Subtask 1: Implement redesigned Profile page in React frontend.)
 // frontend/src/pages/dashboard/Dashboard.jsx
 import React from "react";
 
@@ -9,10 +5,6 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function Dashboard() {
   const { user } = useAuth();
-<<<<<<< HEAD
-
-=======
->>>>>>> e372832 (CMS-221 Subtask 1: Implement redesigned Profile page in React frontend.)
   const name = user?.email?.split("@")[0] || "User";
 
   return (

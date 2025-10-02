@@ -298,8 +298,5 @@ export default function Profile() {
       )}
     </div>
   );
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> e372832 (CMS-221 Subtask 1: Implement redesigned Profile page in React frontend.)
+
