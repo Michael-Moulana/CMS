@@ -1,4 +1,3 @@
-
 // frontend/src/App.js
 import {
   BrowserRouter as Router,
@@ -38,7 +37,11 @@ function AppRoutes() {
         <Route
           path="/"
           element={
-            user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+            user ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
           }
         />
 
@@ -46,12 +49,17 @@ function AppRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        <Route path="/profile" element={<Navigate to="/dashboard/profile" replace />} />
+        <Route
+          path="/profile"
+          element={<Navigate to="/dashboard/profile" replace />}
+        />
 
         {/* Protected dashboard area */}
         <Route
           path="/dashboard"
-          element={user ? <DashboardLayout /> : <Navigate to="/login" replace />}
+          element={
+            user ? <DashboardLayout /> : <Navigate to="/login" replace />
+          }
         >
           <Route index element={<Dashboard />} />
 
@@ -62,17 +70,13 @@ function AppRoutes() {
 
           {/* Navigation */}
           <Route path="navigations" element={<NavigationDashboard />} />
-          <Route path="navigations/new" element={<NavigationForm />} />            {/* Add Navigation */}
-          <Route path="navigations/:id/edit" element={<NavigationForm />} />       {/* Edit Navigation */}
+          <Route path="navigations/new" element={<NavigationForm />} />
+          <Route path="navigations/:id/edit" element={<NavigationForm />} />
 
           {/* Products */}
           <Route path="products" element={<ProductsDashboard />} />
           <Route path="products/new" element={<ProductForm />} />
           <Route path="products/:id/edit" element={<ProductForm />} />
-          
-          
-
-
 
           {/*  Profile is now inside the dashboard layout */}
           <Route path="profile" element={<Profile />} />

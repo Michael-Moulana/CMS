@@ -1,4 +1,4 @@
-// backend/services/ProductManager.js
+const mongoose = require("mongoose");
 const EventBus = require("./EventBus");
 
 class ProductManager {
@@ -60,14 +60,25 @@ class ProductManager {
   }
 
   async getById(id) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid product ID",
+      });
+    }
+
     return this.productRepository.model
       .findById(id)
       .populate("media.mediaId")
       .exec();
   }
 
+  // (polymorphism)
   async search(q, opts = {}) {
-    if (this.searchStrategy && typeof this.searchStrategy.search === "function") {
+    if (
+      this.searchStrategy &&
+      typeof this.searchStrategy.search === "function"
+    ) {
       return this.searchStrategy.search(q, this.productRepository.model, opts);
     }
     return this.productRepository.findAll();
@@ -88,7 +99,9 @@ class ProductManager {
     if (files.length > 0) {
       const currentCount = product.media.length;
       if (currentCount >= 3) {
-        throw new Error("You must delete an image before uploading a new one (max 3 allowed).");
+        throw new Error(
+          "You must delete an image before uploading a new one (max 3 allowed)."
+        );
       }
       if (currentCount + files.length > 3) {
         throw new Error(`You can only add ${3 - currentCount} more image(s).`);
@@ -116,7 +129,6 @@ class ProductManager {
       );
     }
 
-   
     if (data.mediaEdits && Array.isArray(data.mediaEdits)) {
       for (const edit of data.mediaEdits) {
         const mediaItem = product.media.find(
@@ -160,29 +172,29 @@ class ProductManager {
 
   // Delete a product (and its media files)
   async deleteProduct(id) {
-    const product = await this.productRepository.model.findById(id);
-    if (!product) {
-      
-      return { _id: id, deleted: false };
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return { error: "invalid_id" }; // return a simple error object
     }
 
-    
+    const product = await this.productRepository.model.findById(id);
+    if (!product) {
+      return { deleted: false }; // product not found
+    }
+
     if (Array.isArray(product.media)) {
       for (const m of product.media) {
         const mid = m?.mediaId?._id || m?.mediaId;
         if (!mid) continue;
         try {
           await this.mediaManager.delete(mid);
-        } catch (_) {
-          
-        }
+        } catch (_) {}
       }
     }
 
-    
     await this.productRepository.model.findByIdAndDelete(product._id);
-
     EventBus.emit("product.deleted", { _id: product._id });
+
     return { _id: product._id, deleted: true };
   }
 
@@ -244,58 +256,63 @@ class ProductManager {
     return product.populate("media.mediaId");
   }
 
-  
   // Update media details (single item)
-async updateMediaDetails(productId, mediaId, { title, order }) {
-  const product = await this.productRepository.model.findById(productId);
-  if (!product) throw new Error("Product not found");
-
-  const item = product.media.find(
-    (m) =>
-      m.mediaId.toString() === String(mediaId) ||
-      String(m._id) === String(mediaId)
-  );
-  if (!item) throw new Error("Media not found");
-
-  // Update title on Media doc
-  if (title !== undefined && title !== null) {
-    await this.mediaManager.updateTitle(item.mediaId, title);
-    
-  }
-
-  
-  if (order !== undefined && order !== null) {
-    const target = Math.max(
-      0,
-      Math.min(parseInt(order, 10) || 0, product.media.length - 1)
-    );
-
-    
-    const arr = [...product.media].sort(
-      (a, b) => (a.order ?? 0) - (b.order ?? 0)
-    );
-
-    const fromIdx = arr.findIndex(
-      (m) =>
-        m.mediaId.toString() === String(item.mediaId) ||
-        String(m._id) === String(item._id)
-    );
-
-    if (fromIdx !== -1) {
-      const [picked] = arr.splice(fromIdx, 1);
-      arr.splice(target, 0, picked);
-      // reindex 0..n-1
-      arr.forEach((m, i) => { m.order = i; });
-      // write back to product
-      product.media = arr;
+  async updateMediaDetails(productId, mediaId, { title, order }) {
+    // Validate IDs using Mongoose
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      throw new Error("Invalid product ID");
     }
+    if (!mongoose.Types.ObjectId.isValid(mediaId)) {
+      throw new Error("Invalid media ID");
+    }
+
+    const product = await this.productRepository.model.findById(productId);
+    if (!product) throw new Error("Product not found");
+
+    const item = product.media.find(
+      (m) =>
+        m.mediaId.toString() === String(mediaId) ||
+        String(m._id) === String(mediaId)
+    );
+    if (!item) throw new Error("Media not found");
+
+    // Update title
+    if (title !== undefined && title !== null) {
+      await this.mediaManager.updateTitle(item.mediaId, title);
+    }
+
+    // Update order
+    if (order !== undefined && order !== null) {
+      const target = Math.max(
+        0,
+        Math.min(parseInt(order, 10) || 0, product.media.length - 1)
+      );
+
+      const arr = [...product.media].sort(
+        (a, b) => (a.order ?? 0) - (b.order ?? 0)
+      );
+      const fromIdx = arr.findIndex(
+        (m) =>
+          m.mediaId.toString() === String(item.mediaId) ||
+          String(m._id) === String(item._id)
+      );
+
+      if (fromIdx !== -1) {
+        const [picked] = arr.splice(fromIdx, 1);
+        arr.splice(target, 0, picked);
+        arr.forEach((m, i) => (m.order = i));
+        product.media = arr;
+      }
+    }
+
+    await product.save();
+
+    const updated = await this.getById(productId);
+    EventBus.emit("product.updated", updated);
+
+    return updated;
   }
 
-  await product.save();
-  const updated = await this.getById(productId);
-  EventBus.emit("product.updated", updated);
-  return updated;
-}
   _reorderWithThumbnail(mediaArray, thumbId) {
     const arr = [...mediaArray];
     const i = arr.findIndex((m) => m.mediaId.toString() === String(thumbId));

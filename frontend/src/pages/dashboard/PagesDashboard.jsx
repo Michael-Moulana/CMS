@@ -1,5 +1,4 @@
-// src/pages/dashboard/PagesDashboard.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../../axiosConfig.jsx";
 import PageList from "../../components/PageList.jsx";
@@ -124,7 +123,9 @@ export default function PagesDashboard() {
         className="inline-flex items-center gap-1 text-gray-600"
         onClick={() =>
           setSort((s) =>
-            s.key === k ? { key: k, dir: s.dir === "asc" ? "desc" : "asc" } : { key: k, dir: "asc" }
+            s.key === k
+              ? { key: k, dir: s.dir === "asc" ? "desc" : "asc" }
+              : { key: k, dir: "asc" }
           )
         }
         title="Sort"
@@ -159,7 +160,13 @@ export default function PagesDashboard() {
 
         <div className="ml-auto shrink-0 w-[220px] md:w-80">
           <div className="h-10 rounded-2xl border border-gray-200 bg-white px-3 flex items-center gap-2 text-sm text-gray-500">
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              className="h-4 w-4"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <circle cx="11" cy="11" r="7" />
               <path d="M21 21l-4.3-4.3" />
             </svg>
@@ -203,13 +210,19 @@ export default function PagesDashboard() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-6 py-16 text-center text-gray-400 bg-gray-100 md:border md:border-gray-200">
+                <td
+                  colSpan={5}
+                  className="px-6 py-16 text-center text-gray-400 bg-gray-100 md:border md:border-gray-200"
+                >
                   Loading…
                 </td>
               </tr>
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-16 text-center text-gray-400 bg-gray-100 md:border md:border-gray-200">
+                <td
+                  colSpan={5}
+                  className="px-6 py-16 text-center text-gray-400 bg-gray-100 md:border md:border-gray-200"
+                >
                   No pages found.
                 </td>
               </tr>
@@ -231,20 +244,39 @@ export default function PagesDashboard() {
                   <tr key={p._id} className="hover:bg-gray-200/60">
                     <td className={leftCell}>{startIdx + i + 1}</td>
                     <td className={cell}>
-                      <div className="truncate font-medium">{p.title || "—"}</div>
-                      <div className="truncate text-gray-500 text-xs md:hidden">{fmt(p.updatedAt)}</div>
+                      <div className="truncate font-medium">
+                        {p.title || "—"}
+                      </div>
+                      <div className="truncate text-gray-500 text-xs md:hidden">
+                        {fmt(p.updatedAt)}
+                      </div>
                     </td>
-                    <td className={`${cell} hidden md:table-cell truncate`}>{p.slug || "—"}</td>
-                    <td className={`${cell} hidden md:table-cell whitespace-nowrap`}>{fmt(p.updatedAt)}</td>
+                    <td className={`${cell} hidden md:table-cell truncate`}>
+                      {p.slug || "—"}
+                    </td>
+                    <td
+                      className={`${cell} hidden md:table-cell whitespace-nowrap`}
+                    >
+                      {fmt(p.updatedAt)}
+                    </td>
                     <td className={rightCell}>
                       <div className="flex justify-end gap-2">
                         <button
-                          onClick={() => navigate(`/dashboard/pages/${p._id}/edit`)}
+                          onClick={() =>
+                            navigate(`/dashboard/pages/${p._id}/edit`)
+                          }
                           className="h-9 w-9 rounded-xl border bg-white hover:bg-gray-100 grid place-items-center"
                           title="Edit"
                           aria-label="Edit"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
                             <path d="M12 20h9" />
                             <path d="M16.5 3.5a2.121 2.121 0 113 3L7 19l-4 1 1-4 12.5-12.5z" />
                           </svg>
@@ -255,7 +287,14 @@ export default function PagesDashboard() {
                           title="Delete"
                           aria-label="Delete"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                          >
                             <polyline points="3 6 5 6 21 6" />
                             <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
                             <line x1="10" y1="11" x2="10" y2="17" />
@@ -298,18 +337,22 @@ export default function PagesDashboard() {
             {"<"}
           </button>
 
-          {Array.from({ length: totalPages }).slice(0, 5).map((_, idx) => {
-            const n = idx + 1;
-            return (
-              <button
-                key={n}
-                onClick={() => setPage(n)}
-                className={`h-9 w-9 rounded-lg border ${n === safePage ? "bg-blue-50 text-blue-700" : "bg-white"}`}
-              >
-                {n}
-              </button>
-            );
-          })}
+          {Array.from({ length: totalPages })
+            .slice(0, 5)
+            .map((_, idx) => {
+              const n = idx + 1;
+              return (
+                <button
+                  key={n}
+                  onClick={() => setPage(n)}
+                  className={`h-9 w-9 rounded-lg border ${
+                    n === safePage ? "bg-blue-50 text-blue-700" : "bg-white"
+                  }`}
+                >
+                  {n}
+                </button>
+              );
+            })}
 
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}

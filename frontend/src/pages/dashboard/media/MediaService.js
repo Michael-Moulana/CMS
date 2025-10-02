@@ -1,4 +1,3 @@
-// frontend/src/pages/media/MediaService.js
 import api from "../../../axiosConfig.jsx";
 
 // Get product with embedded media relation array

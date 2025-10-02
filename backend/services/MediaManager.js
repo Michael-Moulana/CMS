@@ -43,12 +43,26 @@ class MediaManager {
   }
 
   async delete(mediaId) {
+    if (!mediaId || !this.model.isValidId(mediaId)) {
+      // Validation moved here
+      throw new Error("Invalid media ID");
+    }
+
     const m = await this.model.findById(mediaId);
     if (!m) return null;
+
     await this.storage.deleteFile(m.path);
     await this.model.delete(mediaId);
     EventBus.emit("media.deleted", m);
+
     return m;
+  }
+
+  async getById(mediaId) {
+    if (!mediaId || !this.model.isValidId(mediaId)) {
+      throw new Error("Invalid media ID");
+    }
+    return this.model.findById(mediaId);
   }
 
   getFileStream(path) {

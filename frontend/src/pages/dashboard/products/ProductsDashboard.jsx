@@ -1,5 +1,4 @@
-// frontend/src/pages/products/ProductsDashboard.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import api from "../../../axiosConfig.jsx";
 import FlashMessage from "../../../components/FlashMessage.jsx";
@@ -76,54 +75,117 @@ useEffect(() => {
   if (f) setFlash(f);
 }, [location, navigate]);
 
-  // load data
+  // // load data
+  // useEffect(() => {
+  //   (async () => {
+  //     try {
+  //       const res = await api.get("/products");
+  //       const list = res?.data?.data ?? res?.data ?? [];
+  //       setRows(Array.isArray(list) ? list : []);
+  //     } catch {
+  //       setFlash({ type: "error", message: "Failed to load products" });
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   })();
+  // }, []);
+
+  // Backend search - testing
+  // ---- LOAD / SEARCH PRODUCTS ----
   useEffect(() => {
-    (async () => {
+    const controller = new AbortController(); // allows aborting previous request
+    const fetchProducts = async () => {
+      setLoading(true);
       try {
-        const res = await api.get("/products");
-        const list = res?.data?.data ?? res?.data ?? [];
+        const res = await api.get("/products/search/query", {
+          params: { q },
+          signal: controller.signal,
+        });
+        console.log("search res", res);
+        const list = res?.data?.data ?? [];
         setRows(Array.isArray(list) ? list : []);
-      } catch {
-        setFlash({ type: "error", message: "Failed to load products" });
+      } catch (err) {
+        if (err.name !== "CanceledError") {
+          setFlash({ type: "error", message: "Failed to load products" });
+        }
       } finally {
         setLoading(false);
       }
-    })();
-  }, []);
+    };
+
+    // debounce input by 400ms
+    const timeout = setTimeout(() => {
+      fetchProducts();
+    }, 400);
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort(); // cancel any ongoing request if input changes
+    };
+  }, [q]);
 
   // search + sort
-  const filteredAndSorted = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    const filtered = s
-      ? rows.filter((r) => (r.title || r.name || "").toLowerCase().includes(s))
-      : rows.slice();
+  // const filteredAndSorted = useMemo(() => {
+  //   const s = q.trim().toLowerCase();
+  //   const filtered = s
+  //     ? rows.filter((r) => (r.title || r.name || "").toLowerCase().includes(s))
+  //     : rows.slice();
 
+  //   const { key, dir } = sort;
+  //   const get = (r) => {
+  //     switch (key) {
+  //       case "name":
+  //         return (r.title || r.name || "").toString().toLowerCase();
+  //       case "description":
+  //         return (r.description || "").toString().toLowerCase();
+  //       case "price":
+  //         return Number(r.price) || 0;
+  //       case "stock":
+  //         return Number(r.stock) || 0;
+  //       case "category":
+  //         return prettyCats(r.categories ?? r.category).toLowerCase();
+  //       default:
+  //         return "";
+  //     }
+  //   };
+  //   filtered.sort((a, b) => {
+  //     const A = get(a);
+  //     const B = get(b);
+  //     if (A < B) return dir === "asc" ? -1 : 1;
+  //     if (A > B) return dir === "asc" ? 1 : -1;
+  //     return 0;
+  //   });
+  //   return filtered;
+  // }, [rows, q, sort]);
+
+  // ---- SORT & PAGINATE ----
+  const filteredAndSorted = useMemo(() => {
     const { key, dir } = sort;
-    const get = (r) => {
-      switch (key) {
-        case "name":
-          return (r.title || r.name || "").toString().toLowerCase();
-        case "description":
-          return (r.description || "").toString().toLowerCase();
-        case "price":
-          return Number(r.price) || 0;
-        case "stock":
-          return Number(r.stock) || 0;
-        case "category":
-          return prettyCats(r.categories ?? r.category).toLowerCase();
-        default:
-          return "";
-      }
-    };
-    filtered.sort((a, b) => {
+    const sorted = [...rows].sort((a, b) => {
+      const get = (r) => {
+        switch (key) {
+          case "name":
+            return (r.title || r.name || "").toString().toLowerCase();
+          case "description":
+            return (r.description || "").toString().toLowerCase();
+          case "price":
+            return Number(r.price) || 0;
+          case "stock":
+            return Number(r.stock) || 0;
+          case "category":
+            return prettyCats(r.categories ?? r.category).toLowerCase();
+          default:
+            return "";
+        }
+      };
       const A = get(a);
       const B = get(b);
       if (A < B) return dir === "asc" ? -1 : 1;
       if (A > B) return dir === "asc" ? 1 : -1;
       return 0;
     });
-    return filtered;
-  }, [rows, q, sort]);
+    return sorted;
+  }, [rows, sort]);
 
   // page slice
   const total = filteredAndSorted.length;

@@ -1,11 +1,10 @@
-// frontend/src/pages/media/MediaPickerModal.jsx
 import { useEffect, useState } from "react";
 import { updateMediaDetails } from "./MediaService";
 
 export default function MediaPickerModal({
   productId,
   open,
-  item,       // { relId, mediaId, url, title, order }
+  item, // { relId, mediaId, url, title, order }
   onClose,
   onSaved,
   onPatched,
@@ -75,7 +74,9 @@ export default function MediaPickerModal({
           <div className="rounded-xl border bg-gray-50 p-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Title</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Title
+                </label>
                 <input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -83,7 +84,9 @@ export default function MediaPickerModal({
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Order</label>
+                <label className="block text-xs text-gray-500 mb-1">
+                  Order
+                </label>
                 <input
                   type="number"
                   min={0}
@@ -99,7 +102,11 @@ export default function MediaPickerModal({
           </div>
 
           <div className="flex justify-end items-center pt-2">
-            <button onClick={onClose} className="text-blue-600 underline" disabled={saving}>
+            <button
+              onClick={onClose}
+              className="text-blue-600 underline"
+              disabled={saving}
+            >
               Cancel
             </button>
             <button

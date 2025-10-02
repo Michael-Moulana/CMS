@@ -11,15 +11,18 @@ router.get("/media", protect, productController.getAllMedia);
 // Get single media file (by media ID)
 router.get("/media/:id", protect, productController.getMediaById);
 
+// delete media file (by media ID)
+router.delete("/media/:id", protect, productController.deleteMediaById);
+
 // ------------------- Product CRUD -------------------
 
 // Create product (multipart: product fields + optional image)
 router.post("/", protect, upload, productController.createProduct);
 
 // Get all products
-router.get("/", productController.getAllProducts);
+router.get("/", protect, productController.getAllProducts);
 
-// ------------------- Product search (must be BEFORE :id) -------------------
+// ------------------- Product search -------------------
 router.get("/search/query", productController.searchProducts);
 
 // Get single product

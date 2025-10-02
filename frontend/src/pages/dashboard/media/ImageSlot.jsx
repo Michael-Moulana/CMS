@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 // frontend/src/pages/dashboard/media/ImageSlot.jsx
 import React, { useEffect, useMemo, useState, memo } from "react";
+=======
+import { useEffect, useMemo, useState } from "react";
+>>>>>>> fac7d74b50c9dfc9c4545ecaf0cfd2cdb5582541
 
 /**
  * ImageSlot handles:
@@ -7,7 +11,12 @@ import React, { useEffect, useMemo, useState, memo } from "react";
  *  - String URLs (from server/external)
  * It is memoized so typing elsewhere doesn't re-render it.
  */
+<<<<<<< HEAD
 function ImageSlotBase({
+=======
+
+export default function ImageSlot({
+>>>>>>> fac7d74b50c9dfc9c4545ecaf0cfd2cdb5582541
   fileOrUrl,
   label = "",
   className = "",
@@ -35,10 +44,9 @@ function ImageSlotBase({
     return () => {
       URL.revokeObjectURL(url);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFile, fileOrUrl]);
 
-  const src = isFile ? blobUrl : (fileOrUrl || "");
+  const src = isFile ? blobUrl : fileOrUrl || "";
 
   return (
     <button
@@ -76,6 +84,7 @@ function ImageSlotBase({
     </button>
   );
 }
+<<<<<<< HEAD
 
 /**
  * Memoize with a custom compare:
@@ -98,3 +107,5 @@ export default memo(ImageSlotBase, (prev, next) => {
   }
   return false; // changed type (File <-> string), must re-render
 });
+=======
+>>>>>>> fac7d74b50c9dfc9c4545ecaf0cfd2cdb5582541
