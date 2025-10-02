@@ -1,3 +1,4 @@
+// frontend/src/pages/Profile.jsx
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -138,91 +139,123 @@ export default function Profile() {
     (form.firstName?.[0] || form.email?.[0] || "U").toUpperCase();
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* breadcrumb/header */}
       <div>
-        <h1 className="text-xl font-semibold text-gray-800">Profile</h1>
-        <p className="text-xs text-gray-400">Dashboard / Profile</p>
+        <h1 className="text-lg sm:text-xl font-semibold text-gray-800">Profile</h1>
+        <p className="text-[11px] sm:text-xs text-gray-400">Dashboard / Profile</p>
       </div>
 
-      {/* Larger / taller grey panel */}
-      <div className="rounded-3xl border border-gray-200 bg-gray-100 p-6 md:p-8 max-w-[1240px] w-full min-h-[720px]">
-        <h3 className="text-base font-semibold text-gray-800">Profile Information</h3>
+      {/* Responsive grey panel:
+          - full width on small screens
+          - left-biased capped width on md+  */}
+      <div className="rounded-3xl border border-gray-200 bg-gray-100
+                      p-4 sm:p-6 lg:p-8 w-full
+                      max-w-full md:max-w-[1240px]
+                      min-h-[560px] sm:min-h-[640px] lg:min-h-[720px]">
+        <h3 className="text-sm sm:text-base font-semibold text-gray-800">
+          Profile Information
+        </h3>
 
-        {/* avatar + button below title (left) */}
-        <div className="mt-4 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full overflow-hidden bg-blue-600 text-white grid place-items-center font-semibold">
+        {/* avatar + button (stack on mobile, inline on md+) */}
+        <div className="mt-3 sm:mt-4 flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+          <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full overflow-hidden bg-blue-600 text-white grid place-items-center font-semibold">
             {avatarUrl ? (
-              <img src={avatarUrl} alt="avatar" className="h-full w-full object-cover" />
+              <img
+                src={avatarUrl}
+                alt="avatar"
+                className="h-full w-full object-cover"
+              />
             ) : (
               initial
             )}
           </div>
-          <button
-            type="button"
-            onClick={choosePicture}
-            className="h-9 px-4 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700"
-          >
-            Change Picture
-          </button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={onFile}
-          />
+          <div>
+            <button
+              type="button"
+              onClick={choosePicture}
+              className="h-9 px-4 rounded-lg bg-blue-600 text-white text-sm hover:bg-blue-700"
+            >
+              Change Picture
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={onFile}
+            />
+          </div>
         </div>
 
-        {/* form */}
-        <form onSubmit={onSubmit} className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-5">
+        {/* form: 1 col on mobile, 2 cols on md+ */}
+        <form
+          onSubmit={onSubmit}
+          className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6"
+        >
+          {/* Left column */}
+          <div className="space-y-4 sm:space-y-5">
             <div>
-              <label className="block text-sm text-gray-600 mb-2">First Name</label>
+              <label className="block text-xs sm:text-sm text-gray-600 mb-1.5 sm:mb-2">
+                First Name
+              </label>
               <input
                 type="text"
                 value={form.firstName}
                 onChange={onChange("firstName")}
-                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 outline-none focus:border-blue-500"
+                className="h-11 sm:h-12 w-full rounded-xl border border-gray-200 bg-white px-3 sm:px-4 outline-none focus:border-blue-500"
               />
             </div>
+
             <div>
-              <label className="block text-sm text-gray-600 mb-2">Last Name</label>
+              <label className="block text-xs sm:text-sm text-gray-600 mb-1.5 sm:mb-2">
+                Last Name
+              </label>
               <input
                 type="text"
                 value={form.lastName}
                 onChange={onChange("lastName")}
-                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 outline-none focus:border-blue-500"
+                className="h-11 sm:h-12 w-full rounded-xl border border-gray-200 bg-white px-3 sm:px-4 outline-none focus:border-blue-500"
               />
             </div>
+
             <div>
-              <label className="block text-sm text-gray-600 mb-2">Email</label>
+              <label className="block text-xs sm:text-sm text-gray-600 mb-1.5 sm:mb-2">
+                Email
+              </label>
               <input
                 type="email"
                 value={form.email}
                 onChange={onChange("email")}
-                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 outline-none focus:border-blue-500"
+                className="h-11 sm:h-12 w-full rounded-xl border border-gray-200 bg-white px-3 sm:px-4 outline-none focus:border-blue-500"
               />
             </div>
           </div>
 
-          <div className="space-y-5">
+          {/* Right column */}
+          <div className="space-y-4 sm:space-y-5">
             <div>
-              <label className="block text-sm text-gray-600 mb-2">University</label>
+              <label className="block text-xs sm:text-sm text-gray-600 mb-1.5 sm:mb-2">
+                University
+              </label>
               <input
                 type="text"
                 value={form.university}
                 onChange={onChange("university")}
-                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-4 outline-none focus:border-blue-500"
+                className="h-11 sm:h-12 w-full rounded-xl border border-gray-200 bg-white px-3 sm:px-4 outline-none focus:border-blue-500"
               />
             </div>
+
             <div>
-              <label className="block text-sm text-gray-600 mb-2">Address</label>
+              <label className="block text-xs sm:text-sm text-gray-600 mb-1.5 sm:mb-2">
+                Address
+              </label>
               <textarea
                 value={form.address}
                 onChange={onChange("address")}
-                rows={9}
-                className="w-full rounded-xl border border-gray-200 bg-white p-4 outline-none focus:border-blue-500"
+                rows={6}
+                className="w-full rounded-xl border border-gray-200 bg-white p-3 sm:p-4 outline-none focus:border-blue-500
+                           min-h-[140px] sm:min-h-[200px] lg:min-h-[240px]"
                 data-gramm="false"
                 data-enable-grammarly="false"
                 spellCheck={false}
@@ -230,7 +263,8 @@ export default function Profile() {
             </div>
           </div>
 
-          <div className="md:col-span-2 flex justify-end gap-3 pt-2">
+          {/* Actions (stack on mobile, inline on md+) */}
+          <div className="md:col-span-2 flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={() => navigate(-1)}
@@ -249,11 +283,11 @@ export default function Profile() {
         </form>
       </div>
 
-      {/* top-right flash */}
+      {/* top-right flash (kept responsive spacing) */}
       {flash && (
         <div
           className={
-            "fixed right-6 top-20 md:top-24 z-[60] px-4 py-2 rounded-lg shadow border-l-4 " +
+            "fixed right-4 sm:right-6 top-16 sm:top-24 z-[60] px-4 py-2 rounded-lg shadow border-l-4 " +
             (flash.variant === "success"
               ? "bg-green-50 text-green-700 border-green-500"
               : "bg-red-50 text-red-700 border-red-500")
