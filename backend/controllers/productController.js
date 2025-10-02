@@ -85,6 +85,14 @@ const getAllProducts = async (req, res, next) => {
 // Get single product
 const getProduct = async (req, res, next) => {
   try {
+    // Prevent CastError
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid product ID",
+      });
+    }
+
     let product = await productManager.getById(req.params.id);
     if (!product)
       return res
