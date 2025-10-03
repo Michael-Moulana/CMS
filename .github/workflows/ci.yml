@@ -8,7 +8,7 @@ on:
 jobs:
   deploy:
     name: Deploy Backend + Frontend
-    runs-on: self-hosted           # works with any self-hosted runner
+    runs-on: self-hosted
     env:
       NODE_ENV: production
       MONGO_URI: ${{ secrets.MONGO_URI }}
@@ -23,6 +23,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
 
       - name: Show runner info
         run: |
@@ -36,7 +40,7 @@ jobs:
       # ---------- BACKEND ----------
       - name: Install backend deps
         working-directory: ./backend
-        run: npm ci
+        run: npm ci --no-audit --prefer-offline --progress=false --fund=false
 
       - name: Write backend .env
         working-directory: ./backend
@@ -58,15 +62,14 @@ jobs:
       # ---------- FRONTEND ----------
       - name: Install frontend deps
         working-directory: ./frontend
-        run: npm ci
+        run: npm ci --no-audit --prefer-offline --progress=false --fund=false --no-optional
 
       - name: Build frontend
         working-directory: ./frontend
-        # If your axios uses relative '/api', you don't need REACT_APP_API_BASE.
-        # If you DO use an env base URL, uncomment the next env line and use it in axios.
-        # env:
-        #   REACT_APP_API_BASE: http://localhost:${{ env.PORT }}/api
-        run: npm run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+          CI: "false"
+        run: npm run build --silent
 
       - name: Deploy frontend to Nginx docroot
         run: |
