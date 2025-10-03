@@ -53,12 +53,27 @@ export default function ProductsDashboard() {
   const inner = "mx-auto w-full max-w-[680px] md:max-w-[1200px]";
 
   // pick flash from redirect
-  useEffect(() => {
-    if (location.state?.flash) {
-      setFlash(location.state.flash);
-      navigate(location.pathname, { replace: true, state: {} });
+  // pick flash from redirect OR sessionStorage
+useEffect(() => {
+  let f = null;
+
+  // 1) navigation state (preferred)
+  if (location.state?.flash) {
+    f = location.state.flash;
+    navigate(location.pathname, { replace: true, state: {} });
+  } else {
+    // 2) fallback: sessionStorage (from product create)
+    const raw = sessionStorage.getItem("products_flash");
+    if (raw) {
+      try {
+        f = JSON.parse(raw);
+      } catch {}
+      sessionStorage.removeItem("products_flash");
     }
-  }, [location, navigate]);
+  }
+
+  if (f) setFlash(f);
+}, [location, navigate]);
 
   // // load data
   // useEffect(() => {
