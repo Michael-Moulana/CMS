@@ -2,7 +2,7 @@ name: CMS – Deploy (self-hosted)
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -148,3 +148,4 @@ jobs:
 
       - name: PM2 status
         run: pm2 ls
+
