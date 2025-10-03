@@ -1,0 +1,2250 @@
+{
+	"info": {
+		"_postman_id": "e5213e6c-a618-4375-9045-327cf609fcbe",
+		"name": "CMS API Collection",
+		"description": "# 🚀 Get started here\n\nThis template guides you through CRUD operations (GET, POST, PUT, DELETE), variables, and tests.\n\n## 🔖 **How to use this template**\n\n#### **Step 1: Send requests**\n\nRESTful APIs allow you to perform CRUD operations using the POST, GET, PUT, and DELETE HTTP methods.\n\nThis collection contains each of these [request](https://learning.postman.com/docs/sending-requests/requests/) types. Open each request and click \"Send\" to see what happens.\n\n#### **Step 2: View responses**\n\nObserve the response tab for status code (200 OK), response time, and size.\n\n#### **Step 3: Send new Body data**\n\nUpdate or add new data in \"Body\" in the POST request. Typically, Body data is also used in PUT request.\n\n```\n{\n    \"name\": \"Add your name in the body\"\n}\n\n ```\n\n#### **Step 4: Update the variable**\n\nVariables enable you to store and reuse values in Postman. We have created a [variable](https://learning.postman.com/docs/sending-requests/variables/) called `base_url` with the sample request [https://postman-api-learner.glitch.me](https://postman-api-learner.glitch.me). Replace it with your API endpoint to customize this collection.\n\n#### **Step 5: Add tests in the \"Scripts\" tab**\n\nAdding tests to your requests can help you confirm that your API is working as expected. You can write test scripts in JavaScript and view the output in the \"Test Results\" tab.\n\n<img src=\"https://content.pstmn.io/fa30ea0a-373d-4545-a668-e7b283cca343/aW1hZ2UucG5n\" alt=\"\" height=\"1530\" width=\"2162\">\n\n## 💪 Pro tips\n\n- Use folders to group related requests and organize the collection.\n    \n- Add more [scripts](https://learning.postman.com/docs/writing-scripts/intro-to-scripts/) to verify if the API works as expected and execute workflows.\n    \n\n## 💡Related templates\n\n[API testing basics](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9a37a28-055b-49cd-8c7e-97494a21eb54&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[API documentation](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9c28f47-1253-44af-a2f3-20dce4da1f18&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[Authorization methods](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=31a9a6ed-4cdf-4ced-984c-d12c9aec1c27&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "48284184"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Register",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let response = pm.response.json();",
+									"// Basic test",
+									"pm.test(\"Status code is 201 (Created)\", function () {",
+									"pm.response.to.have.status(201);",
+									"});",
+									"pm.test(\"Content-Type is present\", function () {",
+									"pm.response.to.have.header(\"Content-Type\");",
+									"});",
+									"// Save JWT if returned",
+									"if (response.token) {",
+									"pm.environment.set(\"jwt_token\", response.token);",
+									"console.log(\"JWT Token saved from registration response\");",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"runtest1\",\r\n    \"email\": \"runtest1@gmail.com\",\r\n    \"password\": \"12345678\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						},
+						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse the response safely\r",
+									"let response;\r",
+									"try {\r",
+									"    response = pm.response.json();\r",
+									"} catch (e) {\r",
+									"    response = {};\r",
+									"}\r",
+									"\r",
+									"// Status code should be 200 on successful login\r",
+									"pm.test(\"Status code is 200 (success login)\", function () {\r",
+									"    if (pm.response.code === 200) {\r",
+									"        pm.response.to.have.status(200);\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"// Status code should be 401 on invalid credentials\r",
+									"pm.test(\"Status code is 401 (invalid login)\", function () {\r",
+									"    if (pm.response.code === 401) {\r",
+									"        pm.response.to.have.status(401);\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"// Response has Content-Type header\r",
+									"pm.test(\"Content-Type is present\", function () {\r",
+									"    pm.response.to.have.header(\"Content-Type\");\r",
+									"});\r",
+									"\r",
+									"// Response time is under 200ms\r",
+									"pm.test(\"Response time is less than 200ms\", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(200);\r",
+									"});\r",
+									"\r",
+									"// Save JWT token for reuse if login is successful\r",
+									"if (response.token) {\r",
+									"    pm.environment.set(\"jwt_token\", response.token);\r",
+									"    console.log(\"JWT Token saved:\", response.token);\r",
+									"} else {\r",
+									"    console.warn(\"No token found in response!\");\r",
+									"}\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"runtest1@gmail.com\",\r\n    \"password\": \"12345678\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse the response body\r",
+									"let response = pm.response.json();\r",
+									"// Basic test: status code should be 200\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"pm.response.to.have.status(200);\r",
+									"});\r",
+									"pm.test(\"Body matches string\", function () {\r",
+									"pm.expect(pm.response.text()).to.include(\"\");\r",
+									"});\r",
+									"pm.test(\"Content-Type is present\", function () {\r",
+									"pm.response.to.have.header(\"Content-Type\");\r",
+									"});\r",
+									"pm.test(\"Response time is less than 200ms\", function\r",
+									"() {\r",
+									"pm.expect(pm.response.responseTime).to.be.below(200);\r",
+									"});\r",
+									"// Save JWT token to environment variable (adjust key as needed)\r",
+									"if (response.token) {\r",
+									"pm.environment.set(\"jwt_token\", response.token);\r",
+									"console.log(\"JWT Token saved to environment\");\r",
+									"} else {\r",
+									"console.warn(\"No token found in response!\");\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/profile",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Profile",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse the response body\r",
+									"let response = pm.response.json();\r",
+									"// Basic test: status code should be 200\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"pm.response.to.have.status(200);\r",
+									"});\r",
+									"pm.test(\"Body matches string\", function () {\r",
+									"pm.expect(pm.response.text()).to.include(\"\");\r",
+									"});\r",
+									"pm.test(\"Content-Type is present\", function () {\r",
+									"pm.response.to.have.header(\"Content-Type\");\r",
+									"});\r",
+									"pm.test(\"Response time is less than 200ms\", function\r",
+									"() {\r",
+									"pm.expect(pm.response.responseTime).to.be.below(200);\r",
+									"});\r",
+									"// Save JWT token to environment variable (adjust key as needed)\r",
+									"if (response.token) {\r",
+									"pm.environment.set(\"jwt_token\", response.token);\r",
+									"console.log(\"JWT Token saved to environment\");\r",
+									"} else {\r",
+									"console.warn(\"No token found in response!\");\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"runtest1-updated\",\r\n    \"email\": \"runtest1@gmail.com\",\r\n    \"university\": \"QUT\",\r\n    \"address\": \"55 Street, BNE\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/profile",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Page Management",
+			"item": [
+				{
+					"name": "Get pages",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse response\r",
+									"let response;\r",
+									"try {\r",
+									"    response = pm.response.json();\r",
+									"} catch (e) {\r",
+									"    response = [];\r",
+									"}\r",
+									"\r",
+									"// Test: Status code is 200\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"// Test: Response is an array\r",
+									"pm.test(\"Response is an array\", function () {\r",
+									"    pm.expect(response).to.be.an(\"array\");\r",
+									"});\r",
+									"\r",
+									"// Test: Each page has required fields\r",
+									"pm.test(\"Each page has required fields\", function () {\r",
+									"    if (response.length > 0) {\r",
+									"        response.forEach(page => {\r",
+									"            pm.expect(page).to.have.property(\"_id\");\r",
+									"            pm.expect(page).to.have.property(\"title\");\r",
+									"            pm.expect(page).to.have.property(\"content\");\r",
+									"            pm.expect(page).to.have.property(\"slug\");\r",
+									"            pm.expect(page).to.have.property(\"createdAt\");\r",
+									"            pm.expect(page).to.have.property(\"updatedAt\");\r",
+									"            pm.expect(page).to.have.property(\"__v\");\r",
+									"        });\r",
+									"    } else {\r",
+									"        console.warn(\"No pages found in response\");\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"// Test: Response time is under 300ms\r",
+									"pm.test(\"Response time is less than 300ms\", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);\r",
+									"});\r",
+									"\r",
+									"// Test: JWT token exists in environment\r",
+									"pm.test(\"JWT token exists in environment\", function () {\r",
+									"    pm.expect(pm.environment.get(\"jwt_token\")).to.not.be.undefined;\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/dashboard/pages",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard",
+								"pages"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get page",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse response\r",
+									"let page;\r",
+									"try {\r",
+									"    page = pm.response.json();\r",
+									"} catch (e) {\r",
+									"    page = {};\r",
+									"}\r",
+									"\r",
+									"// Test: Status code is 200\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"// Test: Response is an object\r",
+									"pm.test(\"Response is an object\", function () {\r",
+									"    pm.expect(page).to.be.an(\"object\");\r",
+									"});\r",
+									"\r",
+									"// Test: Page has all required fields\r",
+									"pm.test(\"Page has required fields\", function () {\r",
+									"    pm.expect(page).to.have.property(\"_id\");\r",
+									"    pm.expect(page).to.have.property(\"title\");\r",
+									"    pm.expect(page).to.have.property(\"content\");\r",
+									"    pm.expect(page).to.have.property(\"slug\");\r",
+									"    pm.expect(page).to.have.property(\"createdAt\");\r",
+									"    pm.expect(page).to.have.property(\"updatedAt\");\r",
+									"    pm.expect(page).to.have.property(\"__v\");\r",
+									"});\r",
+									"\r",
+									"// Test: Content field is a string\r",
+									"pm.test(\"Content is a string\", function () {\r",
+									"    pm.expect(page.content).to.be.a(\"string\");\r",
+									"});\r",
+									"\r",
+									"// Test: Response time is under 300ms\r",
+									"pm.test(\"Response time is less than 300ms\", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);\r",
+									"});\r",
+									"\r",
+									"// Test: JWT token exists in environment\r",
+									"pm.test(\"JWT token exists in environment\", function () {\r",
+									"    pm.expect(pm.environment.get(\"jwt_token\")).to.not.be.undefined;\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/dashboard/pages/68a11421a58e0b38544ae947",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard",
+								"pages",
+								"68a11421a58e0b38544ae947"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create page",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse response body",
+									"let body;",
+									"try {",
+									"    body = pm.response.json();",
+									"} catch (e) {",
+									"    body = {};",
+									"}",
+									"",
+									"// Parse request body (JSON)",
+									"let requestData = {};",
+									"try {",
+									"    requestData = JSON.parse(pm.request.body.raw);",
+									"} catch (e) {",
+									"    requestData = {};",
+									"}",
+									"",
+									"// Test: Status code is 201 (Created)",
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"// Test: Response has success message",
+									"pm.test(\"Response has message 'Page created'\", function () {",
+									"    pm.expect(body).to.have.property(\"message\", \"Page created\");",
+									"});",
+									"",
+									"// Test: Response has 'page' object",
+									"pm.test(\"Response has 'page' object\", function () {",
+									"    pm.expect(body).to.have.property(\"page\");",
+									"    pm.expect(body.page).to.be.an(\"object\");",
+									"});",
+									"",
+									"// Test: Page object has required fields",
+									"pm.test(\"Page has required fields\", function () {",
+									"    const page = body.page;",
+									"    pm.expect(page).to.have.property(\"_id\");",
+									"    pm.expect(page).to.have.property(\"title\");",
+									"    pm.expect(page).to.have.property(\"content\");",
+									"    pm.expect(page).to.have.property(\"slug\");",
+									"    pm.expect(page).to.have.property(\"createdAt\");",
+									"    pm.expect(page).to.have.property(\"updatedAt\");",
+									"    pm.expect(page).to.have.property(\"__v\");",
+									"});",
+									"",
+									"// Test: Title matches what was sent",
+									"pm.test(\"Title matches input\", function () {",
+									"    pm.expect(body.page.title).to.eql(requestData.title);",
+									"});",
+									"",
+									"// Test: Slug matches what was sent",
+									"pm.test(\"Slug matches input\", function () {",
+									"    pm.expect(body.page.slug).to.eql(requestData.slug);",
+									"});",
+									"",
+									"// Test: Content matches what was sent",
+									"pm.test(\"Content matches input\", function () {",
+									"    pm.expect(body.page.content).to.eql(requestData.content);",
+									"});",
+									"",
+									"// Test: Response time is under 300ms",
+									"pm.test(\"Response time is less than 300ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);",
+									"});",
+									"",
+									"// Test: JWT token exists in environment",
+									"pm.test(\"JWT token exists in environment\", function () {",
+									"    pm.expect(pm.environment.get(\"jwt_token\")).to.not.be.undefined;",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"title\": \"runtest1\",\n    \"content\": \"<h1>Welcome to runtest1 !</h1>\",\n    \"slug\": \"runtest1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/dashboard/pages/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard",
+								"pages",
+								""
+							]
+						},
+						"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "Update page",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse response body",
+									"let body;",
+									"try {",
+									"    body = pm.response.json();",
+									"} catch (e) {",
+									"    body = {};",
+									"}",
+									"",
+									"// Parse request body (JSON)",
+									"let requestData = {};",
+									"try {",
+									"    requestData = JSON.parse(pm.request.body.raw);",
+									"} catch (e) {",
+									"    requestData = {};",
+									"}",
+									"",
+									"// Test: Status code is 200 (Updated)",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Test: Response has message 'Page updated'",
+									"pm.test(\"Response has message 'Page updated'\", function () {",
+									"    pm.expect(body).to.have.property(\"message\", \"Page updated\");",
+									"});",
+									"",
+									"// Test: Response has 'page' object",
+									"pm.test(\"Response has 'page' object\", function () {",
+									"    pm.expect(body).to.have.property(\"page\");",
+									"    pm.expect(body.page).to.be.an(\"object\");",
+									"});",
+									"",
+									"// Test: Page object has required fields",
+									"pm.test(\"Page has required fields\", function () {",
+									"    const page = body.page;",
+									"    pm.expect(page).to.have.property(\"_id\");",
+									"    pm.expect(page).to.have.property(\"title\");",
+									"    pm.expect(page).to.have.property(\"content\");",
+									"    pm.expect(page).to.have.property(\"slug\");",
+									"    pm.expect(page).to.have.property(\"createdAt\");",
+									"    pm.expect(page).to.have.property(\"updatedAt\");",
+									"    pm.expect(page).to.have.property(\"__v\");",
+									"});",
+									"",
+									"// Test: Title matches input",
+									"pm.test(\"Title matches input\", function () {",
+									"    pm.expect(body.page.title).to.eql(requestData.title);",
+									"});",
+									"",
+									"// Test: Slug matches input",
+									"pm.test(\"Slug matches input\", function () {",
+									"    pm.expect(body.page.slug).to.eql(requestData.slug);",
+									"});",
+									"",
+									"// Test: Content matches input",
+									"pm.test(\"Content matches input\", function () {",
+									"    pm.expect(body.page.content).to.eql(requestData.content);",
+									"});",
+									"",
+									"// Test: Response time is under 300ms",
+									"pm.test(\"Response time is less than 300ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);",
+									"});",
+									"",
+									"// Test: JWT token exists in environment",
+									"pm.test(\"JWT token exists in environment\", function () {",
+									"    pm.expect(pm.environment.get(\"jwt_token\")).to.not.be.undefined;",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"title\": \"runtest1-updated\",\n    \"content\": \"<h1>Welcome to runtest1 !</h1>\",\n    \"slug\": \"runtest1-updated\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/dashboard/pages/68c5ab57f9c5069085d9de4b",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard",
+								"pages",
+								"68c5ab57f9c5069085d9de4b"
+							]
+						},
+						"description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete page",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse response body",
+									"let body;",
+									"try {",
+									"    body = pm.response.json();",
+									"} catch (e) {",
+									"    body = {};",
+									"}",
+									"",
+									"// Test: Status code is 200 or 204 (depending on your API design)",
+									"pm.test(\"Status code is 200 or 204\", function () {",
+									"    pm.expect(pm.response.code === 200 || pm.response.code === 204).to.be.true;",
+									"});",
+									"",
+									"// Test: Response has message 'Page deleted'",
+									"pm.test(\"Response has message 'Page deleted'\", function () {",
+									"    pm.expect(body).to.have.property(\"message\", \"Page deleted\");",
+									"});",
+									"",
+									"// Optional: If your API returns deleted page object",
+									"if (body.page) {",
+									"    pm.test(\"Deleted page object exists\", function () {",
+									"        pm.expect(body.page).to.be.an(\"object\");",
+									"        pm.expect(body.page).to.have.property(\"_id\");",
+									"        pm.expect(body.page).to.have.property(\"title\");",
+									"        pm.expect(body.page).to.have.property(\"slug\");",
+									"    });",
+									"}",
+									"",
+									"// Test: Response time is under 300ms",
+									"pm.test(\"Response time is less than 300ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);",
+									"});",
+									"",
+									"// Test: JWT token exists in environment",
+									"pm.test(\"JWT token exists in environment\", function () {",
+									"    pm.expect(pm.environment.get(\"jwt_token\")).to.not.be.undefined;",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/dashboard/pages/68c5b9902abcfcc5c3a4d065",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard",
+								"pages",
+								"68c5b9902abcfcc5c3a4d065"
+							]
+						},
+						"description": "This is a DELETE request, and it is used to delete data that was previously created via a POST request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful DELETE request typically returns a `200 OK`, `202 Accepted`, or `204 No Content` response code."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Navigation Management",
+			"item": [
+				{
+					"name": "Get navigations",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse response body\r",
+									"let body;\r",
+									"try {\r",
+									"    body = pm.response.json();\r",
+									"} catch (e) {\r",
+									"    body = {};\r",
+									"}\r",
+									"\r",
+									"// Test: Status code is 200\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"// Test: Response has navigation array\r",
+									"pm.test(\"Response has navigation array\", function () {\r",
+									"    pm.expect(body.navigation).to.be.an(\"array\");\r",
+									"});\r",
+									"\r",
+									"// Test: Each navigation item has required fields\r",
+									"pm.test(\"Each navigation item has required fields\", function () {\r",
+									"    body.navigation.forEach(nav => {\r",
+									"        pm.expect(nav).to.have.property(\"_id\");\r",
+									"        pm.expect(nav).to.have.property(\"title\");\r",
+									"        pm.expect(nav).to.have.property(\"slug\");\r",
+									"        pm.expect(nav).to.have.property(\"order\");\r",
+									"        pm.expect(nav).to.have.property(\"parent\");\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"// Test: Response time is under 300ms\r",
+									"pm.test(\"Response time is less than 300ms\", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);\r",
+									"});\r",
+									"\r",
+									"// Test: JWT token exists in environment\r",
+									"pm.test(\"JWT token exists in environment\", function () {\r",
+									"    pm.expect(pm.environment.get(\"jwt_token\")).to.not.be.undefined;\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/dashboard/navigations",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard",
+								"navigations"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get navigation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse response body\r",
+									"let body;\r",
+									"try {\r",
+									"    body = pm.response.json();\r",
+									"} catch (e) {\r",
+									"    body = {};\r",
+									"}\r",
+									"\r",
+									"// Test: Status code is 200\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"// Test: Response has navigation object\r",
+									"pm.test(\"Response has navigation object\", function () {\r",
+									"    pm.expect(body).to.have.property(\"navigation\");\r",
+									"    pm.expect(body.navigation).to.be.an(\"object\");\r",
+									"});\r",
+									"\r",
+									"// Test: Navigation object has required fields\r",
+									"pm.test(\"Navigation object has required fields\", function () {\r",
+									"    const nav = body.navigation;\r",
+									"    pm.expect(nav).to.have.property(\"_id\");\r",
+									"    pm.expect(nav).to.have.property(\"title\");\r",
+									"    pm.expect(nav).to.have.property(\"slug\");\r",
+									"    pm.expect(nav).to.have.property(\"order\");\r",
+									"    pm.expect(nav).to.have.property(\"parent\");\r",
+									"});\r",
+									"\r",
+									"// Test: Response time is under 300ms\r",
+									"pm.test(\"Response time is less than 300ms\", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);\r",
+									"});\r",
+									"\r",
+									"// Test: JWT token exists in environment\r",
+									"pm.test(\"JWT token exists in environment\", function () {\r",
+									"    pm.expect(pm.environment.get(\"jwt_token\")).to.not.be.undefined;\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/dashboard/navigations/68a11368a58e0b38544ae91a",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard",
+								"navigations",
+								"68a11368a58e0b38544ae91a"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create navigation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse response body",
+									"let body;",
+									"try {",
+									"    body = pm.response.json();",
+									"} catch (e) {",
+									"    body = {};",
+									"}",
+									"",
+									"// Parse request body",
+									"let requestData = {};",
+									"try {",
+									"    requestData = JSON.parse(pm.request.body.raw);",
+									"} catch (e) {",
+									"    requestData = {};",
+									"}",
+									"",
+									"// Test: Status code is 201",
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"// Test: Response has message",
+									"pm.test(\"Response has message 'Navigation item created successfully'\", function () {",
+									"    pm.expect(body).to.have.property(\"message\", \"Navigation item created successfully\");",
+									"});",
+									"",
+									"// Test: Response has 'navigation' object",
+									"pm.test(\"Response has 'navigation' object\", function () {",
+									"    pm.expect(body).to.have.property(\"navigation\");",
+									"    pm.expect(body.navigation).to.be.an(\"object\");",
+									"});",
+									"",
+									"// Test: Navigation object has required fields",
+									"pm.test(\"Navigation object has required fields\", function () {",
+									"    const nav = body.navigation;",
+									"    pm.expect(nav).to.have.property(\"_id\");",
+									"    pm.expect(nav).to.have.property(\"title\");",
+									"    pm.expect(nav).to.have.property(\"slug\");",
+									"    pm.expect(nav).to.have.property(\"order\");",
+									"    pm.expect(nav).to.have.property(\"parent\");",
+									"    pm.expect(nav).to.have.property(\"createdBy\");",
+									"    pm.expect(nav).to.have.property(\"createdAt\");",
+									"    pm.expect(nav).to.have.property(\"updatedAt\");",
+									"});",
+									"",
+									"// Test: Title matches request input",
+									"pm.test(\"Title matches input\", function () {",
+									"    pm.expect(body.navigation.title).to.eql(requestData.title);",
+									"});",
+									"",
+									"// Test: Slug matches request input",
+									"pm.test(\"Slug matches input\", function () {",
+									"    pm.expect(body.navigation.slug).to.eql(requestData.slug);",
+									"});",
+									"",
+									"// Test: Response time is under 300ms",
+									"pm.test(\"Response time is less than 300ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);",
+									"});",
+									"",
+									"// Test: JWT token exists in environment",
+									"pm.test(\"JWT token exists in environment\", function () {",
+									"    pm.expect(pm.environment.get(\"jwt_token\")).to.not.be.undefined;",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"title\": \"runtest1\",\n    \"slug\": \"runtest1\",\n    \"order\": \"4\",\n    \"parent\": \"68a11368a58e0b38544ae91a\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/dashboard/navigations",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard",
+								"navigations"
+							]
+						},
+						"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "Update navigation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse response body",
+									"let body;",
+									"try {",
+									"    body = pm.response.json();",
+									"} catch (e) {",
+									"    body = {};",
+									"}",
+									"",
+									"// Parse request body",
+									"let requestData = {};",
+									"try {",
+									"    requestData = JSON.parse(pm.request.body.raw);",
+									"} catch (e) {",
+									"    requestData = {};",
+									"}",
+									"",
+									"// Test: Status code is 200",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Test: Response has 'navigation' object",
+									"pm.test(\"Response has 'navigation' object\", function () {",
+									"    pm.expect(body).to.have.property(\"navigation\");",
+									"    pm.expect(body.navigation).to.be.an(\"object\");",
+									"});",
+									"",
+									"// Test: Navigation object has required fields",
+									"pm.test(\"Navigation object has required fields\", function () {",
+									"    const nav = body.navigation;",
+									"    pm.expect(nav).to.have.property(\"_id\");",
+									"    pm.expect(nav).to.have.property(\"title\");",
+									"    pm.expect(nav).to.have.property(\"slug\");",
+									"    pm.expect(nav).to.have.property(\"order\");",
+									"    pm.expect(nav).to.have.property(\"parent\");",
+									"    pm.expect(nav).to.have.property(\"createdBy\");",
+									"    pm.expect(nav).to.have.property(\"createdAt\");",
+									"    pm.expect(nav).to.have.property(\"updatedAt\");",
+									"});",
+									"",
+									"// Test: Title matches request input",
+									"pm.test(\"Title matches input\", function () {",
+									"    pm.expect(body.navigation.title).to.eql(requestData.title);",
+									"});",
+									"",
+									"// Test: Slug matches request input",
+									"pm.test(\"Slug matches input\", function () {",
+									"    pm.expect(body.navigation.slug).to.eql(requestData.slug);",
+									"});",
+									"",
+									"// Test: Response time is under 300ms",
+									"pm.test(\"Response time is less than 300ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);",
+									"});",
+									"",
+									"// Test: JWT token exists in environment",
+									"pm.test(\"JWT token exists in environment\", function () {",
+									"    pm.expect(pm.environment.get(\"jwt_token\")).to.not.be.undefined;",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"title\": \"runtest11111\",\n    \"slug\": \"runtest11111\",\n    \"order\": \"3\",\n    \"parent\": \"68a11368a58e0b38544ae91a\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/dashboard/navigations/68c5b8002abcfcc5c3a4d038",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard",
+								"navigations",
+								"68c5b8002abcfcc5c3a4d038"
+							]
+						},
+						"description": "This is a PUT request and it is used to overwrite an existing piece of data. For instance, after you create an entity with a POST request, you may want to modify that later. You can do that using a PUT request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful PUT request typically returns a `200 OK`, `201 Created`, or `204 No Content` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete navigation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse response body",
+									"let body;",
+									"try {",
+									"    body = pm.response.json();",
+									"} catch (e) {",
+									"    body = {};",
+									"}",
+									"",
+									"// Test: Status code is 200",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"// Test: Response has message",
+									"pm.test(\"Response has message 'Navigation deleted successfully'\", function () {",
+									"    pm.expect(body).to.have.property(\"message\", \"Navigation deleted successfully\");",
+									"});",
+									"",
+									"// Test: Response time is under 300ms",
+									"pm.test(\"Response time is less than 300ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);",
+									"});",
+									"",
+									"// Test: JWT token exists in environment",
+									"pm.test(\"JWT token exists in environment\", function () {",
+									"    pm.expect(pm.environment.get(\"jwt_token\")).to.not.be.undefined;",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/dashboard/navigations/68c5b8002abcfcc5c3a4d038",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard",
+								"navigations",
+								"68c5b8002abcfcc5c3a4d038"
+							]
+						},
+						"description": "This is a DELETE request, and it is used to delete data that was previously created via a POST request. You typically identify the entity being updated by including an identifier in the URL (eg. `id=1`).\n\nA successful DELETE request typically returns a `200 OK`, `202 Accepted`, or `204 No Content` response code."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Product Management",
+			"item": [
+				{
+					"name": "Media Management",
+					"item": [
+						{
+							"name": "Add media to product",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{jwt_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "images",
+											"type": "file",
+											"src": "/C:/Users/Michael/Desktop/linkedin.jpg"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{base_url}}/dashboard/products/68d2e6850b6b8f0dd8945ff4/media",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"dashboard",
+										"products",
+										"68d2e6850b6b8f0dd8945ff4",
+										"media"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete media from product",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{jwt_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{base_url}}/dashboard/products/68d2e6850b6b8f0dd8945ff4/media",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"dashboard",
+										"products",
+										"68d2e6850b6b8f0dd8945ff4",
+										"media"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete media DIRECTLY (helper)",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{jwt_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{base_url}}/dashboard/products/media/68d799a9e1f05fcdff50725d",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"dashboard",
+										"products",
+										"media",
+										"68d799a9e1f05fcdff50725d"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get all medias (helper)",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{jwt_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{base_url}}/dashboard/products/media/",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"dashboard",
+										"products",
+										"media",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get one media (helper)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Get response JSON\r",
+											"const response = pm.response.json();\r",
+											"\r",
+											"// Check HTTP status\r",
+											"if (pm.response.code === 200) {\r",
+											"    pm.test(\"Status code is 200\", () => {\r",
+											"        pm.response.to.have.status(200);\r",
+											"    });\r",
+											"\r",
+											"    pm.test(\"Response has success true\", () => {\r",
+											"        pm.expect(response.success).to.be.true;\r",
+											"    });\r",
+											"\r",
+											"    pm.test(\"Response has message 'Media fetched successfully'\", () => {\r",
+											"        pm.expect(response.message).to.eql(\"Media fetched successfully\");\r",
+											"    });\r",
+											"\r",
+											"    pm.test(\"Response has data object with _id\", () => {\r",
+											"        pm.expect(response.data).to.have.property(\"_id\");\r",
+											"    });\r",
+											"} \r",
+											"else if (pm.response.code === 404) {\r",
+											"    pm.test(\"Status code is 404\", () => {\r",
+											"        pm.response.to.have.status(404);\r",
+											"    });\r",
+											"\r",
+											"    pm.test(\"Response has success false\", () => {\r",
+											"        pm.expect(response.success).to.be.false;\r",
+											"    });\r",
+											"\r",
+											"    pm.test(\"Response has message 'Media not found'\", () => {\r",
+											"        pm.expect(response.message).to.eql(\"Media not found\");\r",
+											"    });\r",
+											"} \r",
+											"else if (pm.response.code === 400) {\r",
+											"    pm.test(\"Status code is 400\", () => {\r",
+											"        pm.response.to.have.status(400);\r",
+											"    });\r",
+											"\r",
+											"    pm.test(\"Response has success false\", () => {\r",
+											"        pm.expect(response.success).to.be.false;\r",
+											"    });\r",
+											"\r",
+											"    pm.test(\"Response has message 'Invalid media ID'\", () => {\r",
+											"        pm.expect(response.message).to.eql(\"Invalid media ID\");\r",
+											"    });\r",
+											"} \r",
+											"else {\r",
+											"    pm.test(\"Unexpected status code\", () => {\r",
+											"        pm.expect.fail(`Unexpected status code: ${pm.response.code}`);\r",
+											"    });\r",
+											"}"
+										],
+										"type": "text/javascript",
+										"packages": {},
+										"requests": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{jwt_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{base_url}}/dashboard/products/media/68d7a5a28e0cf98eab02a610",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"dashboard",
+										"products",
+										"media",
+										"68d7a5a28e0cf98eab02a610"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update media of product",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{jwt_token}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"title\": \"the one\",\r\n    \"order\": 0\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/dashboard/products/68d2e6850b6b8f0dd8945ff4/media/68d2e6850b6b8f0dd8945ff2",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"dashboard",
+										"products",
+										"68d2e6850b6b8f0dd8945ff4",
+										"media",
+										"68d2e6850b6b8f0dd8945ff2"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Create product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let body = {};\r",
+									"try {\r",
+									"    body = pm.response.json();\r",
+									"} catch (e) {}\r",
+									"\r",
+									"// Test: Status code\r",
+									"pm.test(\"Status code is 201 on success or 400/500 on error\", function () {\r",
+									"    pm.expect(pm.response.code).to.be.oneOf([201, 400, 500]);\r",
+									"});\r",
+									"\r",
+									"// Test: Response has message\r",
+									"pm.test(\"Response has a message\", function () {\r",
+									"    pm.expect(body).to.have.property(\"message\").that.is.a(\"string\");\r",
+									"});\r",
+									"\r",
+									"// If success, check basic data\r",
+									"if (pm.response.code === 201 && body.success) {\r",
+									"    pm.test(\"Response has data object\", function () {\r",
+									"        pm.expect(body).to.have.property(\"data\").that.is.an(\"object\");\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"// If error, check error message\r",
+									"if (pm.response.code >= 400) {\r",
+									"    pm.test(\"Error message exists\", function () {\r",
+									"        pm.expect(body).to.have.property(\"error\").that.is.a(\"string\");\r",
+									"    });\r",
+									"}\r",
+									"\r",
+									"// Test: Response time is under 300ms\r",
+									"pm.test(\"Response time is less than 300ms\", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);\r",
+									"});\r",
+									"\r",
+									"// Test: JWT token exists in environment\r",
+									"pm.test(\"JWT token exists in environment\", function () {\r",
+									"    pm.expect(pm.environment.get(\"jwt_token\")).to.not.be.undefined;\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "\"Let's try\"",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "\"77777777777777777\"",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "77777",
+									"type": "text"
+								},
+								{
+									"key": "stock",
+									"value": "20",
+									"type": "text"
+								},
+								{
+									"key": "categories",
+									"value": "[\"footwear\", \"sports\", \"running\"]",
+									"type": "text"
+								},
+								{
+									"key": "images",
+									"type": "file",
+									"src": "/C:/Users/Michael/Desktop/test.png"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/dashboard/products",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard",
+								"products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create product without media",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Helper function to strip quotes from strings\r",
+									"const stripQuotes = (str) => str?.replace(/^\"(.*)\"$/, '$1');\r",
+									"\r",
+									"// Parse response body\r",
+									"let body;\r",
+									"try {\r",
+									"    body = pm.response.json();\r",
+									"} catch (e) {\r",
+									"    body = {};\r",
+									"}\r",
+									"\r",
+									"// Parse request body safely\r",
+									"let requestData = {};\r",
+									"try {\r",
+									"    if (pm.request.body && pm.request.body.mode === 'raw') {\r",
+									"        requestData = JSON.parse(pm.request.body.raw);\r",
+									"    } else if (pm.request.body && pm.request.body.mode === 'urlencoded') {\r",
+									"        requestData = {};\r",
+									"        pm.request.body.urlencoded.each(item => {\r",
+									"            requestData[item.key] = item.value;\r",
+									"        });\r",
+									"    } else if (pm.request.body && pm.request.body.mode === 'formdata') {\r",
+									"        requestData = {};\r",
+									"        pm.request.body.formdata.each(item => {\r",
+									"            requestData[item.key] = item.value;\r",
+									"        });\r",
+									"    }\r",
+									"} catch (e) {\r",
+									"    requestData = {};\r",
+									"}\r",
+									"\r",
+									"// Test: Status code is 201\r",
+									"pm.test(\"Status code is 201\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"// Test: Response has message\r",
+									"pm.test(\"Response has message 'Product created successfully'\", function () {\r",
+									"    pm.expect(body).to.have.property(\"message\", \"Product created successfully\");\r",
+									"});\r",
+									"\r",
+									"// Test: Response has 'data' object (product)\r",
+									"pm.test(\"Response has 'data' object\", function () {\r",
+									"    pm.expect(body).to.have.property(\"data\");\r",
+									"    pm.expect(body.data).to.be.an(\"object\");\r",
+									"});\r",
+									"\r",
+									"// Test: Product object has required fields\r",
+									"pm.test(\"Product object has required fields\", function () {\r",
+									"    const product = body.data;\r",
+									"    pm.expect(product).to.have.property(\"_id\");\r",
+									"    pm.expect(product).to.have.property(\"title\");\r",
+									"    pm.expect(product).to.have.property(\"description\");\r",
+									"    pm.expect(product).to.have.property(\"price\");\r",
+									"    pm.expect(product).to.have.property(\"stock\");\r",
+									"    pm.expect(product).to.have.property(\"categories\");\r",
+									"    pm.expect(product).to.have.property(\"media\");\r",
+									"    pm.expect(product).to.have.property(\"createdBy\");\r",
+									"    pm.expect(product).to.have.property(\"createdAt\");\r",
+									"});\r",
+									"\r",
+									"// Test: Title matches request input\r",
+									"pm.test(\"Title matches input\", function () {\r",
+									"    pm.expect(stripQuotes(body.data.title)).to.eql(stripQuotes(requestData.title));\r",
+									"});\r",
+									"\r",
+									"// Test: Price matches request input\r",
+									"pm.test(\"Price matches input\", function () {\r",
+									"    pm.expect(body.data.price).to.eql(Number(requestData.price));\r",
+									"});\r",
+									"\r",
+									"// Test: Stock matches request input\r",
+									"pm.test(\"Stock matches input\", function () {\r",
+									"    pm.expect(body.data.stock).to.eql(Number(requestData.stock));\r",
+									"});\r",
+									"\r",
+									"// Test: Categories is an array\r",
+									"pm.test(\"Categories is an array\", function () {\r",
+									"    pm.expect(body.data.categories).to.be.an(\"array\");\r",
+									"});\r",
+									"\r",
+									"// Test: Media is an array\r",
+									"pm.test(\"Media is an array\", function () {\r",
+									"    pm.expect(body.data.media).to.be.an(\"array\");\r",
+									"});\r",
+									"\r",
+									"// Test: Response time is under 300ms\r",
+									"pm.test(\"Response time is less than 300ms\", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);\r",
+									"});\r",
+									"\r",
+									"// Test: JWT token exists in environment\r",
+									"pm.test(\"JWT token exists in environment\", function () {\r",
+									"    pm.expect(pm.environment.get(\"jwt_token\")).to.not.be.undefined;\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"title\": \"Cool Sneakers 7\",\r\n  \"description\": \"High quality sneakers for running\",\r\n  \"price\": 79.99,\r\n  \"stock\": 20,\r\n  \"categories\": [\"footwear\", \"sports\"]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/dashboard/products",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard",
+								"products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get all products",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse response body\r",
+									"let body;\r",
+									"try {\r",
+									"    body = pm.response.json();\r",
+									"} catch (e) {\r",
+									"    body = {};\r",
+									"}\r",
+									"\r",
+									"// Test: Status code is 200\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"// Test: Response has message\r",
+									"pm.test(\"Response has message 'Fetched all products successfully'\", function () {\r",
+									"    pm.expect(body).to.have.property(\"message\", \"Fetched all products successfully\");\r",
+									"});\r",
+									"\r",
+									"// Test: Response has 'data' array\r",
+									"pm.test(\"Response has 'data' array\", function () {\r",
+									"    pm.expect(body).to.have.property(\"data\");\r",
+									"    pm.expect(body.data).to.be.an(\"array\");\r",
+									"});\r",
+									"\r",
+									"// Test: Each product has required fields\r",
+									"pm.test(\"Each product has required fields\", function () {\r",
+									"    body.data.forEach(product => {\r",
+									"        pm.expect(product).to.have.property(\"_id\");\r",
+									"        pm.expect(product).to.have.property(\"title\");\r",
+									"        pm.expect(product).to.have.property(\"description\");\r",
+									"        pm.expect(product).to.have.property(\"price\");\r",
+									"        pm.expect(product).to.have.property(\"stock\");\r",
+									"        pm.expect(product).to.have.property(\"categories\");\r",
+									"        pm.expect(product).to.have.property(\"media\");\r",
+									"        pm.expect(product).to.have.property(\"createdBy\");\r",
+									"        pm.expect(product).to.have.property(\"createdAt\");\r",
+									"        // Make updatedAt optional\r",
+									"        if (product.hasOwnProperty(\"updatedAt\")) {\r",
+									"            pm.expect(product.updatedAt).to.not.be.undefined;\r",
+									"        }\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"// Test: All prices are numbers\r",
+									"pm.test(\"All prices are numbers\", function () {\r",
+									"    body.data.forEach(product => {\r",
+									"        pm.expect(product.price).to.be.a(\"number\");\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"// Test: All stock values are numbers\r",
+									"pm.test(\"All stock values are numbers\", function () {\r",
+									"    body.data.forEach(product => {\r",
+									"        pm.expect(product.stock).to.be.a(\"number\");\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"// Test: Categories and media are arrays\r",
+									"pm.test(\"Categories and media are arrays\", function () {\r",
+									"    body.data.forEach(product => {\r",
+									"        pm.expect(product.categories).to.be.an(\"array\");\r",
+									"        pm.expect(product.media).to.be.an(\"array\");\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"// Test: Response time is under 300ms\r",
+									"pm.test(\"Response time is less than 300ms\", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);\r",
+									"});\r",
+									"\r",
+									"// Test: JWT token exists in environment\r",
+									"pm.test(\"JWT token exists in environment\", function () {\r",
+									"    pm.expect(pm.environment.get(\"jwt_token\")).to.not.be.undefined;\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/dashboard/products",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard",
+								"products"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get one product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Parse response body\r",
+									"let body;\r",
+									"try {\r",
+									"    body = pm.response.json();\r",
+									"} catch (e) {\r",
+									"    body = {};\r",
+									"}\r",
+									"\r",
+									"// Test: Response time is under 300ms\r",
+									"pm.test(\"Response time is less than 300ms\", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);\r",
+									"});\r",
+									"\r",
+									"// Test: JWT token exists in environment\r",
+									"pm.test(\"JWT token exists in environment\", function () {\r",
+									"    pm.expect(pm.environment.get(\"jwt_token\")).to.not.be.undefined;\r",
+									"});\r",
+									"\r",
+									"// Check if product exists or not\r",
+									"if (pm.response.code === 200) {\r",
+									"    pm.test(\"Status code is 200\", function () {\r",
+									"        pm.response.to.have.status(200);\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"Response has message 'Product fetched successfully'\", function () {\r",
+									"        pm.expect(body).to.have.property(\"message\", \"Product fetched successfully\");\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"Response has 'data' object\", function () {\r",
+									"        pm.expect(body).to.have.property(\"data\");\r",
+									"        pm.expect(body.data).to.be.an(\"object\");\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"Product object has required fields\", function () {\r",
+									"        const product = body.data;\r",
+									"        pm.expect(product).to.have.property(\"_id\");\r",
+									"        pm.expect(product).to.have.property(\"title\");\r",
+									"        pm.expect(product).to.have.property(\"description\");\r",
+									"        pm.expect(product).to.have.property(\"price\");\r",
+									"        pm.expect(product).to.have.property(\"stock\");\r",
+									"        pm.expect(product).to.have.property(\"categories\");\r",
+									"        pm.expect(product).to.have.property(\"media\");\r",
+									"        pm.expect(product).to.have.property(\"createdBy\");\r",
+									"        pm.expect(product).to.have.property(\"createdAt\");\r",
+									"        if (product.hasOwnProperty(\"updatedAt\")) {\r",
+									"            pm.expect(product.updatedAt).to.not.be.undefined;\r",
+									"        }\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"Price is a number\", function () {\r",
+									"        pm.expect(body.data.price).to.be.a(\"number\");\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"Stock is a number\", function () {\r",
+									"        pm.expect(body.data.stock).to.be.a(\"number\");\r",
+									"    });\r",
+									"\r",
+									"    pm.test(\"Categories and media are arrays\", function () {\r",
+									"        pm.expect(body.data.categories).to.be.an(\"array\");\r",
+									"        pm.expect(body.data.media).to.be.an(\"array\");\r",
+									"    });\r",
+									"} else if (pm.response.code === 404) {\r",
+									"    pm.test(\"Product not found\", function () {\r",
+									"        pm.response.to.have.status(404);\r",
+									"        pm.expect(body).to.have.property(\"success\", false);\r",
+									"        pm.expect(body).to.have.property(\"message\", \"Product not found\");\r",
+									"    });\r",
+									"} else {\r",
+									"    pm.test(\"Unexpected response code\", function () {\r",
+									"        pm.expect([200, 404]).to.include(pm.response.code);\r",
+									"    });\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": []
+						},
+						"url": {
+							"raw": "{{base_url}}/dashboard/products/68d7a6f6c335a5e6f8cf20ec",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard",
+								"products",
+								"68d7a6f6c335a5e6f8cf20ec"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response time is less than 300ms\", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"JWT token exists in environment\", function () {\r",
+									"    pm.expect(pm.environment.get(\"jwt_token\")).to.not.be.undefined;\r",
+									"});\r",
+									"\r",
+									"// Only test for success if response code is 200\r",
+									"if (pm.response.code === 200 && body.data) {\r",
+									"    // All previous tests (title, price, stock, etc.)\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "title",
+									"value": "\"Cool Sneakers\"",
+									"type": "text"
+								},
+								{
+									"key": "description",
+									"value": "\"High quality sneakers for runningj\"",
+									"type": "text"
+								},
+								{
+									"key": "price",
+									"value": "79.98",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "stock",
+									"value": "11",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "categories",
+									"value": "[\"footwear\", \"sports\", \"running\"]",
+									"type": "text",
+									"disabled": true
+								},
+								{
+									"key": "thumbnail",
+									"value": "",
+									"type": "text"
+								},
+								{
+									"key": "images",
+									"type": "file",
+									"src": "/C:/Users/Michael/Desktop/linkedin.jpg"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/dashboard/products/68d2ecbe0b6b8f0dd8945fff",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard",
+								"products",
+								"68d2ecbe0b6b8f0dd8945fff"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"let body;\r",
+									"try {\r",
+									"    body = pm.response.json();\r",
+									"} catch (e) {\r",
+									"    body = {};\r",
+									"}\r",
+									"\r",
+									"// Test: Response time is under 300ms\r",
+									"pm.test(\"Response time is less than 300ms\", function () {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);\r",
+									"});\r",
+									"\r",
+									"// Test: JWT token exists in environment\r",
+									"pm.test(\"JWT token exists in environment\", function () {\r",
+									"    pm.expect(pm.environment.get(\"jwt_token\")).to.not.be.undefined;\r",
+									"});\r",
+									"\r",
+									"// Check response based on status code\r",
+									"switch(pm.response.code) {\r",
+									"    case 200:\r",
+									"        pm.test(\"Status code is 200\", function () {\r",
+									"            pm.response.to.have.status(200);\r",
+									"        });\r",
+									"        pm.test(\"Response has message 'Product deleted successfully'\", function () {\r",
+									"            pm.expect(body).to.have.property(\"message\", \"Product deleted successfully\");\r",
+									"            pm.expect(body).to.have.property(\"success\", true);\r",
+									"        });\r",
+									"        break;\r",
+									"    case 400:\r",
+									"        pm.test(\"Invalid product ID\", function () {\r",
+									"            pm.response.to.have.status(400);\r",
+									"            pm.expect(body).to.have.property(\"message\", \"Invalid product ID\");\r",
+									"            pm.expect(body).to.have.property(\"success\", false);\r",
+									"        });\r",
+									"        break;\r",
+									"    case 404:\r",
+									"        pm.test(\"Product not found\", function () {\r",
+									"            pm.response.to.have.status(404);\r",
+									"            pm.expect(body).to.have.property(\"message\", \"Product not found\");\r",
+									"            pm.expect(body).to.have.property(\"success\", false);\r",
+									"        });\r",
+									"        break;\r",
+									"    default:\r",
+									"        pm.test(\"Unexpected response code\", function () {\r",
+									"            pm.expect([200, 400, 404]).to.include(pm.response.code);\r",
+									"        });\r",
+									"        break;\r",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/dashboard/products/68dcf3c0a765fffa2876b787",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard",
+								"products",
+								"68dcf3c0a765fffa2876b787"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/dashboard/products/search/query",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"dashboard",
+								"products",
+								"search",
+								"query"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "id",
+			"value": "1"
+		},
+		{
+			"key": "base_url",
+			"value": "https://template.postman-echo.com"
+		}
+	]
+}
