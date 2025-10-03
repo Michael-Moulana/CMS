@@ -2,7 +2,6 @@ const ModelFactory = require("../services/ModelFactory");
 const AuthProxy = require("../services/AuthProxy");
 const ResponseDecorator = require("../services/ResponseDecorator");
 const MediaManager = require("../services/MediaManager");
-const mongoose = require("mongoose");
 
 const productManager = ModelFactory.createProductManager();
 const mediaManager = new MediaManager();
