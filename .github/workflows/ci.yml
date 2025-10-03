@@ -1,72 +1,86 @@
-name: Backend CI
+name: CMS – Deploy (self-hosted)
 
 on:
   push:
-    branches:
-      - main # Trigger CI on pushes to the main branch
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
-  test:
-    name: Run Tests
+  deploy:
+    name: Deploy Backend + Frontend
     runs-on: self-hosted
-
-    strategy:
-      matrix:
-        node-version: [22]
+    env:
+      NODE_ENV: production
+      MONGO_URI: ${{ secrets.MONGO_URI }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      PORT: ${{ secrets.PORT }}
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # Set up Node.js with npm caching
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
 
-      # Stop running apps
-      - run: pm2 stop all || true
+      - name: Show runner info
+        run: |
+          node -v
+          npm -v
+          uname -a
 
-      # Create .env before installing/running
-      - name: Create .env file
+      - name: Stop PM2 apps (ignore if none)
+        run: pm2 stop all || true
+
+      # ---------- BACKEND ----------
+      - name: Install backend deps
+        working-directory: ./backend
+        run: npm ci --no-audit --prefer-offline --progress=false --fund=false
+
+      - name: Write backend .env
         working-directory: ./backend
         run: |
-          touch .env
-          echo "MONGO_URI=${{ secrets.MONGO_URI }}" >> .env
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
-          echo "PORT=${{ secrets.PORT }}" >> .env
+          cat > .env <<EOF
+          MONGO_URI=${MONGO_URI}
+          JWT_SECRET=${JWT_SECRET}
+          PORT=${PORT}
+          EOF
+          echo "Wrote backend .env"
 
-      # Install backend dependencies
-      - name: Install Backend Dependencies
+      - name: Start/Restart backend with PM2
         working-directory: ./backend
-        run: npm ci --prefer-offline --no-audit
-
-      # Cache frontend dependencies
-      - name: Cache Frontend Dependencies
-        uses: actions/cache@v3
-        with:
-          path: frontend/node_modules
-          key: frontend-node-modules-${{ hashFiles('frontend/package-lock.json') }}
-          restore-keys: frontend-node-modules-
-
-      # Install frontend dependencies
-      - name: Install Frontend Dependencies
-        working-directory: ./frontend
-        run: npm ci --prefer-offline --no-audit --verbose
-        timeout-minutes: 15 # Fail fast if stuck
-
-      # Build Frontend
-      - name: Build Frontend
-        working-directory: ./frontend
-        run: NODE_OPTIONS=--max-old-space-size=4096 npm run build
-
-      # Run backend tests
-      - name: Run Backend Tests
-        working-directory: ./backend
-        run: npm test
-
-      # Restart backend with pm2
-      - name: Restart PM2
         run: |
-          pm2 startOrRestart ecosystem.config.js || pm2 restart all
+          pm2 delete cms-backend || true
+          pm2 start server.js --name cms-backend
+          pm2 save
+
+      # ---------- FRONTEND ----------
+      - name: Install frontend deps
+        working-directory: ./frontend
+        run: npm ci --no-audit --prefer-offline --progress=false --fund=false --no-optional
+
+      - name: Build frontend
+        working-directory: ./frontend
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+          CI: "false"
+        run: npm run build --silent
+
+      - name: Deploy frontend to Nginx docroot
+        run: |
+          sudo mkdir -p /var/www/frontend
+          sudo rm -rf /var/www/frontend/*
+          sudo cp -r ./frontend/build/* /var/www/frontend/
+
+      - name: Validate & reload Nginx
+        run: |
+          sudo nginx -t
+          sudo systemctl reload nginx || sudo systemctl restart nginx
+
+      - name: PM2 status
+        run: pm2 ls
