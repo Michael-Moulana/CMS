@@ -2,13 +2,17 @@ name: CMS – Deploy (self-hosted)
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   deploy:
     name: Deploy Backend + Frontend
     runs-on: self-hosted
+    permissions:
+      contents: read
+
+    # Make your repo secrets in: Settings → Secrets and variables → Actions
     env:
       NODE_ENV: production
       MONGO_URI: ${{ secrets.MONGO_URI }}
@@ -19,10 +23,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      # React Scripts is much happier on Node 18 LTS than 22
+      - name: Setup Node.js (LTS)
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 18
           cache: npm
           cache-dependency-path: |
             backend/package-lock.json
@@ -33,6 +38,13 @@ jobs:
           node -v
           npm -v
           uname -a
+
+      - name: Ensure PM2 is installed
+        run: |
+          if ! command -v pm2 >/dev/null 2>&1; then
+            sudo npm i -g pm2
+          fi
+          pm2 -v
 
       - name: Stop PM2 apps (ignore if none)
         run: pm2 stop all || true
@@ -56,7 +68,7 @@ jobs:
         working-directory: ./backend
         run: |
           pm2 delete cms-backend || true
-          pm2 start server.js --name cms-backend
+          pm2 start server.js --name cms-backend --update-env
           pm2 save
 
       # ---------- FRONTEND ----------
@@ -67,8 +79,10 @@ jobs:
       - name: Build frontend
         working-directory: ./frontend
         env:
-          NODE_OPTIONS: --max-old-space-size=4096
+          # prevent CRA from treating warnings as failures in CI
           CI: "false"
+          # give node more memory for large builds
+          NODE_OPTIONS: --max-old-space-size=4096
         run: npm run build --silent
 
       - name: Deploy frontend to Nginx docroot
@@ -77,6 +91,56 @@ jobs:
           sudo rm -rf /var/www/frontend/*
           sudo cp -r ./frontend/build/* /var/www/frontend/
 
+      # ---------- NGINX SITE (serves frontend and proxies /api to backend:5001) ----------
+      - name: Install/Update Nginx site
+        run: |
+          sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
+          sudo tee /etc/nginx/sites-available/cms >/dev/null <<'NGINX'
+          server {
+            listen 80 default_server;
+            listen [::]:80 default_server;
+            server_name _;
+
+            # Serve React build
+            root /var/www/frontend;
+            index index.html;
+
+            # Try static file, then fallback to index.html (SPA)
+            location / {
+              try_files $uri $uri/ /index.html;
+            }
+
+            # Proxy API to Node backend (PM2) on 5001
+            location /api/ {
+              proxy_pass         http://127.0.0.1:5001;
+              proxy_http_version 1.1;
+              proxy_set_header   Host $host;
+              proxy_set_header   X-Real-IP $remote_addr;
+              proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header   Upgrade $http_upgrade;
+              proxy_set_header   Connection "upgrade";
+            }
+
+            # Serve uploaded media directly (your server.js also exposes /uploads)
+            location /uploads/ {
+              alias /home/ubuntu/uploads/;
+              autoindex off;
+              access_log off;
+              add_header Cache-Control "public, max-age=31536000, immutable";
+            }
+          }
+          NGINX
+
+          # enable our site
+          if [ ! -L /etc/nginx/sites-enabled/cms ]; then
+            sudo ln -s /etc/nginx/sites-available/cms /etc/nginx/sites-enabled/cms
+          fi
+
+          # remove the default site if it exists (optional)
+          if [ -e /etc/nginx/sites-enabled/default ]; then
+            sudo rm -f /etc/nginx/sites-enabled/default
+          fi
+
       - name: Validate & reload Nginx
         run: |
           sudo nginx -t
@@ -84,4 +148,3 @@ jobs:
 
       - name: PM2 status
         run: pm2 ls
-
