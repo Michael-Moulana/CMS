@@ -82,7 +82,7 @@ jobs:
       - name: Build frontend
         working-directory: ./frontend
         env:
-          CI: "false"                      # don’t fail on warnings
+          CI: "false"                      
           NODE_OPTIONS: --max-old-space-size=4096
         run: npm run build --silent
 

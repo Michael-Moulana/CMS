@@ -1,21 +1,12 @@
 import axios from "axios";
 
-/**
- * Read JWT from where your app stores it.
- * - preferred: JSON string under "user" with a `token` field
- * - fallbacks: "token"/"authToken" keys in localStorage/sessionStorage
- */
 function readToken() {
   try {
     const raw =
-      sessionStorage.getItem("user") ||
-      localStorage.getItem("user") ||
-      "";
+      sessionStorage.getItem("user") || localStorage.getItem("user") || "";
     const parsed = raw ? JSON.parse(raw) : null;
     if (parsed?.token) return parsed.token;
-  } catch {
-    
-  }
+  } catch {}
   return (
     localStorage.getItem("token") ||
     localStorage.getItem("authToken") ||
@@ -25,9 +16,8 @@ function readToken() {
   );
 }
 
-const axiosInstance = axios.create({
-  baseURL: "/api", 
-});
+//  uses relative path; Nginx handles prod, CRA dev proxy handles local
+const axiosInstance = axios.create({ baseURL: "/api" });
 
 axiosInstance.interceptors.request.use((config) => {
   const token = readToken();
