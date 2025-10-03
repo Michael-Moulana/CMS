@@ -26,7 +26,7 @@ function readToken() {
 }
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:5001/api", 
+  baseURL: "/api", 
 });
 
 axiosInstance.interceptors.request.use((config) => {
