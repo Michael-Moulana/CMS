@@ -12,7 +12,6 @@ jobs:
     permissions:
       contents: read
 
-    # Make your repo secrets in: Settings → Secrets and variables → Actions
     env:
       NODE_ENV: production
       MONGO_URI: ${{ secrets.MONGO_URI }}
@@ -23,7 +22,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # React Scripts is much happier on Node 18 LTS than 22
+      # CRA & many plugins are happiest on Node 18 LTS
       - name: Setup Node.js (LTS)
         uses: actions/setup-node@v4
         with:
@@ -50,9 +49,11 @@ jobs:
         run: pm2 stop all || true
 
       # ---------- BACKEND ----------
-      - name: Install backend deps
+      - name: Install backend deps (ci with safe fallback)
         working-directory: ./backend
-        run: npm ci --no-audit --prefer-offline --progress=false --fund=false
+        run: |
+          npm ci --no-audit --prefer-offline --progress=false --fund=false \
+          || npm install --legacy-peer-deps --no-audit --progress=false --fund=false
 
       - name: Write backend .env
         working-directory: ./backend
@@ -72,16 +73,16 @@ jobs:
           pm2 save
 
       # ---------- FRONTEND ----------
-      - name: Install frontend deps
+      - name: Install frontend deps (ci with safe fallback)
         working-directory: ./frontend
-        run: npm ci --no-audit --prefer-offline --progress=false --fund=false --no-optional
+        run: |
+          npm ci --no-audit --prefer-offline --progress=false --fund=false --no-optional \
+          || npm install --legacy-peer-deps --no-audit --progress=false --fund=false
 
       - name: Build frontend
         working-directory: ./frontend
         env:
-          # prevent CRA from treating warnings as failures in CI
-          CI: "false"
-          # give node more memory for large builds
+          CI: "false"                      # don’t fail on warnings
           NODE_OPTIONS: --max-old-space-size=4096
         run: npm run build --silent
 
@@ -91,7 +92,7 @@ jobs:
           sudo rm -rf /var/www/frontend/*
           sudo cp -r ./frontend/build/* /var/www/frontend/
 
-      # ---------- NGINX SITE (serves frontend and proxies /api to backend:5001) ----------
+      # ---------- NGINX: serve SPA + proxy API & uploads ----------
       - name: Install/Update Nginx site
         run: |
           sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
@@ -105,7 +106,7 @@ jobs:
             root /var/www/frontend;
             index index.html;
 
-            # Try static file, then fallback to index.html (SPA)
+            # SPA routing
             location / {
               try_files $uri $uri/ /index.html;
             }
@@ -121,12 +122,13 @@ jobs:
               proxy_set_header   Connection "upgrade";
             }
 
-            # Serve uploaded media directly (your server.js also exposes /uploads)
+            # Let backend serve uploaded files (matches server.js /uploads static)
             location /uploads/ {
-              alias /home/ubuntu/uploads/;
-              autoindex off;
-              access_log off;
-              add_header Cache-Control "public, max-age=31536000, immutable";
+              proxy_pass         http://127.0.0.1:5001;
+              proxy_http_version 1.1;
+              proxy_set_header   Host $host;
+              proxy_set_header   X-Real-IP $remote_addr;
+              proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
             }
           }
           NGINX
@@ -135,8 +137,7 @@ jobs:
           if [ ! -L /etc/nginx/sites-enabled/cms ]; then
             sudo ln -s /etc/nginx/sites-available/cms /etc/nginx/sites-enabled/cms
           fi
-
-          # remove the default site if it exists (optional)
+          # optional: disable default site
           if [ -e /etc/nginx/sites-enabled/default ]; then
             sudo rm -f /etc/nginx/sites-enabled/default
           fi
