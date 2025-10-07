@@ -2,8 +2,9 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
-const connectDB = require("./config/db");
 const path = require("path");
+const connectDB = require("./config/db");
+
 dotenv.config();
 
 const app = express();
@@ -18,17 +19,24 @@ app.use("/api/dashboard/pages", require("./routes/pageRoutes"));
 app.use("/api/dashboard/navigations", require("./routes/navigationRoutes"));
 app.use("/api/dashboard/products", require("./routes/productRoutes"));
 
-// serve uploaded images
-
+// Serve uploaded images
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-//  Products API (this must exist for /api/products)
+// Products API (this must exist for /api/products)
 app.use("/api/products", require("./routes/productRoutes"));
 
-if (require.main === module) {
-  connectDB();
-  const PORT = process.env.PORT || 5001;
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-}
+// ---- Always starts the server (works with PM2) ----
+(async () => {
+  try {
+    await connectDB();
+    const PORT = process.env.PORT || 5001;
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(` Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error(" MongoDB connection failed:", err.message);
+    process.exit(1);
+  }
+})();
 
 module.exports = app;
