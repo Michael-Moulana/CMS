@@ -43,10 +43,10 @@ class MediaManager {
   }
 
   async delete(mediaId) {
-    if (!mediaId || !this.model.isValidId(mediaId)) {
-      // Validation moved here
-      throw new Error("Invalid media ID");
-    }
+    const mongoose = require("mongoose");
+if (!mediaId || !mongoose.Types.ObjectId.isValid(String(mediaId))) {
+  throw new Error("Invalid media ID");
+}
 
     const m = await this.model.findById(mediaId);
     if (!m) return null;
@@ -59,9 +59,10 @@ class MediaManager {
   }
 
   async getById(mediaId) {
-    if (!mediaId || !this.model.isValidId(mediaId)) {
-      throw new Error("Invalid media ID");
-    }
+    const mongoose = require("mongoose");
+if (!mediaId || !mongoose.Types.ObjectId.isValid(String(mediaId))) {
+  throw new Error("Invalid media ID");
+}
     return this.model.findById(mediaId);
   }
 
