@@ -128,7 +128,7 @@ export default function DashboardLayout() {
             <Item to="/dashboard/pages" icon="/img/pages.png" label="Pages" />
             <Item
               to="/dashboard/navigations"
-              icon="/img/site%20navigation.png"
+              icon="/img/site-nav.png"
               label="Manage Site Navigation"
             />
             <Item
