@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: CMS – Deploy (self-hosted)
 
 on:
@@ -22,7 +23,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # CRA & many plugins are happiest on Node 18 LTS
+      
       - name: Setup Node.js (LTS)
         uses: actions/setup-node@v4
         with:
